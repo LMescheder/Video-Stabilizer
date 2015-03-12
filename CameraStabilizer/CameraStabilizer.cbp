@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="CameraStabilizer" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/CameraStabilizer" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-pedantic-errors" />
+					<Add option="-std=c++11" />
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add directory="/usr/local/include" />
+				</Compiler>
+				<Linker>
+					<Add library="opencv_core" />
+					<Add library="opencv_imgproc" />
+					<Add library="opencv_imgcodecs" />
+					<Add library="opencv_video" />
+					<Add library="opencv_videoio" />
+					<Add library="opencv_highgui" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/CameraStabilizer" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-s" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="`opencv-config --cxxflags`" />
+		</Compiler>
+		<Linker>
+			<Add option="`opencv-config --ldstaticflags`" />
+		</Linker>
+		<Unit filename="ComponentTreeParser.hpp" />
+		<Unit filename="MSER.cpp" />
+		<Unit filename="MSER.hpp" />
+		<Unit filename="Tree.hpp" />
+		<Unit filename="lena.jpg" />
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
