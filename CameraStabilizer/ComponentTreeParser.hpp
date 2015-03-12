@@ -9,21 +9,20 @@
 
 /*
 G must provide:
-  G::NodeIndex
+  G::Node
   G::Value - must be totally ordered by <
 
   G::Value G::inf
 
   void G::reset_status()
   G::NodeIndex G::get_source()
-  bool G::note_saturated(G::NodeIndex node)
-  G::NodeIndex G::get_next_neighbor(G::NodeIndex node)
+  bool G::Node::has_more_neighbors()
+  G::Node G::Node::get_next_neighbor(G::Node)
 
-  bool G::note_accessible (G::NodeIndex node)
-  void G::set_note_accessible (G::NodeIndex node, bool accessible)
+  bool G::Node::accessible ()
+  void G::Node::set_accessible (bool accessible)
 
-  G::Value G::operator[] (G::NodeIndex node)
-
+  G::Value G::Node::value (G::NodeIndex node)
 
 A must provide:
   A::ComponentRef
@@ -38,67 +37,102 @@ A must provide:
 // declaration
 template <typename G, typename A>
 class ComponentTreeParser {
+    // interface
     public:
     using Graph = G;
     using Value = typename G::Value;
-    using NodeIndex = typename G::NodeIndex;
+    using Node = typename G::Node;
 
     using Analyzer = A;
     using Result = typename A::Result;
     using ComponentRef = typename A::ComponentRef;
-    // constructor <- necessary parameters good be added
+
     ComponentTreeParser () = default;
 
-    // operator
-    Result operator() (G& graph);
+    Result operator() (G& graph) {
+        return compute_(G& graph);
+    }
 
+    // implementation
     private:
     struct Component {
-        Value value;
+        Value level;
         std::vector<Value> nodes;
         ComponentRef compref;
     };
 
+    struct NodeLess {
+        bool operator& (const Node& node1, const Node& node2) {
+            return (node1.value() < node2.value());
+        }
+    };
 
-};
+    // actual algorithm
+    Result compute_(Graph& graph) {
+        // data structures
+        Analyzer analyzer;
+        std::stack<Component> component_stack;
+        std::priority_queue<Node, std::vector<Node>, NodeLess> boundary_nodes;
 
+        // push dummy component on the stack
+        component_stack.push(Component{G::inf, {}, ComponentRef{}});
+        next_level = G::inf;
 
-template <typename T1, typename T2>
-struct FirstArgumentLess  {
-    bool operator() (const std::pair<T1, T2>& pair1, const std::pair<T1, T2>& pair2) { return pair1.first < pair2.first; }
-};
+        // get entrance point and intialize flowing down phase
+        graph.reset_status();
+        Node current_node = graph.get_source();;
+        bool flowingdown_phase = true;
 
-// implementation
-template <typename G, typename A>
-typename A::Result ComponentTreeParser<G, A>::operator() (G& graph) {
-    // abbreviation
-    using NodeValuePair = std::pair<Value, NodeIndex>;
+        // we are done, when there is no boundary node left
+        while (!boundary_nodes.empty()) {
+            // explore neighborhood of current node
+            while (current_node.has_more_neighbors()) {
+                Node neighbor_node = current_node.get_next_neighbor();
+                if (!neighbor_node.accessible()) {
+                    neighbor_node.set_accessible(true);
 
-    // analyzer, which examines the components
-    Analyzer analyzer;
+                    // flow (further) down?
+                    if (neighbor_node.value < current_node.value) {
+                        // yes, flow further down!
+                        flowing_down_phase = true;
+                        boundary_nodes.push(current_pixel);
+                        current_pixel = neighbor;
+                    } else {
+                        // no, stay here
+                        boundary_nodes.push(neighbor_pixel);
+                    }
+                }
+            }
+            // all neighboring pixels explored, now process components
+            if (flowingdown_phase) {
+                // end flowing down phase
+                flowingdown_phase = false;
+                component_stack.push(Component{current_node.value(), {current_node}, ComponentRef{}});
+            } else {
+                component_stack.top().nodes.push_back(current_node);
+            }
+            analyzer.add_node(current_node);
 
-    // data structures
-    std::stack<Component> component_stack;
-    std::priority_queue<NodeValuePair, std::vector<NodeValuePair>, FirstArgumentLess<Value, NodeIndex>> boundary_nodes;
+            current_node = boundary_nodes.pop();
 
-    NodeIndex current_node;
-    Value current_level;
-
-    // initialize: reset status and push dummy component to the stack
-    graph.reset_status();
-    component_stack.push(Component{G::inf, {}, analyzer.add_component()});
-
-    // get current node and its level
-    current_node = graph.get_source();
-    current_level = graph[current_node];
-
-    // flowing down phase
-    while (!graph.is_saturated(node)) {
-        NodeIndex next_node;
-        do {
-            next_node = graph.get_next_neighbor(node);
-        } while (!graph.node_accessible(next_node));
+            // adapt components
+            next_level = adapt_components(current_node, component_stack);
+        }
     }
 
-}
+    Component adapt_components (const Node& comp1, std::stack<Component>& component_stack) {
+        while (current_node.value() > component_stack.top().level) {
+            if (current_node.value() < next_level) {
+                component_stack.top().level = current_node.value();
+            } else {
+                auto current_component = component_stack.pop();
+                auto next_component = component_stack.pop();
+                next_level = component_stack.top().level;
+                component_stack.push(merge_components(current_component, next_component));
+            }
+        }
+        return next_level;
+    }
+};
+
 #endif // COMPONENTTREEPARSER_HPP_
