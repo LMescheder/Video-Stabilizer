@@ -9,29 +9,30 @@
 
 /*
 G must provide:
-  G::Node
-  G::Value - must be totally ordered by <
+  Node
+  Value - must be totally ordered by <
 
-  G::Value G::inf
+  static const Value inf
 
-  void G::reset_status()
-  G::NodeIndex G::get_source()
-  bool G::Node::has_more_neighbors()
-  G::Node G::Node::get_next_neighbor(G::Node)
+  void reset_status()
+  Node get_source()
 
-  bool G::Node::accessible ()
-  void G::Node::set_accessible (bool accessible)
+  Node must provide:
+    Value value ()
+    bool accessible ()
+    void set_accessible (bool accessible)
 
-  G::Value G::Node::value (G::NodeIndex node)
+    bool has_more_neighbors()
+    Node get_next_neighbor()
 
 A must provide:
-  A::ComponentRef
-  A::Result
+  ComponentRef
+  Result
 
-  A::ComponentRef::add_node(G::Node, G::Value)
+  add_node(G::Node, G::Value)
 
-  A::ComponentRef A<G>::add_component()
-  A::ComponentRef A<G>::merge_components(A<G>::ComponentRef comp1, A<G>::ComponentRef comp2)
+  ComponentRef add_component()
+  merge_components(ComponentRef comp1, ComponentRef comp2)
 */
 
 // declaration
@@ -50,19 +51,19 @@ class ComponentTreeParser {
     ComponentTreeParser () = default;
 
     Result operator() (G& graph) {
-        return compute_(G& graph);
+        return compute_(graph);
     }
 
     // implementation
     private:
     struct Component {
         Value level;
-        std::vector<Value> nodes;
+        std::vector<Node> nodes;
         ComponentRef compref;
     };
 
     struct NodeLess {
-        bool operator& (const Node& node1, const Node& node2) {
+        bool operator() (const Node& node1, const Node& node2) {
             return (node1.value() < node2.value());
         }
     };
@@ -76,7 +77,7 @@ class ComponentTreeParser {
 
         // push dummy component on the stack
         component_stack.push(Component{G::inf, {}, ComponentRef{}});
-        next_level = G::inf;
+        Value next_level = G::inf;
 
         // get entrance point and intialize flowing down phase
         graph.reset_status();
@@ -92,14 +93,14 @@ class ComponentTreeParser {
                     neighbor_node.set_accessible(true);
 
                     // flow (further) down?
-                    if (neighbor_node.value < current_node.value) {
+                    if (neighbor_node.value() < current_node.value()) {
                         // yes, flow further down!
-                        flowing_down_phase = true;
-                        boundary_nodes.push(current_pixel);
-                        current_pixel = neighbor;
+                        flowingdown_phase = true;
+                        boundary_nodes.push(current_node);
+                        current_node = neighbor_node;
                     } else {
                         // no, stay here
-                        boundary_nodes.push(neighbor_pixel);
+                        boundary_nodes.push(neighbor_node);
                     }
                 }
             }
@@ -111,27 +112,32 @@ class ComponentTreeParser {
             } else {
                 component_stack.top().nodes.push_back(current_node);
             }
-            analyzer.add_node(current_node);
+            //analyzer.add_node(current_node);
 
-            current_node = boundary_nodes.pop();
-
+            current_node = boundary_nodes.top();
+            boundary_nodes.pop();
             // adapt components
-            next_level = adapt_components(current_node, component_stack);
+            adapt_components(current_node, next_level, component_stack);
         }
     }
 
-    Component adapt_components (const Node& comp1, std::stack<Component>& component_stack) {
+    void adapt_components (Node& current_node, Value& next_level, std::stack<Component>& component_stack) {
         while (current_node.value() > component_stack.top().level) {
             if (current_node.value() < next_level) {
                 component_stack.top().level = current_node.value();
             } else {
-                auto current_component = component_stack.pop();
-                auto next_component = component_stack.pop();
+                auto current_component = component_stack.top();
+                component_stack.pop();
+                auto next_component = component_stack.top();
+                component_stack.pop();
                 next_level = component_stack.top().level;
                 component_stack.push(merge_components(current_component, next_component));
             }
         }
-        return next_level;
+    }
+
+    Component merge_components(Component current_component, Component next_component) {
+        return Component{};
     }
 };
 
