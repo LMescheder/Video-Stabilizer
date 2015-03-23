@@ -45,6 +45,7 @@
 			<Add option="`opencv-config --ldstaticflags`" />
 		</Linker>
 		<Unit filename="ComponentTreeParser.hpp" />
+		<Unit filename="ComponentTreeParserTest.cpp" />
 		<Unit filename="MSER.cpp" />
 		<Unit filename="MSER.hpp" />
 		<Unit filename="Tree.hpp" />

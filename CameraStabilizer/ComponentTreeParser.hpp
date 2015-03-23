@@ -11,10 +11,11 @@
 G must provide:
   Node
   Value - must be totally ordered by <
+  Data
 
   static const Value inf
 
-  void reset_status()
+  G(const Data&)
   Node get_source()
 
   Node must provide:
@@ -26,7 +27,7 @@ G must provide:
     Node get_next_neighbor()
 
 A must provide:
-  ComponentRef
+  Component
   Result
 
   add_node(G::Node, G::Value)
@@ -40,26 +41,57 @@ template <typename G, typename A>
 class ComponentTreeParser {
     // interface
     public:
-    using Graph = G;
+    using GraphAccessor = G;
     using Value = typename G::Value;
     using Node = typename G::Node;
+    using Data = typename G::Data;
 
     using Analyzer = A;
     using Result = typename A::Result;
-    using ComponentRef = typename A::ComponentRef;
+    using Component = typename A::Component;
 
     ComponentTreeParser () = default;
 
-    Result operator() (G& graph) {
-        return compute_(graph);
+    Result operator() (const Data& data) {
+        return compute_(data);
     }
 
     // implementation
     private:
-    struct Component {
-        Value level;
-        std::vector<Node> nodes;
-        ComponentRef compref;
+
+    struct ComponentStack {
+        public:
+        ComponentStack (Analyzer analyzer) : analyzer_(analyzer) {}
+
+        void push_component(Value level) {
+            components_.push_back(analyzer_.add_component());
+        }
+        void push_node(Node node) {
+            analyzer_.add_node(node, components_.back());
+        }
+
+        void raise_level(Value level) {
+            Value current_level = components_.rbegin()[0].level();  // level of last component
+            Value next_level = components_.rbegin()[1].level();     // level of second last component
+
+            while (level > current_level) {
+                if (level < next_level) {
+                    components_.back().set_level(level);
+                } else {
+                    auto current_component = components_.back();
+                    components_.pop_back();
+                    auto next_component = components_.back();
+                    components_.pop_back();
+                    next_level = components_.back().level;
+                    components_.push_back(analyzer_.merge_components(current_component, next_component));
+                    current_level = components_.back().level;
+                }
+            }
+        }
+
+        private:
+        std::vector<Component> components_;
+        Analyzer analyzer_;
     };
 
     struct NodeLess {
@@ -69,18 +101,17 @@ class ComponentTreeParser {
     };
 
     // actual algorithm
-    Result compute_(Graph& graph) {
+    Result compute_(const Data& data) {
         // data structures
+        GraphAccessor graph{data};
         Analyzer analyzer;
-        std::stack<Component> component_stack;
+        ComponentStack component_stack;
         std::priority_queue<Node, std::vector<Node>, NodeLess> boundary_nodes;
 
         // push dummy component on the stack
-        component_stack.push(Component{G::inf, {}, ComponentRef{}});
-        Value next_level = G::inf;
+        component_stack.push_component(G::inf);
 
         // get entrance point and intialize flowing down phase
-        graph.reset_status();
         Node current_node = graph.get_source();;
         bool flowingdown_phase = true;
 
@@ -94,50 +125,29 @@ class ComponentTreeParser {
 
                     // flow (further) down?
                     if (neighbor_node.value() < current_node.value()) {
-                        // yes, flow further down!
+                        // yes, flow (further) down!
                         flowingdown_phase = true;
                         boundary_nodes.push(current_node);
                         current_node = neighbor_node;
                     } else {
-                        // no, stay here
+                        // no, stay here and look at other neighbors
                         boundary_nodes.push(neighbor_node);
                     }
                 }
             }
-            // all neighboring pixels explored, now process components
+            // all neighboring nodes explored, now process components
             if (flowingdown_phase) {
-                // end flowing down phase
+                // end flowing down phase, new minimum found
                 flowingdown_phase = false;
-                component_stack.push(Component{current_node.value(), {current_node}, ComponentRef{}});
-            } else {
-                component_stack.top().nodes.push_back(current_node);
+                component_stack.push_component(current_node.value());
             }
-            //analyzer.add_node(current_node);
+            component_stack.push_node(current_node);
 
             current_node = boundary_nodes.top();
             boundary_nodes.pop();
-            // adapt components
-            adapt_components(current_node, next_level, component_stack);
+            // raise level of current component
+            component_stack.raise_level(current_node.value());
         }
-    }
-
-    void adapt_components (Node& current_node, Value& next_level, std::stack<Component>& component_stack) {
-        while (current_node.value() > component_stack.top().level) {
-            if (current_node.value() < next_level) {
-                component_stack.top().level = current_node.value();
-            } else {
-                auto current_component = component_stack.top();
-                component_stack.pop();
-                auto next_component = component_stack.top();
-                component_stack.pop();
-                next_level = component_stack.top().level;
-                component_stack.push(merge_components(current_component, next_component));
-            }
-        }
-    }
-
-    Component merge_components(Component current_component, Component next_component) {
-        return Component{};
     }
 };
 
