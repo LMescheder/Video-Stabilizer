@@ -2,38 +2,43 @@
 
 struct G {
     using Value = int;
-    struct Node {
-        Value value () const { return 0; }
-        bool accessible () { return true; }
-        void set_accessible (bool accessible) {}
-
-        bool has_more_neighbors() { return false; }
-        Node get_next_neighbor() { return *this; }
-
+    using Data = int;
+    struct NodeIndex {
+        Value value = 0;
     };
+    bool has_more_neighbors(NodeIndex node) { return false; }
+    NodeIndex get_next_neighbor(NodeIndex node) { return node; }
+    Value value(NodeIndex node) {return node.value;}
     static const Value inf = 1000;
 
+    G (const Data&) {}
 
 
-    void reset_status () {}
-    Node get_source () { return Node{}; }
+    NodeIndex get_source () { return NodeIndex{}; }
 
 };
 
+
 struct A {
-    using ComponentRef = int;
+    struct Component {
+        int level_ = 0;
+        int level() {return level_;}
+        void set_level(int level) {level_ = level;}
+    };
     using Result = int;
 
-    ComponentRef add_node( G::Node node, G::Value value) { return 0; }
-    ComponentRef add_component () { return 0; }
-    ComponentRef merge_components (ComponentRef comp1, ComponentRef comp2) {return 0;}
+    void add_node( G::NodeIndex node, Component component) { }
+    Component add_component () { return Component{}; }
+    Component merge_components (Component comp1, Component comp2) {return Component{};}
 
+
+    Result get_result() {return Result{}; }
 };
 
 void test() {
-    G graph;
+    int data = 0;
     ComponentTreeParser<G, A> test;
-    test(graph);
+    test(data);
 }
 
 
