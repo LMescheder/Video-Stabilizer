@@ -50,7 +50,7 @@ class ComponentTreeParser {
     ComponentTreeParser () = default;
 
     Result operator() (const Data& data) {
-        return compute_(data);
+        return parse_(data);
     }
 
     // implementation
@@ -58,7 +58,9 @@ class ComponentTreeParser {
 
     struct ComponentStack {
         public:
-        ComponentStack (Analyzer analyzer) : analyzer_{analyzer} {}
+        ComponentStack (Analyzer& analyzer) : analyzer_(analyzer), components_() {
+            push_component(GraphAccessor::inf);
+        }
 
         void push_component(Value level) {
             components_.push_back(analyzer_.add_component());
@@ -68,10 +70,11 @@ class ComponentTreeParser {
         }
 
         void raise_level(Value level) {
-            auto current_level = components_.rbegin()[0].level();  // level of last component
-            auto next_level = components_.rbegin()[1].level();     // level of second last component
-
+            // level of last component
+            auto current_level = components_.rbegin()[0].level();
             while (level > current_level) {
+                 // level of second last component (exists, since current_level < inf)
+                auto next_level = components_.rbegin()[1].level();
                 if (level < next_level) {
                     components_.back().set_level(level);
                 } else {
@@ -88,7 +91,7 @@ class ComponentTreeParser {
 
         private:
         std::vector<Component> components_;
-        Analyzer analyzer_;
+        Analyzer& analyzer_;
     };
 
     struct NodeLess {
@@ -100,38 +103,37 @@ class ComponentTreeParser {
     };
 
     // actual algorithm
-    Result compute_(const Data& data) {
+    Result parse_(const Data& data) {
         // data structures
         auto graph = GraphAccessor{data};
         auto analyzer = Analyzer{};
         auto component_stack = ComponentStack{analyzer};
         auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodeLess>{NodeLess{graph}};
 
-        // push dummy component on the stack
-        component_stack.push_component(G::inf);
-
-        // get entrance point and intialize flowing down phase
-        auto current_node = graph.get_source();;
+        // initialize
+        boundary_nodes.push(graph.get_source());
         bool flowingdown_phase = true;
 
         // we are done, when there is no boundary node left
-        while (!boundary_nodes.empty()) {
+        while (!boundary_nodes.empty()){
+            // get next node and process components
+            auto current_node = boundary_nodes.top();
+            boundary_nodes.pop();
+            component_stack.raise_level(graph.value(current_node));
+
             // explore neighborhood of current node
+            // the accessor has to make sure, that we access every node only once
             while (graph.has_more_neighbors(current_node)) {
-                // the accessor has to make sure, that we access every node only once
                 NodeIndex neighbor_node = graph.get_next_neighbor(current_node);
                 // flow (further) down?
                 if (graph.value(neighbor_node) < graph.value(current_node)) {
-                    // yes, flow (further) down!
                     flowingdown_phase = true;
                     boundary_nodes.push(current_node);
                     current_node = neighbor_node;
                 } else {
-                    // no, stay here and look at other neighbors
                     boundary_nodes.push(neighbor_node);
                 }
             }
-            // all neighboring nodes explored, now process components
 
             // new minimum found?
             if (flowingdown_phase)
@@ -139,11 +141,6 @@ class ComponentTreeParser {
 
             flowingdown_phase = false;
             component_stack.push_node(current_node);
-
-            current_node = boundary_nodes.top();
-            boundary_nodes.pop();
-            // raise level of current component
-            component_stack.raise_level(graph.value(current_node));
         }
         return analyzer.get_result();
     }
