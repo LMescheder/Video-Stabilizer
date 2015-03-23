@@ -35,7 +35,7 @@ struct A {
     Result get_result() {return Result{}; }
 };
 
-void test() {
+int main() {
     int data = 0;
     ComponentTreeParser<G, A> test;
     test(data);

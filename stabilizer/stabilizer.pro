@@ -1,4 +1,8 @@
-TEMPLATE=lib
+CONFIG+=c++11
+TEMPLATE=app
 
-SOURCES=MSER.cpp ComponentTreeParserTest.cpp
-HEADERS=CameraStabilizer.hpp ComponentTreeParser.hpp MSER.hpp Tree.hpp
+SOURCES
+HEADERS=CameraStabilizer.hpp ComponentTreeParser.hpp
+
+SOURCES += \
+    main.cpp
