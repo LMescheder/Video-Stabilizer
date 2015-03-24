@@ -1,4 +1,7 @@
 #include "ComponentTreeParser.hpp"
+#include "OpenCVMatAccessor.hpp"
+#include "opencv2/core.hpp"
+#include <iostream>
 
 struct G {
     using Value = int;
@@ -19,15 +22,16 @@ struct G {
 };
 
 
+template <typename G>
 struct A {
     struct Component {
-        int level_ = 0;
-        int level() {return level_;}
-        void set_level(int level) {level_ = level;}
+        typename G::Value level_;
+        typename G::Value level() {return level_;}
+        void set_level(typename G::Value level) {level_ = level;}
     };
     using Result = int;
 
-    void add_node( G::NodeIndex node, Component component) { }
+    void add_node( typename G::NodeIndex node, Component component) { }
     Component add_component () { return Component{}; }
     Component merge_components (Component comp1, Component comp2) {return Component{};}
 
@@ -36,8 +40,8 @@ struct A {
 };
 
 int main() {
-    int data = 0;
-    ComponentTreeParser<G, A> test;
+    cv::Mat data(100, 100, CV_8U);
+    ComponentTreeParser<OpenCVMatAccessor, A<OpenCVMatAccessor>> test;
     test(data);
 }
 
