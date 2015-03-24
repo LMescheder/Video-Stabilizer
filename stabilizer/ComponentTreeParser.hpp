@@ -31,7 +31,6 @@ A must provide:
   merge_components(ComponentRef comp1, ComponentRef comp2)
 */
 
-// declaration
 template <typename G, typename A>
 // requires GraphAccessor<G>
 //      &&  ComponentAnalyzer<A>
