@@ -5,6 +5,7 @@
 #include <stack>
 #include <queue>
 #include <utility>
+#include <iostream>
 
 /*
 G must provide:
@@ -62,7 +63,7 @@ class ComponentTreeParser {
         }
 
         void push_component(Value level) {
-            components_.push_back(analyzer_.add_component());
+            components_.push_back(analyzer_.add_component(level));
         }
         void push_node(NodeIndex node) {
             analyzer_.add_node(node, components_.back());
@@ -76,6 +77,7 @@ class ComponentTreeParser {
                 auto next_level = components_.rbegin()[1].level();
                 if (level < next_level) {
                     components_.back().set_level(level);
+                    current_level = level;
                 } else {
                     auto current_component = components_.back();
                     components_.pop_back();
@@ -93,37 +95,44 @@ class ComponentTreeParser {
         Analyzer& analyzer_;
     };
 
-    struct NodeLess {
+    struct NodePriority {
         GraphAccessor& graph;
 
         bool operator() (const NodeIndex& node1, const NodeIndex& node2) {
-            return (graph.value(node1) < graph.value(node2));
+            return (graph.value(node1) > graph.value(node2));
         }
     };
 
     // actual algorithm
     Result parse_(const Data& data) {
         // data structures
-        auto graph = GraphAccessor{data};
+        auto graph = GraphAccessor(data);
         auto analyzer = Analyzer{};
         auto component_stack = ComponentStack{analyzer};
-        auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodeLess>{NodeLess{graph}};
+        auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriority>{NodePriority{graph}};
 
         // initialize
         boundary_nodes.push(graph.get_source());
         bool flowingdown_phase = true;
+        //auto current_node = graph.get_source();
 
         // we are done, when there is no boundary node left
-        while (!boundary_nodes.empty()){
-            // get next node and process components
+        while (!boundary_nodes.empty()) {
+            // get next node
             auto current_node = boundary_nodes.top();
             boundary_nodes.pop();
+
+
+            std::cout << "Current node: " << current_node
+                      << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
+
+
             component_stack.raise_level(graph.value(current_node));
 
             // explore neighborhood of current node
             // the accessor has to make sure, that we access every node only once
-            while (graph.has_more_neighbors(current_node)) {
-                NodeIndex neighbor_node = graph.get_next_neighbor(current_node);
+            NodeIndex neighbor_node;
+            while (graph.get_next_neighbor(current_node, neighbor_node)) {
                 // flow (further) down?
                 if (graph.value(neighbor_node) < graph.value(current_node)) {
                     flowingdown_phase = true;
@@ -140,6 +149,7 @@ class ComponentTreeParser {
 
             flowingdown_phase = false;
             component_stack.push_node(current_node);
+
         }
         return analyzer.get_result();
     }

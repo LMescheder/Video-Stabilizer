@@ -1,6 +1,8 @@
 #include "ComponentTreeParser.hpp"
 #include "OpenCVMatAccessor.hpp"
 #include "opencv2/core.hpp"
+//#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
 #include <iostream>
 
 struct G {
@@ -32,15 +34,16 @@ struct A {
     using Result = int;
 
     void add_node( typename G::NodeIndex node, Component component) { }
-    Component add_component () { return Component{}; }
-    Component merge_components (Component comp1, Component comp2) {return Component{};}
+    Component add_component (typename G::Value level) { return Component{level}; }
+    Component merge_components (Component comp1, Component comp2) {return Component{std::max(comp1.level_, comp2.level_)};}
 
 
     Result get_result() {return Result{}; }
 };
 
 int main() {
-    cv::Mat data(100, 100, CV_8U);
+    const char* path = "/home/lars/Education/University/Semester_10_Lausanne/CV_Project/work/build/data/Lena.png";
+    cv::Mat data = cv::imread(path, CV_LOAD_IMAGE_GRAYSCALE);
     ComponentTreeParser<OpenCVMatAccessor, A<OpenCVMatAccessor>> test;
     test(data);
 }
