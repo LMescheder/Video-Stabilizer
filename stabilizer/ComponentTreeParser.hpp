@@ -95,7 +95,7 @@ class ComponentTreeParser {
         Analyzer& analyzer_;
     };
 
-    struct NodePriority {
+    struct NodePriorityLess {
         GraphAccessor& graph;
 
         bool operator() (const NodeIndex& node1, const NodeIndex& node2) {
@@ -109,7 +109,7 @@ class ComponentTreeParser {
         auto graph = GraphAccessor(data);
         auto analyzer = Analyzer{};
         auto component_stack = ComponentStack{analyzer};
-        auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriority>{NodePriority{graph}};
+        auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriorityLess>{NodePriorityLess{graph}};
 
         // initialize
         boundary_nodes.push(graph.get_source());
@@ -122,10 +122,10 @@ class ComponentTreeParser {
             auto current_node = boundary_nodes.top();
             boundary_nodes.pop();
 
-
+            /*
             std::cout << "Current node: " << current_node
                       << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
-
+            */
 
             component_stack.raise_level(graph.value(current_node));
 
