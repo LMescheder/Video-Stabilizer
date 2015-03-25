@@ -39,6 +39,8 @@ public:
             NodeIndex next_node;
 
             switch (mask_value) {
+            case 0:
+                next_node = node;
             case 1:
                 next_node = NodeIndex{node.x + 1, node.y};
                 break;
@@ -72,5 +74,22 @@ private:
     cv::Mat mask_;
 };
 
+class OpenCVMatMserAnalyzer {
+public:
+    struct Component {
+        uchar level_;
+        uchar level() {return level_;}
+        void set_level(uchar level) {level_ = level;}
+    };
+
+    using Result = std::vector<std::vector<cv::Point2i>>;
+
+    void add_node( typename cv::Point2i node, Component component) { }
+    Component add_component (uchar level) { return Component{level}; }
+    Component merge_components (Component comp1, Component comp2) {return Component{std::max(comp1.level_, comp2.level_)};}
+
+
+    Result get_result() {return {}; }
+};
 
 #endif // OPENCVMATACCESSOR_HPP_

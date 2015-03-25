@@ -53,7 +53,7 @@ struct A {
 int main() {
     const char* path = "/home/lars/Education/University/Semester_10_Lausanne/CV_Project/work/build/data/Lena.png";
     cv::Mat data = cv::imread(path, CV_LOAD_IMAGE_GRAYSCALE);
-    ComponentTreeParser<OpenCVMatAccessor, A<OpenCVMatAccessor>> test;
+    ComponentTreeParser<OpenCVMatAccessor, OpenCVMatMserAnalyzer> test;
 
 
     auto start = std::chrono::high_resolution_clock::now();
