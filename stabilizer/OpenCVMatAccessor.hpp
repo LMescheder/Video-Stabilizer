@@ -36,10 +36,22 @@ public:
         uchar& mask_value = mask_.at<uchar>(node);
 
         while (mask_value < 5) {
-            int dx = dx_[mask_value-1];
-            int dy = dy_[mask_value-1];
+            NodeIndex next_node;
 
-            auto next_node = NodeIndex{node.x + dx, node.y + dy};
+            switch (mask_value) {
+            case 1:
+                next_node = NodeIndex{node.x + 1, node.y};
+                break;
+            case 2:
+                next_node = NodeIndex{node.x, node.y + 1};
+                break;
+            case 3:
+                next_node = NodeIndex{node.x - 1, node.y};
+                break;
+            case 4:
+                next_node = NodeIndex{node.x, node.y - 1};
+                break;
+            }
             ++mask_value;
 
             if (   0 <= next_node.x  && next_node.x < data_.cols
@@ -56,8 +68,6 @@ public:
     }
 
 private:
-    const int dx_[4] = {1, -1, 0, 0};
-    const int dy_[4] = {0,  0, 1, -1};
     Data data_;
     cv::Mat mask_;
 };
