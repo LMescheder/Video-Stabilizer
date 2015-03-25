@@ -6,6 +6,7 @@
 #include <queue>
 #include <utility>
 #include <iostream>
+#include <boost/optional.hpp>
 
 /*
 G must provide:
@@ -131,8 +132,10 @@ class ComponentTreeParser {
 
             // explore neighborhood of current node
             // the accessor has to make sure, that we access every node only once
-            NodeIndex neighbor_node;
-            while (graph.get_next_neighbor(current_node, neighbor_node)) {
+
+            boost::optional<NodeIndex> neighbor_or_none;
+            while (neighbor_or_none = graph.get_next_neighbor(current_node)) {
+                auto neighbor_node = *neighbor_or_none;
                 // flow (further) down?
                 if (graph.value(neighbor_node) < graph.value(current_node)) {
                     flowingdown_phase = true;

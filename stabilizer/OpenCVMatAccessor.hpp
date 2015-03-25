@@ -2,6 +2,7 @@
 #define OPENCVMATACCESSOR_HPP_
 
 #include "opencv2/core.hpp"
+#include "boost/optional.hpp"
 
 class OpenCVMatAccessor
 {
@@ -32,7 +33,7 @@ public:
         // point has status 5 if accessible and all 4 neighbors explored
         return mask_.at<uchar>(node) < 5;
     }
-    bool get_next_neighbor (NodeIndex node, NodeIndex& neighor_node) {
+    boost::optional<NodeIndex> get_next_neighbor (NodeIndex node) {
         uchar& mask_value = mask_.at<uchar>(node);
 
         while (mask_value < 5) {
@@ -61,12 +62,11 @@ public:
                 uchar& next_mask_value = mask_.at<uchar>(next_node);
                 if (next_mask_value == 0) {
                     ++next_mask_value;
-                    neighor_node = next_node;
-                    return true;
+                    return next_node;
                  }
             }
         }
-        return false;
+        return boost::none;
     }
 
 private:
