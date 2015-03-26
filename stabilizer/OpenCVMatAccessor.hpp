@@ -77,19 +77,42 @@ private:
 class OpenCVMatMserAnalyzer {
 public:
     struct Component {
-        uchar level_;
-        uchar level() {return level_;}
-        void set_level(uchar level) {level_ = level;}
+        unsigned int age = 0;
+        unsigned int N = 0;
+        cv::Point2f mean{0., 0.};
     };
 
-    using Result = std::vector<std::vector<cv::Point2i>>;
+    using Result = std::vector<Component>;
 
-    void add_node( typename cv::Point2i node, Component component) { }
-    Component add_component (uchar level) { return Component{level}; }
-    Component merge_components (Component comp1, Component comp2) {return Component{std::max(comp1.level_, comp2.level_)};}
+    void add_node( typename cv::Point2i node, Component& component) {
+        //component.points.push_back(node);
+        auto area = float(component.N);
+        auto factor = area / (area + 1);
+        component.mean.x = node.x/(area + 1) + factor * component.mean.x;
+        component.mean.y = node.y/(area + 1) + factor * component.mean.y;
+        ++component.age;
 
+        // todo check maximal stability
+    }
 
-    Result get_result() {return {}; }
+    Component add_component () {
+        return Component{};
+    }
+
+    void merge_component_into(const Component& comp1, Component& comp2) {
+        auto area1 = float(comp1.N);
+        auto area2 = float(comp2.N);
+        auto area12 = area1 + area2;
+        comp2.mean.x = area1/area12 * comp1.mean.x + area2/area12 * comp2.mean.x;
+        comp2.mean.y = area1/area12 * comp1.mean.y + area2/area12 * comp2.mean.y;
+        comp2.N += comp1.N;
+    }
+
+    // TODO: still makes a deep copy -> has to be optimized (would calling std::move be save?
+    Result get_result() { return result_; }
+
+private:
+    Result result_;
 };
 
 #endif // OPENCVMATACCESSOR_HPP_

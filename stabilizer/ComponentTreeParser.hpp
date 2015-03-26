@@ -4,7 +4,6 @@
 #include <vector>
 #include <stack>
 #include <queue>
-#include <utility>
 #include <iostream>
 #include <boost/optional.hpp>
 
@@ -57,6 +56,7 @@ class ComponentTreeParser {
     // implementation
     private:
 
+    // contains (component, level) pairs
     struct ComponentStack {
         public:
         ComponentStack (Analyzer& analyzer) : analyzer_(analyzer), components_() {
@@ -64,7 +64,8 @@ class ComponentTreeParser {
         }
 
         void push_component(Value level) {
-            components_.push_back(analyzer_.add_component(level));
+            components_.push_back(Component{});
+            values_.push_back(level);
         }
         void push_node(NodeIndex node) {
             analyzer_.add_node(node, components_.back());
@@ -72,27 +73,21 @@ class ComponentTreeParser {
 
         void raise_level(Value level) {
             // level of last component
-            auto current_level = components_.rbegin()[0].level();
-            while (level > current_level) {
+            while (level >  values_.back()) {
                  // level of second last component (exists, since current_level < inf)
-                auto next_level = components_.rbegin()[1].level();
-                if (level < next_level) {
-                    components_.back().set_level(level);
-                    current_level = level;
+                auto next_level = values_.rbegin()[1];
+                if  (level < next_level) {
+                    values_.back() = level;
                 } else {
-                    auto current_component = components_.back();
+                    analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
                     components_.pop_back();
-                    auto next_component = components_.back();
-                    components_.pop_back();
-                    next_level = components_.back().level();
-                    components_.push_back(analyzer_.merge_components(current_component, next_component));
-                    current_level = components_.back().level();
+                    values_.pop_back();
                 }
             }
         }
 
-        private:
         std::vector<Component> components_;
+        std::vector<Value> values_;
         Analyzer& analyzer_;
     };
 
@@ -147,10 +142,10 @@ class ComponentTreeParser {
             }
 
             // new minimum found?
-            if (flowingdown_phase)
+            if (flowingdown_phase) {
                 component_stack.push_component(graph.value(current_node));
-
-            flowingdown_phase = false;
+                flowingdown_phase = false;
+            }
             component_stack.push_node(current_node);
 
         }
