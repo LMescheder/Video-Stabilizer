@@ -124,18 +124,16 @@ class ComponentTreeParser {
             component_stack.raise_level(graph.value(current_node));
             if (analyzer.is_finished())
                 break;
+
             /*
             std::cout << "Current node: " << current_node
                       << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
             */
 
 
-
             // explore neighborhood of current node
             // the accessor has to make sure, that we access every node only once
-
-            boost::optional<NodeIndex> neighbor_or_none;
-            while (neighbor_or_none = graph.get_next_neighbor(current_node)) {
+            while (auto neighbor_or_none = graph.get_next_neighbor(current_node)) {
                 auto neighbor_node = *neighbor_or_none;
                 // flow (further) down?
                 if (graph.value(neighbor_node) < graph.value(current_node)) {

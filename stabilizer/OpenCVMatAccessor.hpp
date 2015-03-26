@@ -77,22 +77,17 @@ public:
     struct Component {
         unsigned int age = 0;
         unsigned int N = 0;
-        cv::Point2f mean = cv::Point2f(0., 0.);
+        cv::Vec2f mean = cv::Vec2f(0., 0.);
+        cv::Matx22f cov = cv::Matx22f(0., 0., 0., 0.);
     };
 
     using Result = std::vector<Component>;
 
     void add_node( typename cv::Point2i node, Component& component) {
-        //component.points.push_back(node);
-        auto area = float(component.N);
-        auto factor = area / (area + 1);
-        component.mean.x = node.x/(area + 1) + factor * component.mean.x;
-        component.mean.y = node.y/(area + 1) + factor * component.mean.y;
-        component.age += 1;
-        component.N += 1;
-        //finished_ |= (component.N >= max_N_);
-
-        // todo check maximal stability
+        Component node_comp;
+        node_comp.mean = cv::Vec2f(node.x, node.y);
+        node_comp.N = 1;
+        merge_component_into(node_comp, component);
     }
 
     Component add_component () {
@@ -100,12 +95,16 @@ public:
     }
 
     void merge_component_into(const Component& comp1, Component& comp2) {
-        auto area1 = float(comp1.N);
-        auto area2 = float(comp2.N);
-        auto area12 = area1 + area2;
-        comp2.mean.x = area1/area12 * comp1.mean.x + area2/area12 * comp2.mean.x;
-        comp2.mean.y = area1/area12 * comp1.mean.y + area2/area12 * comp2.mean.y;
-        comp2.N += comp1.N;
+        auto p = float(comp1.N) / float(comp1.N + comp2.N);
+        auto q = float(comp2.N) / float(comp1.N + comp2.N);
+
+        for (auto i : {0, 1})
+            for (auto j : {0, 1})
+                comp2.cov(i, j) = p * comp1.cov(i, j) + q * comp2.cov(i, j)
+                                   + p*q*(comp2.mean(i) - comp1.mean(i)) * (comp2.mean(j) - comp1.mean(j));
+
+        comp2.mean = p * comp1.mean + q * comp2.mean;
+        comp2.N = comp1.N + comp2.N;
 
         //finished_ |= (comp2.N >= max_N_);
     }
@@ -128,23 +127,24 @@ class OpenCVMatPriorityQueue {
 public:
     void push(cv::Point2i point, uchar value) {
         points_[value].push_back(point);
-        //minimum_ = std::min(minimum_, value);
+        minimum_ = std::min(minimum_, value);
     }
 
     boost::optional<cv::Point2i> pop() {
-        for (auto& vec : points_)
-            if (!vec.empty()) {
-                cv::Point2i next_point = vec.back();
-                vec.pop_back();
-                return next_point;
-            }
-        return boost::none;
+        if (points_[minimum_].empty())
+            return boost::none;
+        else {
+            auto next_point = points_[minimum_].back();
+            points_[minimum_].pop_back();
+            while (minimum_ < 255 && points_[minimum_].empty())
+                ++minimum_;
+            return next_point;
+        }
     }
 
 private:
-    std::array<std::vector<cv::Point2i>, 255> points_;
-    //uchar minimum_ = 0;
-
+    std::array<std::vector<cv::Point2i>, 256> points_;
+    uchar minimum_ = 255;
 };
 
 #endif // OPENCVMATACCESSOR_HPP_
