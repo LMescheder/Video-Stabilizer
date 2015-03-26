@@ -32,7 +32,7 @@ A must provide:
   merge_components(ComponentRef comp1, ComponentRef comp2)
 */
 
-template <typename G, typename A>
+template <typename G, typename A, typename P>
 // requires GraphAccessor<G>
 //      &&  ComponentAnalyzer<A>
 class ComponentTreeParser {
@@ -46,6 +46,8 @@ class ComponentTreeParser {
     using Analyzer = A;
     using Result = typename A::Result;
     using Component = typename A::Component;
+
+    using PriorityQueue = P;
 
     ComponentTreeParser () = default;
 
@@ -105,18 +107,20 @@ class ComponentTreeParser {
         auto graph = GraphAccessor(data);
         auto analyzer = Analyzer{};
         auto component_stack = ComponentStack{analyzer};
-        auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriorityLess>{NodePriorityLess{graph}};
+        //auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriorityLess>{NodePriorityLess{graph}};
+
+        auto boundary_nodes = PriorityQueue{};
 
         // initialize
-        boundary_nodes.push(graph.get_source());
+        auto source_node = graph.get_source();
+        boundary_nodes.push(source_node, graph.value(source_node));
         bool flowingdown_phase = true;
         //auto current_node = graph.get_source();
 
         // we are done, when there is no boundary node left
-        while (!boundary_nodes.empty()) {
+        while (auto current_node_or_none = boundary_nodes.pop()) {
             // get next node
-            auto current_node = boundary_nodes.top();
-            boundary_nodes.pop();
+            auto current_node = *current_node_or_none;
 
             /*
             std::cout << "Current node: " << current_node
@@ -134,10 +138,10 @@ class ComponentTreeParser {
                 // flow (further) down?
                 if (graph.value(neighbor_node) < graph.value(current_node)) {
                     flowingdown_phase = true;
-                    boundary_nodes.push(current_node);
+                    boundary_nodes.push(current_node, graph.value(current_node));
                     current_node = neighbor_node;
                 } else {
-                    boundary_nodes.push(neighbor_node);
+                    boundary_nodes.push(neighbor_node, graph.value(neighbor_node));
                 }
             }
 

@@ -3,6 +3,7 @@
 
 #include "opencv2/core.hpp"
 #include "boost/optional.hpp"
+#include <array>
 
 class OpenCVMatAccessor
 {
@@ -29,10 +30,7 @@ public:
         return result;
     }
 
-    bool has_more_neighbors (NodeIndex node) {
-        // point has status 5 if accessible and all 4 neighbors explored
-        return mask_.at<uchar>(node) < 5;
-    }
+
     boost::optional<NodeIndex> get_next_neighbor (NodeIndex node) {
         uchar& mask_value = mask_.at<uchar>(node);
 
@@ -113,6 +111,30 @@ public:
 
 private:
     Result result_;
+};
+
+
+class OpenCVMatPriorityQueue {
+public:
+    void push(cv::Point2i point, uchar value) {
+        points_[value].push_back(point);
+        //minimum_ = std::min(minimum_, value);
+    }
+
+    boost::optional<cv::Point2i> pop() {
+        for (auto& vec : points_)
+            if (!vec.empty()) {
+                cv::Point2i next_point = vec.back();
+                vec.pop_back();
+                return next_point;
+            }
+        return boost::none;
+    }
+
+private:
+    std::array<std::vector<cv::Point2i>, 255> points_;
+    //uchar minimum_ = 0;
+
 };
 
 #endif // OPENCVMATACCESSOR_HPP_
