@@ -77,7 +77,7 @@ public:
     struct Component {
         unsigned int age = 0;
         unsigned int N = 0;
-        cv::Point2f mean{0., 0.};
+        cv::Point2f mean = cv::Point2f(0., 0.);
     };
 
     using Result = std::vector<Component>;
@@ -88,7 +88,9 @@ public:
         auto factor = area / (area + 1);
         component.mean.x = node.x/(area + 1) + factor * component.mean.x;
         component.mean.y = node.y/(area + 1) + factor * component.mean.y;
-        ++component.age;
+        component.age += 1;
+        component.N += 1;
+        finished_ |= (component.N >= max_N_);
 
         // todo check maximal stability
     }
@@ -104,13 +106,21 @@ public:
         comp2.mean.x = area1/area12 * comp1.mean.x + area2/area12 * comp2.mean.x;
         comp2.mean.y = area1/area12 * comp1.mean.y + area2/area12 * comp2.mean.y;
         comp2.N += comp1.N;
+
+        finished_ |= (comp2.N >= max_N_);
     }
 
     // TODO: still makes a deep copy -> has to be optimized (would calling std::move be save?
     Result get_result() { return result_; }
 
+    bool is_finished() {
+        return finished_;
+    }
+
 private:
     Result result_;
+    bool finished_ = false;
+    const unsigned int max_N_ = 14400;
 };
 
 

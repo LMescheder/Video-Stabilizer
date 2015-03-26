@@ -121,13 +121,15 @@ class ComponentTreeParser {
         while (auto current_node_or_none = boundary_nodes.pop()) {
             // get next node
             auto current_node = *current_node_or_none;
-
+            component_stack.raise_level(graph.value(current_node));
+            if (analyzer.is_finished())
+                break;
             /*
             std::cout << "Current node: " << current_node
                       << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
             */
 
-            component_stack.raise_level(graph.value(current_node));
+
 
             // explore neighborhood of current node
             // the accessor has to make sure, that we access every node only once
@@ -151,7 +153,8 @@ class ComponentTreeParser {
                 flowingdown_phase = false;
             }
             component_stack.push_node(current_node);
-
+            if (analyzer.is_finished())
+                break;
         }
         return analyzer.get_result();
     }
