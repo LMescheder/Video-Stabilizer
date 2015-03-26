@@ -90,7 +90,7 @@ public:
         component.mean.y = node.y/(area + 1) + factor * component.mean.y;
         component.age += 1;
         component.N += 1;
-        finished_ |= (component.N >= max_N_);
+        //finished_ |= (component.N >= max_N_);
 
         // todo check maximal stability
     }
@@ -107,7 +107,7 @@ public:
         comp2.mean.y = area1/area12 * comp1.mean.y + area2/area12 * comp2.mean.y;
         comp2.N += comp1.N;
 
-        finished_ |= (comp2.N >= max_N_);
+        //finished_ |= (comp2.N >= max_N_);
     }
 
     // TODO: still makes a deep copy -> has to be optimized (would calling std::move be save?
