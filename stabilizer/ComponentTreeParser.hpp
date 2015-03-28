@@ -77,18 +77,11 @@ class ComponentTreeParser {
 
         void raise_level(Value level);
 
-        std::vector<Component> components_;
         std::vector<Value> values_;
         Analyzer& analyzer_;
+        std::vector<Component> components_;
     };
 
-    struct NodePriorityLess {
-        GraphAccessor& graph;
-
-        bool operator() (const NodeIndex& node1, const NodeIndex& node2) {
-            return (graph.value(node1) > graph.value(node2));
-        }
-    };
 
     // actual algorithm
     Result parse_(const Data& data);

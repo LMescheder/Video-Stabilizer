@@ -78,12 +78,14 @@ public:
 private:
     Result result_;
     bool finished_ = false;
+    const unsigned int min_N_ = 200;
     const unsigned int max_N_ = 14400;
     const uchar delta_ = 5;
+    const float min_stability_ = 20.;
 
     void merge_componentstats_into_(const ComponentStats& comp1, ComponentStats& comp2);
     void calculate_stability(Component& comp);
-
+    void check_mser_ (Component& comp);
 };
 
 
@@ -148,6 +150,7 @@ void OpenCVMatMserAnalyzer::add_node(cv::Point2i node, uchar level, OpenCVMatMse
         component.history.push_back(component.stats);
         component.history_levels.push_back(component.level);
         component.level = level;
+        check_mser_(component);
     }
     merge_componentstats_into_(node_comp, component.stats);
     calculate_stability(component);
@@ -170,6 +173,7 @@ void OpenCVMatMserAnalyzer::merge_component_into(OpenCVMatMserAnalyzer::Componen
         comp2.history.push_back(winner->stats);
         comp2.history_levels.push_back(winner->level);
         comp2.level = level;
+        check_mser_(comp2);
     }
 
     merge_componentstats_into_(comp1.stats, comp2.stats);
@@ -197,7 +201,26 @@ void OpenCVMatMserAnalyzer::calculate_stability(OpenCVMatMserAnalyzer::Component
         comp.stats.stability = 0;
     } else {
         auto index = comp.history_levels.rend() - it - 1;
-        comp.stats.stability = static_cast<float>(delta)/(comp.stats.N - comp.history[index].N);
+        uchar old_N = comp.history[index].N;
+        comp.stats.stability = static_cast<float>(delta * old_N)/(comp.stats.N - old_N);
+    }
+}
+
+void OpenCVMatMserAnalyzer::check_mser_(OpenCVMatMserAnalyzer::Component &comp) {
+    if (comp.history.size() >= 3) {
+        auto& succ = comp.history.rbegin()[0];
+        auto& examinee = comp.history.rbegin()[1];
+        auto& pred = comp.history.rbegin()[2];
+
+        auto& succ_level = comp.history_levels.rbegin()[0];
+        auto& pred_level = comp.history_levels.rbegin()[2];
+
+        if ((examinee.stability > pred.stability && examinee.stability > succ.stability)
+               || (succ_level - pred_level) >= delta_) {
+            if (min_N_ <= examinee.N && examinee.N <= max_N_
+                    && examinee.stability >= min_stability_)
+                result_.push_back(examinee);
+        }
     }
 }
 
