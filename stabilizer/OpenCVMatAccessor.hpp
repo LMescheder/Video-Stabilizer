@@ -109,12 +109,13 @@ public:
         merge_componentstats_into_(node_comp, component.stats);
     }
 
-    void merge_component_into (Component&& comp1, Component& comp2, uchar level) {
+    void merge_component_into (Component& comp1, Component& comp2, uchar level) {
         // take the history of the winner
         Component* winner;
         if (comp1.stats.N > comp2.stats.N) {
             winner = &comp1;
             comp2.history = std::move(comp1.history);
+            comp2.history_levels = std::move(comp1.history_levels);
         } else {
             winner = &comp2;
         }

@@ -161,7 +161,7 @@ void ComponentTreeParser<G,A,P>::ComponentStack::raise_level(ComponentTreeParser
         if  (level < next_level) {
             values_.back() = level;
         } else {
-            analyzer_.merge_component_into(std::move(components_.rbegin()[0]), components_.rbegin()[1], level);
+            analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1], level);
             components_.pop_back();
             values_.pop_back();
         }
