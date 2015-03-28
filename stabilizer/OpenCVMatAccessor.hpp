@@ -45,6 +45,7 @@ public:
         unsigned int N = 0;
         cv::Vec2f mean = cv::Vec2f(0., 0.);
         cv::Matx22f cov = cv::Matx22f(0., 0., 0., 0.);
+        float stability = 0.;
     };
 
     struct Component {
@@ -67,8 +68,6 @@ public:
     void merge_component_into (Component& comp1, Component& comp2, uchar level);
 
 
-
-
     // TODO: still makes a deep copy -> has to be optimized (would calling std::move be save?
     Result get_result() { return result_; }
 
@@ -80,8 +79,11 @@ private:
     Result result_;
     bool finished_ = false;
     const unsigned int max_N_ = 14400;
+    const uchar delta_ = 5;
 
     void merge_componentstats_into_(const ComponentStats& comp1, ComponentStats& comp2);
+    void calculate_stability(Component& comp);
+
 };
 
 
@@ -148,6 +150,8 @@ void OpenCVMatMserAnalyzer::add_node(cv::Point2i node, uchar level, OpenCVMatMse
         component.level = level;
     }
     merge_componentstats_into_(node_comp, component.stats);
+    calculate_stability(component);
+
 }
 
 void OpenCVMatMserAnalyzer::merge_component_into(OpenCVMatMserAnalyzer::Component &comp1, OpenCVMatMserAnalyzer::Component &comp2, uchar level) {
@@ -169,6 +173,7 @@ void OpenCVMatMserAnalyzer::merge_component_into(OpenCVMatMserAnalyzer::Componen
     }
 
     merge_componentstats_into_(comp1.stats, comp2.stats);
+    calculate_stability(comp2);
 }
 
 inline void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMserAnalyzer::ComponentStats &comp1, OpenCVMatMserAnalyzer::ComponentStats &comp2) {
@@ -183,6 +188,20 @@ inline void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMse
     comp2.N = comp1.N + comp2.N;
     comp2.mean = p * comp1.mean + q * comp2.mean;
 }
+
+void OpenCVMatMserAnalyzer::calculate_stability(OpenCVMatMserAnalyzer::Component &comp) {
+    const uchar delta = delta_;
+    auto it = std::find_if(comp.history_levels.rbegin(), comp.history_levels.rend(),
+                         [&comp, delta] (uchar& level) {return level <= comp.level - delta;});
+    if (it == comp.history_levels.rend()){
+        comp.stats.stability = 0;
+    } else {
+        auto index = comp.history_levels.rend() - it - 1;
+        comp.stats.stability = static_cast<float>(delta)/(comp.stats.N - comp.history[index].N);
+    }
+}
+
+
 
 inline boost::optional<cv::Point2i> OpenCVMatPriorityQueue::pop() {
     if (points_[minimum_].empty())
