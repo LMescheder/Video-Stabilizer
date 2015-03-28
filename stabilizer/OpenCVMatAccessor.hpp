@@ -52,7 +52,6 @@ public:
         uchar level;
         ComponentStats stats;
         std::vector<ComponentStats> history;
-        std::vector<uchar> history_levels;
 
         Component (uchar value) : level(value) {}
     };
@@ -147,8 +146,8 @@ void OpenCVMatMserAnalyzer::add_node(cv::Point2i node, uchar level, OpenCVMatMse
     node_comp.N = 1;
 
     if (level > component.level) {
-        component.history.push_back(component.stats);
-        component.history_levels.push_back(component.level);
+        for (int i=0; i<level - component.level; ++i)
+            component.history.push_back(component.stats);
         component.level = level;
         check_mser_(component);
     }
@@ -163,15 +162,14 @@ void OpenCVMatMserAnalyzer::merge_component_into(OpenCVMatMserAnalyzer::Componen
     if (comp1.stats.N > comp2.stats.N) {
         winner = &comp1;
         comp2.history = std::move(comp1.history);
-        comp2.history_levels = std::move(comp1.history_levels);
     } else {
         winner = &comp2;
     }
 
     // update history
     if (level > winner->level) {
-        comp2.history.push_back(winner->stats);
-        comp2.history_levels.push_back(winner->level);
+        for (int i=0; i<level - winner->level; ++i)
+            comp2.history.push_back(winner->stats);
         comp2.level = level;
         check_mser_(comp2);
     }
@@ -194,16 +192,13 @@ inline void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMse
 }
 
 void OpenCVMatMserAnalyzer::calculate_stability(OpenCVMatMserAnalyzer::Component &comp) {
-    const uchar delta = delta_;
-    auto it = std::find_if(comp.history_levels.rbegin(), comp.history_levels.rend(),
-                         [&comp, delta] (uchar& level) {return level <= comp.level - delta;});
-    if (it == comp.history_levels.rend()){
+    if (comp.history.size() < delta_) {
         comp.stats.stability = 0;
     } else {
-        auto index = comp.history_levels.rend() - it - 1;
-        uchar old_N = comp.history[index].N;
-        comp.stats.stability = static_cast<float>(delta * old_N)/(comp.stats.N - old_N);
+        auto old_N = comp.history.rbegin()[delta_-1].N;
+        comp.stats.stability = static_cast<float>(delta_ * old_N)/(comp.stats.N - old_N);
     }
+
 }
 
 void OpenCVMatMserAnalyzer::check_mser_(OpenCVMatMserAnalyzer::Component &comp) {
@@ -212,15 +207,10 @@ void OpenCVMatMserAnalyzer::check_mser_(OpenCVMatMserAnalyzer::Component &comp) 
         auto& examinee = comp.history.rbegin()[1];
         auto& pred = comp.history.rbegin()[2];
 
-        auto& succ_level = comp.history_levels.rbegin()[0];
-        auto& pred_level = comp.history_levels.rbegin()[2];
-
-        if ((examinee.stability > pred.stability && examinee.stability > succ.stability)
-               || (succ_level - pred_level) >= delta_) {
-            if (min_N_ <= examinee.N && examinee.N <= max_N_
-                    && examinee.stability >= min_stability_)
+        if (examinee.stability > pred.stability && examinee.stability > succ.stability
+             && min_N_ <= examinee.N && examinee.N <= max_N_
+             && examinee.stability >= min_stability_)
                 result_.push_back(examinee);
-        }
     }
 }
 

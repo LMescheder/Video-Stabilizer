@@ -34,6 +34,7 @@ int main() {
     //start = std::chrono::high_resolution_clock::now();
 
 
+
     auto mser = cv::MSER::create();
     std::vector<std::vector<cv::Point>> cv_msers;
     std::vector<cv::Rect> boxes;
@@ -59,6 +60,7 @@ int main() {
     cv::imshow("MSER", output_im);
 
     cv::waitKey(0);
+
 }
 
 
