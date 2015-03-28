@@ -7,6 +7,8 @@
 #include <iostream>
 #include <boost/optional.hpp>
 
+// declarations
+
 /*
 G must provide:
   NodeIndex
@@ -73,20 +75,7 @@ class ComponentTreeParser {
             analyzer_.add_node(node, components_.back());
         }
 
-        void raise_level(Value level) {
-            // level of last component
-            while (level >  values_.back()) {
-                 // level of second last component (exists, since current_level < inf)
-                auto next_level = values_.rbegin()[1];
-                if  (level < next_level) {
-                    values_.back() = level;
-                } else {
-                    analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
-                    components_.pop_back();
-                    values_.pop_back();
-                }
-            }
-        }
+        void raise_level(Value level);
 
         std::vector<Component> components_;
         std::vector<Value> values_;
@@ -106,7 +95,8 @@ class ComponentTreeParser {
 
 };
 
-// definition
+// definitions
+
 template <typename G, typename A, typename P>
 typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(const ComponentTreeParser<G,A,P>::Data &data) {
     // data structures
@@ -163,4 +153,23 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(c
     return analyzer.get_result();
 }
 
+template <typename G, typename A, typename P>
+void ComponentTreeParser<G,A,P>::ComponentStack::raise_level(ComponentTreeParser<G,A,P>::Value level) {
+    // level of last component
+    while (level >  values_.back()) {
+        // level of second last component (exists, since current_level < inf)
+        auto next_level = values_.rbegin()[1];
+        if  (level < next_level) {
+            values_.back() = level;
+        } else {
+            analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
+            components_.pop_back();
+            values_.pop_back();
+        }
+    }
+}
+
 #endif // COMPONENTTREEPARSER_HPP_
+
+
+
