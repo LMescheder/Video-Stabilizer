@@ -74,40 +74,63 @@ private:
 
 class OpenCVMatMserAnalyzer {
 public:
-    struct Component {
+    struct ComponentStats {
         unsigned int age = 0;
         unsigned int N = 0;
         cv::Vec2f mean = cv::Vec2f(0., 0.);
         cv::Matx22f cov = cv::Matx22f(0., 0., 0., 0.);
     };
 
-    using Result = std::vector<Component>;
+    struct Component {
+        uchar level;
+        ComponentStats stats;
+        std::vector<ComponentStats> history;
+        std::vector<uchar> history_levels;
 
-    void add_node( typename cv::Point2i node, Component& component) {
-        Component node_comp;
+        Component (uchar value) : level(value) {}
+    };
+
+    using Result = std::vector<ComponentStats>;
+
+    uchar get_level (Component& comp) {
+        return comp.level;
+    }
+
+    void add_node( typename cv::Point2i node, uchar level, Component& component) {
+        ComponentStats node_comp;
         node_comp.mean = cv::Vec2f(node.x, node.y);
         node_comp.N = 1;
-        merge_component_into(node_comp, component);
+
+        if (level > component.level) {
+            component.history.push_back(component.stats);
+            component.history_levels.push_back(component.level);
+            component.level = level;
+        }
+        merge_componentstats_into_(node_comp, component.stats);
     }
 
-    Component add_component () {
-        return Component{};
+    void merge_component_into (Component&& comp1, Component& comp2, uchar level) {
+        // take the history of the winner
+        Component* winner;
+        if (comp1.stats.N > comp2.stats.N) {
+            winner = &comp1;
+            comp2.history = std::move(comp1.history);
+        } else {
+            winner = &comp2;
+        }
+
+        // update history
+        if (level > winner->level) {
+            comp2.history.push_back(winner->stats);
+            comp2.history_levels.push_back(winner->level);
+            comp2.level = level;
+        }
+
+        merge_componentstats_into_(comp1.stats, comp2.stats);
     }
 
-    void merge_component_into(const Component& comp1, Component& comp2) {
-        auto p = float(comp1.N) / float(comp1.N + comp2.N);
-        auto q = float(comp2.N) / float(comp1.N + comp2.N);
 
-        for (auto i : {0, 1})
-            for (auto j : {0, 1})
-                comp2.cov(i, j) = p * comp1.cov(i, j) + q * comp2.cov(i, j)
-                                   + p*q*(comp2.mean(i) - comp1.mean(i)) * (comp2.mean(j) - comp1.mean(j));
 
-        comp2.mean = p * comp1.mean + q * comp2.mean;
-        comp2.N = comp1.N + comp2.N;
-
-        //finished_ |= (comp2.N >= max_N_);
-    }
 
     // TODO: still makes a deep copy -> has to be optimized (would calling std::move be save?
     Result get_result() { return result_; }
@@ -120,6 +143,19 @@ private:
     Result result_;
     bool finished_ = false;
     const unsigned int max_N_ = 14400;
+
+    void merge_componentstats_into_(const ComponentStats& comp1, ComponentStats& comp2) {
+        auto p = float(comp1.N) / float(comp1.N + comp2.N);
+        auto q = float(comp2.N) / float(comp1.N + comp2.N);
+
+        for (auto i : {0, 1})
+            for (auto j : {0, 1})
+                comp2.cov(i, j) = p * comp1.cov(i, j) + q * comp2.cov(i, j)
+                                   + p*q*(comp2.mean(i) - comp1.mean(i)) * (comp2.mean(j) - comp1.mean(j));
+
+        comp2.N = comp1.N + comp2.N;
+        comp2.mean = p * comp1.mean + q * comp2.mean;
+    }
 };
 
 

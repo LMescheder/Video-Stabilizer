@@ -68,11 +68,11 @@ class ComponentTreeParser {
         }
 
         void push_component(Value level) {
-            components_.push_back(Component{});
+            components_.emplace_back(level);
             values_.push_back(level);
         }
-        void push_node(NodeIndex node) {
-            analyzer_.add_node(node, components_.back());
+        void push_node(NodeIndex node, Value level) {
+            analyzer_.add_node(node, level, components_.back());
         }
 
         void raise_level(Value level);
@@ -146,7 +146,7 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(c
             component_stack.push_component(graph.value(current_node));
             flowingdown_phase = false;
         }
-        component_stack.push_node(current_node);
+        component_stack.push_node(current_node, graph.value(current_node));
         if (analyzer.is_finished())
             break;
     }
@@ -155,14 +155,13 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(c
 
 template <typename G, typename A, typename P>
 void ComponentTreeParser<G,A,P>::ComponentStack::raise_level(ComponentTreeParser<G,A,P>::Value level) {
-    // level of last component
     while (level >  values_.back()) {
         // level of second last component (exists, since current_level < inf)
         auto next_level = values_.rbegin()[1];
         if  (level < next_level) {
             values_.back() = level;
         } else {
-            analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
+            analyzer_.merge_component_into(std::move(components_.rbegin()[0]), components_.rbegin()[1], level);
             components_.pop_back();
             values_.pop_back();
         }
