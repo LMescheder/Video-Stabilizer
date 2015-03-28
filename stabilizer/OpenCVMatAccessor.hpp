@@ -56,12 +56,12 @@ public:
             ++mask_value;
 
             if (   0 <= next_node.x  && next_node.x < data_.cols
-                   && 0 <= next_node.y  && next_node.y < data_.rows ) {
+                && 0 <= next_node.y  && next_node.y < data_.rows ) {
                 uchar& next_mask_value = mask_.at<uchar>(next_node);
                 if (next_mask_value == 0) {
                     ++next_mask_value;
                     return next_node;
-                }
+                 }
             }
         }
         return boost::none;

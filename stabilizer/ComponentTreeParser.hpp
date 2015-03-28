@@ -7,8 +7,6 @@
 #include <iostream>
 #include <boost/optional.hpp>
 
-// declarations
-
 /*
 G must provide:
   NodeIndex
@@ -75,7 +73,20 @@ class ComponentTreeParser {
             analyzer_.add_node(node, components_.back());
         }
 
-        void raise_level(Value level);
+        void raise_level(Value level) {
+            // level of last component
+            while (level >  values_.back()) {
+                 // level of second last component (exists, since current_level < inf)
+                auto next_level = values_.rbegin()[1];
+                if  (level < next_level) {
+                    values_.back() = level;
+                } else {
+                    analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
+                    components_.pop_back();
+                    values_.pop_back();
+                }
+            }
+        }
 
         std::vector<Component> components_;
         std::vector<Value> values_;
@@ -91,82 +102,61 @@ class ComponentTreeParser {
     };
 
     // actual algorithm
-    Result parse_(const Data& data);
+    Result parse_(const Data& data) {
+        // data structures
+        auto graph = GraphAccessor(data);
+        auto analyzer = Analyzer{};
+        auto component_stack = ComponentStack{analyzer};
+        //auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriorityLess>{NodePriorityLess{graph}};
 
-};
+        auto boundary_nodes = PriorityQueue{};
 
-// definitions
-template <class G, class A, class P>
-typename ComponentTreeParser<G, A, P>::Result ComponentTreeParser<G, A, P>::parse_(const ComponentTreeParser::Data &data) {
-    // data structures
-    auto graph = GraphAccessor(data);
-    auto analyzer = Analyzer{};
-    auto component_stack = ComponentStack{analyzer};
-    //auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriorityLess>{NodePriorityLess{graph}};
+        // initialize
+        auto source_node = graph.get_source();
+        boundary_nodes.push(source_node, graph.value(source_node));
+        bool flowingdown_phase = true;
+        //auto current_node = graph.get_source();
 
-    auto boundary_nodes = PriorityQueue{};
+        // we are done, when there is no boundary node left
+        while (auto current_node_or_none = boundary_nodes.pop()) {
+            // get next node
+            auto current_node = *current_node_or_none;
+            component_stack.raise_level(graph.value(current_node));
+            if (analyzer.is_finished())
+                break;
 
-    // initialize
-    auto source_node = graph.get_source();
-    boundary_nodes.push(source_node, graph.value(source_node));
-    bool flowingdown_phase = true;
-    //auto current_node = graph.get_source();
-
-    // we are done, when there is no boundary node left
-    while (auto current_node_or_none = boundary_nodes.pop()) {
-        // get next node
-        auto current_node = *current_node_or_none;
-        component_stack.raise_level(graph.value(current_node));
-        if (analyzer.is_finished())
-            break;
-
-        /*
+            /*
             std::cout << "Current node: " << current_node
                       << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
             */
 
 
-        // explore neighborhood of current node
-        // the accessor has to make sure, that we access every node only once
-        while (auto neighbor_or_none = graph.get_next_neighbor(current_node)) {
-            auto neighbor_node = *neighbor_or_none;
-            // flow (further) down?
-            if (graph.value(neighbor_node) < graph.value(current_node)) {
-                flowingdown_phase = true;
-                boundary_nodes.push(current_node, graph.value(current_node));
-                current_node = neighbor_node;
-            } else {
-                boundary_nodes.push(neighbor_node, graph.value(neighbor_node));
+            // explore neighborhood of current node
+            // the accessor has to make sure, that we access every node only once
+            while (auto neighbor_or_none = graph.get_next_neighbor(current_node)) {
+                auto neighbor_node = *neighbor_or_none;
+                // flow (further) down?
+                if (graph.value(neighbor_node) < graph.value(current_node)) {
+                    flowingdown_phase = true;
+                    boundary_nodes.push(current_node, graph.value(current_node));
+                    current_node = neighbor_node;
+                } else {
+                    boundary_nodes.push(neighbor_node, graph.value(neighbor_node));
+                }
             }
-        }
 
-        // new minimum found?
-        if (flowingdown_phase) {
-            component_stack.push_component(graph.value(current_node));
-            flowingdown_phase = false;
+            // new minimum found?
+            if (flowingdown_phase) {
+                component_stack.push_component(graph.value(current_node));
+                flowingdown_phase = false;
+            }
+            component_stack.push_node(current_node);
+            if (analyzer.is_finished())
+                break;
         }
-        component_stack.push_node(current_node);
-        if (analyzer.is_finished())
-            break;
+        return analyzer.get_result();
     }
-    return analyzer.get_result();
-}
 
-template <class G, class A, class P>
-void ComponentTreeParser<G, A, P>::ComponentStack::raise_level(ComponentTreeParser<G, A, P>::Value level) {
-    // level of last component
-    while (level >  values_.back()) {
-        // level of second last component (exists, since current_level < inf)
-        auto next_level = values_.rbegin()[1];
-        if  (level < next_level) {
-            values_.back() = level;
-        } else {
-            analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
-            components_.pop_back();
-            values_.pop_back();
-        }
-    }
-}
-
+};
 
 #endif // COMPONENTTREEPARSER_HPP_

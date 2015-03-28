@@ -18,6 +18,3 @@ OpenCVMatAccessor::NodeIndex OpenCVMatAccessor::get_next_neighbor(OpenCVMatAcces
 }
 
 */
-
-
-
