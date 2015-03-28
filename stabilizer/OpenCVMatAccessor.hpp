@@ -101,7 +101,7 @@ private:
 
 
 
-boost::optional<OpenCVMatAccessor::NodeIndex> OpenCVMatAccessor::get_next_neighbor(OpenCVMatAccessor::NodeIndex node) {
+inline boost::optional<OpenCVMatAccessor::NodeIndex> OpenCVMatAccessor::get_next_neighbor(OpenCVMatAccessor::NodeIndex node) {
     uchar& mask_value = mask_.at<uchar>(node);
 
     while (mask_value < 5) {
@@ -171,7 +171,7 @@ void OpenCVMatMserAnalyzer::merge_component_into(OpenCVMatMserAnalyzer::Componen
     merge_componentstats_into_(comp1.stats, comp2.stats);
 }
 
-void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMserAnalyzer::ComponentStats &comp1, OpenCVMatMserAnalyzer::ComponentStats &comp2) {
+inline void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMserAnalyzer::ComponentStats &comp1, OpenCVMatMserAnalyzer::ComponentStats &comp2) {
     auto p = float(comp1.N) / float(comp1.N + comp2.N);
     auto q = float(comp2.N) / float(comp1.N + comp2.N);
 
@@ -184,7 +184,7 @@ void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMserAnalyz
     comp2.mean = p * comp1.mean + q * comp2.mean;
 }
 
-boost::optional<cv::Point2i> OpenCVMatPriorityQueue::pop() {
+inline boost::optional<cv::Point2i> OpenCVMatPriorityQueue::pop() {
     if (points_[minimum_].empty())
         return boost::none;
     else {
