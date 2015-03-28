@@ -5,7 +5,7 @@ HEADERS += \
     ComponentTreeParser.hpp OpenCVMatAccessor.hpp
 
 SOURCES += \
-    main.cpp OpenCVMatAccessor.cpp
+    main.cpp
 
 LIBS += -lopencv_core -lopencv_highgui
 LIBS += -lopencv_imgproc -lopencv_imgcodecs
