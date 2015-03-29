@@ -61,7 +61,10 @@ class ComponentTreeParser {
     ComponentTreeParser () = default;
 
     Result operator() (const Data& data) {
-        return parse_(data);
+        auto graph = GraphAccessor(data);
+        auto analyzer = Analyzer{};
+        auto boundary_nodes = PriorityQueue{};
+        return parse_(graph, analyzer, boundary_nodes);
     }
 
     // implementation
@@ -90,21 +93,18 @@ class ComponentTreeParser {
 
 
     // actual algorithm
-    Result parse_(const Data& data);
+    Result parse_(GraphAccessor& graph, Analyzer& analyzer, PriorityQueue& boundary_nodes);
 
 };
 
 // definitions
 
 template <typename G, typename A, typename P>
-typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(const ComponentTreeParser<G,A,P>::Data &data) {
+typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(G& graph, A& analyzer, P& boundary_nodes) {
     // data structures
-    auto graph = GraphAccessor(data);
-    auto analyzer = Analyzer{};
+
     auto component_stack = ComponentStack{analyzer};
     //auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriorityLess>{NodePriorityLess{graph}};
-
-    auto boundary_nodes = PriorityQueue{};
 
     // initialize
     auto source_node = graph.get_source();

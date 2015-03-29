@@ -33,7 +33,10 @@ public:
     }
 
     Value value (NodeIndex node) {
-        return data_.at<uchar>(node);
+        if (!inverted)
+            return data_.at<uchar>(node);
+        else
+            return 255 - data_.at<uchar>(node);
     }
 
 
@@ -43,6 +46,7 @@ public:
 private:
     Data data_;
     cv::Mat mask_;
+    bool inverted = false;
 };
 
 
