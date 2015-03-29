@@ -2,7 +2,8 @@ CONFIG+=c++11
 TEMPLATE=app
 
 HEADERS += \
-    ComponentTreeParser.hpp OpenCVMatAccessor.hpp
+    ComponentTreeParser.hpp OpenCVMatAccessor.hpp \
+    OpenCVMatMserAnalyzer.hpp
 
 SOURCES += \
     main.cpp
