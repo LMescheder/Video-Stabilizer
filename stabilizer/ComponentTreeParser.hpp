@@ -12,6 +12,7 @@
 /*
 G must provide:
   NodeIndex
+  Node
   Value // must be totally ordered by <
   Data
 
@@ -21,17 +22,22 @@ G must provide:
   NodeIndex get_source()
 
   Value value (NodeIndex node);
-  bool has_more_neighbors (NodeIndex node);
-  NodeIndex get_next_neighbor (NodeIndex node);
+  Node node (NodeIndex node);
+  boost::optional<NodeIndex> get_next_neighbor (NodeIndex node);
 
 A must provide:
-  Component
+  ComponentIndex
   Result
 
-  add_node(G::NodeIndex, G::Value)
+  void add_node(G::Node, G::Value)
+  ComponentIndex add_component(G::Value)
 
-  ComponentRef add_component()
-  merge_components(ComponentRef comp1, ComponentRef comp2)
+  ComponentIndex merge_components(ComponentIndex comp1, ComponentIndex comp2) \\ 1st into 2nd
+
+P must provide:
+  void push(NodeIndex)
+  boost::optional<NodeIndex> pop()
+
 */
 
 template <typename G, typename A, typename P>
@@ -43,11 +49,12 @@ class ComponentTreeParser {
     using GraphAccessor = G;
     using Value = typename G::Value;
     using NodeIndex = typename G::NodeIndex;
+    using Node = typename G::Node;
     using Data = typename G::Data;
 
     using Analyzer = A;
     using Result = typename A::Result;
-    using Component = typename A::Component;
+    using ComponentIndex = typename A::ComponentIndex;
 
     using PriorityQueue = P;
 
@@ -60,7 +67,6 @@ class ComponentTreeParser {
     // implementation
     private:
 
-    // contains (component, level) pairs
     struct ComponentStack {
         public:
         ComponentStack (Analyzer& analyzer) : analyzer_(analyzer), components_() {
@@ -68,18 +74,18 @@ class ComponentTreeParser {
         }
 
         void push_component(Value level) {
-            components_.emplace_back(level);
-            values_.push_back(level);
+            components_.push_back(analyzer_.add_component(level));
+            current_levels_.push_back(level);
         }
-        void push_node(NodeIndex node, Value level) {
+        void push_node(Node node, Value level) {
             analyzer_.add_node(node, level, components_.back());
         }
 
         void raise_level(Value level);
 
-        std::vector<Value> values_;
+        std::vector<Value> current_levels_;
         Analyzer& analyzer_;
-        std::vector<Component> components_;
+        std::vector<ComponentIndex> components_;
     };
 
 
@@ -113,12 +119,10 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(c
         component_stack.raise_level(graph.value(current_node));
         if (analyzer.is_finished())
             break;
-
         /*
             std::cout << "Current node: " << current_node
                       << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
             */
-
 
         // explore neighborhood of current node
         // the accessor has to make sure, that we access every node only once
@@ -139,7 +143,7 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(c
             component_stack.push_component(graph.value(current_node));
             flowingdown_phase = false;
         }
-        component_stack.push_node(current_node, graph.value(current_node));
+        component_stack.push_node(graph.node(current_node), graph.value(current_node));
         if (analyzer.is_finished())
             break;
     }
@@ -148,15 +152,15 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(c
 
 template <typename G, typename A, typename P>
 void ComponentTreeParser<G,A,P>::ComponentStack::raise_level(ComponentTreeParser<G,A,P>::Value level) {
-    while (level >  values_.back()) {
+    while (level >  current_levels_.back()) {
         // level of second last component (exists, since current_level < inf)
-        auto next_level = values_.rbegin()[1];
+        auto next_level = current_levels_.rbegin()[1];
         if  (level < next_level) {
-            values_.back() = level;
+            current_levels_.back() = level;
         } else {
             analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1], level);
             components_.pop_back();
-            values_.pop_back();
+            current_levels_.pop_back();
         }
     }
 }

@@ -22,6 +22,8 @@ public:
         }
     };
 
+    using ComponentIndex = Component;
+
     using Result = std::vector<ComponentStats>;
 
     uchar get_level (Component& comp) {
@@ -32,6 +34,9 @@ public:
 
     void merge_component_into (Component& comp1, Component& comp2, uchar level);
 
+    Component add_component (uchar level) {
+        return Component{level};
+    }
 
     // TODO: still makes a deep copy -> has to be optimized (would calling std::move be save?
     Result get_result() { return result_; }

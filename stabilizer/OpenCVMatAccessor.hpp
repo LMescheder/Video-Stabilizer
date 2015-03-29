@@ -5,10 +5,13 @@
 #include "boost/optional.hpp"
 #include <array>
 
+
+// TODO: optimize
 class OpenCVMatAccessor
 {
 public:
     using NodeIndex = cv::Point2i;
+    using Node =cv::Point2i;
     using Value = uchar;
     using Data = cv::Mat;
 
@@ -25,9 +28,14 @@ public:
         return NodeIndex{0, 0};
     }
 
+    Node node(NodeIndex node) {
+        return node;
+    }
+
     Value value (NodeIndex node) {
         return data_.at<uchar>(node);
     }
+
 
 
     boost::optional<NodeIndex> get_next_neighbor (NodeIndex node);
