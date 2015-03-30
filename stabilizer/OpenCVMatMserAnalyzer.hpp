@@ -126,21 +126,27 @@ void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMserAnalyz
 }
 
 void OpenCVMatMserAnalyzer::calculate_stability(OpenCVMatMserAnalyzer::Component &comp) {
-
+    if(comp.history.size() >= 2*delta_ + 1) {
+        auto& comp0 = comp.history.rbegin()[2*delta_];
+        auto& comp1 = comp.history.rbegin()[delta_];
+        auto& comp2 = comp.history.rbegin()[0];
+        comp1.stability = static_cast<float>(2*delta_ * comp0.N)/(comp2.N - comp0.N);
+    }
+    /*
     if (comp.history.size() < delta_) {
         comp.stats.stability = 0;
     } else {
         auto old_N = comp.history.rbegin()[delta_-1].N;
         comp.stats.stability = static_cast<float>(delta_ * old_N)/(comp.stats.N - old_N);
     }
-
+    */
 }
 
 void OpenCVMatMserAnalyzer::check_mser_(OpenCVMatMserAnalyzer::Component &comp) {
-    if (comp.history.size() >= 3) {
-        auto& succ = comp.history.rbegin()[0];
-        auto& examinee = comp.history.rbegin()[1];
-        auto& pred = comp.history.rbegin()[2];
+    if (comp.history.size() >= 2*delta_ + 1) {
+        auto& succ = comp.history.rbegin()[delta_-1];
+        auto& examinee = comp.history.rbegin()[delta_];
+        auto& pred = comp.history.rbegin()[delta_ + 1];
 
         if (examinee.stability > pred.stability && examinee.stability > succ.stability
              && min_N_ <= examinee.N && examinee.N <= max_N_
