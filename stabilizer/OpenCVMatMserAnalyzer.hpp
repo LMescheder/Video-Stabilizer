@@ -32,7 +32,12 @@ public:
 
     using Result = std::vector<ComponentStats>;
 
-    uchar get_level (Component& comp) {
+    uchar raise_level (Component& comp, uchar level) {
+        assert(level > comp.level);
+        extend_history_(comp, comp.stats, level);
+    }
+
+    uchar get_level (const Component& comp) const{
         return comp.level;
     }
 
@@ -67,19 +72,24 @@ private:
     void check_mser_ (Component& comp);
 };
 
+// TODO: Remove level from parameter list
 void OpenCVMatMserAnalyzer::add_node(cv::Point2i node, uchar level, OpenCVMatMserAnalyzer::Component &component) {
+    assert(level == component.level);
     ComponentStats node_comp;
     node_comp.mean = cv::Vec2f(node.x, node.y);
     node_comp.N = 1;
 
-    extend_history_(component, component.stats, level);
     merge_componentstats_into_(node_comp, component.stats);
 
 
 }
 
+// TODO: Remove level from parameter list
+// TODO: call extend history function instead of own function
 void OpenCVMatMserAnalyzer::merge_component_into(OpenCVMatMserAnalyzer::Component &comp1, OpenCVMatMserAnalyzer::Component &comp2, uchar level) {
     // take the history of the winner
+    assert(comp1.level < comp2.level);
+    assert(comp2.level <= level);
     Component* winner;
     if (comp1.stats.N > comp2.stats.N) {
         winner = &comp1;

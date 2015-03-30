@@ -81,7 +81,7 @@ class ComponentTreeParser {
 
         void push_component(Value level) {
             components_.push_back(analyzer_.add_component(level));
-            current_levels_.push_back(level);
+            //current_levels_.push_back(level);
         }
         void push_node(Node node, Value level) {
             analyzer_.add_node(node, level, components_.back());
@@ -89,7 +89,7 @@ class ComponentTreeParser {
 
         void raise_level(Value level);
 
-        std::vector<Value> current_levels_;
+       // std::vector<Value> current_levels_;
         Analyzer& analyzer_;
         std::vector<Component> components_;
     };
@@ -155,15 +155,15 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(G
 
 template <typename G, typename A, typename P>
 void ComponentTreeParser<G,A,P>::ComponentStack::raise_level(ComponentTreeParser<G,A,P>::Value level) {
-    while (level >  current_levels_.back()) {
+    while (level >  analyzer_.get_level(components_.back())) {
         // level of second last component (exists, since current_level < inf)
-        auto next_level = current_levels_.rbegin()[1];
+        auto next_level = analyzer_.get_level(components_.rbegin()[1]);
         if  (level < next_level) {
-            current_levels_.back() = level;
+            analyzer_.raise_level(components_.back(), level);
         } else {
+            // is it correct to use level instead of next_level here?
             analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1], level);
             components_.pop_back();
-            current_levels_.pop_back();
         }
     }
 }
