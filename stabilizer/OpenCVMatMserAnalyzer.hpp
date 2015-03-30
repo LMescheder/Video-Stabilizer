@@ -3,6 +3,13 @@
 
 #include "opencv2/core.hpp"
 
+//TODO: Put Mser extraction into derived class
+//TODO: Create derived class for tracking
+//TODO: Optimize history (less reallocation) by creating a (#minima * history_length) array
+//TODO: Put the current level here, not in Parser class, level is then processing level, not maximum level of points
+//      <- makes backwards difference as derivative more sensible, since the level corresponds to the maximum grey level
+//         before next points added (?)
+//TODO: add asserts
 class OpenCVMatMserAnalyzer {
 public:
     struct ComponentStats {

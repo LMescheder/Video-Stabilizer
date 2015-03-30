@@ -38,6 +38,9 @@ P must provide:
   void push(NodeIndex)
   boost::optional<NodeIndex> pop()
 
+  TODO: put current levels in analyzer instead of parser
+  TODO: use size hints from accessor to preallocate component stack
+  TODO: better way to return analyzers results?
 */
 
 template <typename G, typename A, typename P>
