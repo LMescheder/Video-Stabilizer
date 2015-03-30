@@ -54,7 +54,7 @@ class ComponentTreeParser {
 
     using Analyzer = A;
     using Result = typename A::Result;
-    using ComponentIndex = typename A::ComponentIndex;
+    using Component = typename A::Component;
 
     using PriorityQueue = P;
 
@@ -88,7 +88,7 @@ class ComponentTreeParser {
 
         std::vector<Value> current_levels_;
         Analyzer& analyzer_;
-        std::vector<ComponentIndex> components_;
+        std::vector<Component> components_;
     };
 
 

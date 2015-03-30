@@ -22,7 +22,6 @@ public:
         }
     };
 
-    using ComponentIndex = Component;
 
     using Result = std::vector<ComponentStats>;
 
