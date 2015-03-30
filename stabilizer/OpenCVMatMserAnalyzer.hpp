@@ -24,6 +24,7 @@ public:
         uchar level;
         ComponentStats stats;
         std::vector<ComponentStats> history;
+        //std::vector<uchar> history_levels;
 
         Component (uchar value) : level(value) {
         }
@@ -34,7 +35,8 @@ public:
 
     uchar raise_level (Component& comp, uchar level) {
         assert(level > comp.level);
-        extend_history_(comp, comp.stats, level);
+        extend_history_(comp,  level);
+        comp.level = level;
     }
 
     uchar get_level (const Component& comp) const{
@@ -59,12 +61,12 @@ public:
 private:
     Result result_;
     bool finished_ = false;
-    const unsigned int min_N_ = 200;
+    const unsigned int min_N_ = 60;
     const unsigned int max_N_ = 14400;
     const uchar delta_ = 5;
     const float min_stability_ = 20.;
 
-    void extend_history_(Component& comp, const ComponentStats& stats, uchar level);
+    void extend_history_(Component& comp, uchar level);
 
 
     void merge_componentstats_into_(const ComponentStats& comp1, ComponentStats& comp2);
@@ -90,36 +92,23 @@ void OpenCVMatMserAnalyzer::merge_component_into(OpenCVMatMserAnalyzer::Componen
     // take the history of the winner
     assert(comp1.level < comp2.level);
     assert(comp2.level <= level);
-    Component* winner;
-    if (comp1.stats.N > comp2.stats.N) {
-        winner = &comp1;
-        comp2.history = std::move(comp1.history);
-    } else {
-        winner = &comp2;
-    }
 
     // update history
-    if (level > winner->level) {
-        for (int i=0; i<level - winner->level; ++i)
-            comp2.history.push_back(winner->stats);
-        comp2.level = level;
-        check_mser_(comp2);
-    }
+    if (comp1.stats.N > comp2.stats.N) {
+        extend_history_(comp1, comp2.level);
+        comp2.history = std::move(comp1.history);
+     }
 
     merge_componentstats_into_(comp1.stats, comp2.stats);
-    calculate_stability(comp2);
 }
-
-void OpenCVMatMserAnalyzer::extend_history_(OpenCVMatMserAnalyzer::Component &component, const OpenCVMatMserAnalyzer::ComponentStats& stats, uchar level) {
-
-    if (level > component.level) {
-        for (int i=0; i<level - component.level; ++i) {
-            component.history.push_back(stats);
-            calculate_stability(component);
-            check_mser_(component);
-         }
-    }
-    component.level = level;
+// TODO: remove level parameter
+// TODO: put check mser into subclass
+void OpenCVMatMserAnalyzer::extend_history_(OpenCVMatMserAnalyzer::Component &component, uchar level) {
+    assert(component.level < level);
+    component.history.push_back(component.stats);
+    //component.history_levels.push_back(component.level);
+    calculate_stability(component);
+    check_mser_(component);
 
 }
 
@@ -137,6 +126,7 @@ void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMserAnalyz
 }
 
 void OpenCVMatMserAnalyzer::calculate_stability(OpenCVMatMserAnalyzer::Component &comp) {
+
     if (comp.history.size() < delta_) {
         comp.stats.stability = 0;
     } else {
