@@ -26,6 +26,7 @@ public:
         cv::Point2i min_point = cv::Point2i(0., 0.);
         cv::Point2i max_point = cv::Point2i(0., 0.);
         float stability = 0.;
+        cv::Point2i source = cv::Point2i(0., 0.);
     };
 
     struct Component {
@@ -65,11 +66,12 @@ public:
     Component add_component (cv::Point2i point, uchar level) {
         Component new_comp = Component(level);
         new_comp.stats = point_stats_(point, level);
+        new_comp.stats.source = point;
         return new_comp;
     }
 
-    // TODO: still makes a deep copy -> has to be optimized (would calling std::move be save?
-    Result get_result() { return result_; }
+    // TODO: put into derived classes
+    Result get_result() { return std::move(result_); result_.clear();}
 
 protected:
     Result result_;
@@ -122,6 +124,7 @@ public:
         new_comp.stats.mean = cv::Vec2f(point.x, point.y);
         new_comp.stats.min_point = point;
         new_comp.stats.max_point = point;
+        new_comp.stats.source = point;
         return new_comp;
     }
 

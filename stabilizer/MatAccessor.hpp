@@ -36,18 +36,21 @@ public:
         return NodeIndex{0, 0};
     }
 
-    Node node(NodeIndex node) {
+    Node node(NodeIndex node_idx) {
+        return node_idx;
+    }
+
+    Value value (NodeIndex node_idx) {
+        if (!inverted_)
+            return data_.at<uchar>(node_idx);
+        else
+            return 255 - data_.at<uchar>(node_idx);
+    }
+
+
+    NodeIndex get_index (const Node& node){
         return node;
     }
-
-    Value value (NodeIndex node) {
-        if (!inverted_)
-            return data_.at<uchar>(node);
-        else
-            return 255 - data_.at<uchar>(node);
-    }
-
-
 
     boost::optional<NodeIndex> get_next_neighbor (NodeIndex node);
 

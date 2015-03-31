@@ -19,11 +19,13 @@
 void test0 ();
 void test1 ();
 void test2 ();
+void test3 ();
 
 int main() {
     //test0();
     //test1();
-    test2();
+    //test2();
+    test3();
 }
 
 
@@ -127,4 +129,38 @@ void test2()
 
 }
 
+void test3()
+{
+    std::string filename = "../../data/Shop 30s.avi";
+    cv::VideoCapture cap(filename);
+
+    //if(!cap.isOpened())
+    //   return -1;
+
+    cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
+
+    MatMser mymser;
+
+    while (true) {
+        cv::Mat frame;
+        cap >> frame;
+        cv::Mat gray;
+        cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+
+        auto result = mymser.find_msers_points(gray);
+
+        for (auto& mser : result) {
+            std::vector<cv::Point> hull;
+            cv::convexHull(mser, hull);
+            cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+        }
+
+        cv::imshow("Video", frame);
+
+        if (cv::waitKey(1) >= 0) {
+            break;
+        }
+    }
+
+}
 

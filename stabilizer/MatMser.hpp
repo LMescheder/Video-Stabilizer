@@ -19,23 +19,60 @@ public:
 
     std::vector<ComponentStats> find_msers (const cv::Mat& image) {
         ComponentTreeParser<MatAccessor, MatMserAnalyzer> parser{};
+        MatMserAnalyzer analyzer(delta_, min_N_, max_N_, min_stability_, min_diversity_);
 
         MatAccessor graph1(image);
-        MatMserAnalyzer analyzer1(delta_, min_N_, max_N_, min_stability_, min_diversity_);
-        auto mser_stats1 = parser(graph1, analyzer1);
+        auto mser_stats1 = parser(graph1, analyzer);
 
         MatAccessor graph2(image, true);
-        MatMserAnalyzer analyzer2(delta_, min_N_, max_N_, min_stability_, min_diversity_);
-        auto mser_stats2 = parser(graph2, analyzer2);
+        auto mser_stats2 = parser(graph2, analyzer);
 
         std::vector<ComponentStats> result;
         for (auto& stat : mser_stats1)
             result.push_back(stat);
-        for (auto& stat : mser_stats2)
-            result.push_back(stat);
+        //for (auto& stat : mser_stats2)
+        //    result.push_back(stat);
         return result;
     }
 
+    std::vector<std::vector<cv::Point2i>> find_msers_points (const cv::Mat& image) {
+        std::vector<ComponentStats> msers = find_msers(image);
+        std::vector<std::vector<cv::Point2i>> points;
+        points.reserve(msers.size());
+
+        for (auto& stats : msers)
+            points.push_back(find_points(stats, image));
+
+        return points;
+    }
+
+    std::vector<cv::Point2i> find_points (const MatMserAnalyzer::ComponentStats& stats, const cv::Mat& im) {
+        std::vector<MatAccessor::NodeIndex> toprocess;
+        std::vector<cv::Point2i> points;
+
+        points.reserve(stats.N);
+        toprocess.reserve(stats.N);
+
+        cv::Mat ROI = im(cv::Range(stats.min_point.y, stats.max_point.y+1),
+                         cv::Range(stats.min_point.x, stats.max_point.x+1));
+        MatAccessor graph(ROI);
+
+        toprocess.push_back(graph.get_index(stats.source - stats.min_point) );
+        while (!toprocess.empty()) {
+            auto current_node = toprocess.back();
+            toprocess.pop_back();
+
+            while(auto next_neighbor_or_none = graph.get_next_neighbor(current_node)) {
+                auto next_neighbor = *next_neighbor_or_none;
+                if ( stats.min_val <= graph.value(next_neighbor)
+                    && graph.value(next_neighbor) <= stats.max_val)
+                    toprocess.push_back(next_neighbor);
+            }
+
+            points.push_back(stats.min_point + graph.node(current_node));
+        }
+        return points;
+    }
 
 
 private:
@@ -45,9 +82,7 @@ private:
     float min_stability_;
     float min_diversity_;
 
-    std::vector<cv::Point> find_points_ (MatMserAnalyzer::ComponentStats stats) {
 
-    }
 };
 
 #endif // MATMSER_HPP
