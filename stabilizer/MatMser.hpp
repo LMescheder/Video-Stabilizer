@@ -68,6 +68,7 @@ public:
 
             points.push_back(stats.min_point + graph.node(current_node));
         }
+
         assert(points.size() == stats.N);
         return points;
     }

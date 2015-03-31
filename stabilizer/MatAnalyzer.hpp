@@ -120,10 +120,7 @@ public:
 
     Component add_component (cv::Point2i point, uchar level) {
         Component new_comp = Component(level);
-        new_comp.stats.N = 1;
-        new_comp.stats.mean = cv::Vec2f(point.x, point.y);
-        new_comp.stats.min_point = point;
-        new_comp.stats.max_point = point;
+        new_comp.stats = point_stats_(point, level);
         new_comp.stats.source = point;
         return new_comp;
     }
@@ -185,7 +182,7 @@ void MatAnalyzer<Child>::merge_component_into(MatAnalyzer<Child>::Component &com
 // TODO: put check mser into subclass
 template <typename Child>
 void MatAnalyzer<Child>::extend_history_(MatAnalyzer<Child>::Component &component, uchar level) {
-    //assert(component.level < level);
+    assert(component.level != level);
     component.history.push_back(component.stats);
     //component.history_levels.push_back(component.level);
     calculate_stability(component);
