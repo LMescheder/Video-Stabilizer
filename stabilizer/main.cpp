@@ -14,6 +14,7 @@
 #include "ComponentTreeParser.hpp"
 #include "MatAnalyzer.hpp"
 #include "MatAccessor.hpp"
+#include "MatMser.hpp"
 
 int main() {
     const char* path = "/home/lars/Education/University/Semester_10_Lausanne/CV_Project/work/build/data/Lena.png";
@@ -23,7 +24,7 @@ int main() {
     cv::cvtColor(im, data, CV_BGR2GRAY);
 
 
-    ComponentTreeParser<MatAccessor, MatMserAnalyzer, MatPriorityQueue> test;
+    ComponentTreeParser<MatAccessor, MatMserAnalyzer> test;
 
 
     auto start = std::chrono::high_resolution_clock::now();

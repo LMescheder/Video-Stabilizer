@@ -1,5 +1,5 @@
-#ifndef OPENCVMATACCESSOR_HPP_
-#define OPENCVMATACCESSOR_HPP_
+#ifndef MATACCESSOR_HPP
+#define MATACCESSOR_HPP
 
 #include "opencv2/core.hpp"
 #include "boost/optional.hpp"
@@ -20,6 +20,20 @@ public:
     using Node =cv::Point2i;
     using Value = uchar;
     using Data = cv::Mat;
+
+    class PriorityQueue {
+    public:
+        void push(cv::Point2i point, uchar value) {
+            points_[value].push_back(point);
+            minimum_ = std::min(minimum_, value);
+        }
+
+        boost::optional<cv::Point2i> pop();
+
+    private:
+        std::array<std::vector<cv::Point2i>, 256> points_;
+        uchar minimum_ = 255;
+    };
 
     static const Value inf = 255;
 
@@ -57,19 +71,7 @@ private:
 
 // TODO: store priority queue contiguously (more efficient?)
 // TODO: better way to pop?
-class MatPriorityQueue {
-public:
-    void push(cv::Point2i point, uchar value) {
-        points_[value].push_back(point);
-        minimum_ = std::min(minimum_, value);
-    }
 
-    boost::optional<cv::Point2i> pop();
-
-private:
-    std::array<std::vector<cv::Point2i>, 256> points_;
-    uchar minimum_ = 255;
-};
 
 
 // definitions
@@ -110,7 +112,7 @@ boost::optional<MatAccessor::NodeIndex> MatAccessor::get_next_neighbor(MatAccess
 }
 
 
-boost::optional<cv::Point2i> MatPriorityQueue::pop() {
+boost::optional<cv::Point2i> MatAccessor::PriorityQueue::pop() {
     if (points_[minimum_].empty())
         return boost::none;
     else {
@@ -122,7 +124,7 @@ boost::optional<cv::Point2i> MatPriorityQueue::pop() {
     }
 }
 
-#endif // OPENCVMATACCESSOR_HPP_
+#endif // MATACCESSOR_HPP
 
 
 

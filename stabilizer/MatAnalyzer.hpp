@@ -1,5 +1,5 @@
-#ifndef OPENCVMATMSERANALYZER_HPP
-#define OPENCVMATMSERANALYZER_HPP
+#ifndef MATMSERANALYZER_HPP
+#define MATMSERANALYZER_HPP
 
 #include "opencv2/core.hpp"
 
@@ -18,7 +18,6 @@ template <typename Child>
 class MatAnalyzer {
 public:
     struct ComponentStats {
-        unsigned int age = 0;
         unsigned int N = 0;
         cv::Vec2f mean = cv::Vec2f(0., 0.);
         cv::Matx22f cov = cv::Matx22f(0., 0., 0., 0.);
@@ -118,8 +117,6 @@ public:
         }
     }
 
-
-
 private:
     const unsigned int min_N_;
     const unsigned int max_N_;
@@ -208,4 +205,4 @@ void MatAnalyzer<Child>::calculate_stability(MatAnalyzer<Child>::Component &comp
 }
 
 
-#endif // OPENCVMATMSERANALYZER_HPP
+#endif // MATMSERANALYZER_HPP

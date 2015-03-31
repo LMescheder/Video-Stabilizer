@@ -4,10 +4,12 @@ TEMPLATE=app
 HEADERS += \
     ComponentTreeParser.hpp \
     MatAccessor.hpp \
-    MatAnalyzer.hpp
+    MatAnalyzer.hpp \
+    MatMser.hpp
 
 SOURCES += \
-    main.cpp
+    main.cpp \
+    MatMser.cpp
 
 LIBS += -lopencv_core -lopencv_highgui
 LIBS += -lopencv_imgproc -lopencv_imgcodecs

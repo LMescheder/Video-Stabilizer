@@ -1,5 +1,5 @@
-#ifndef COMPONENTTREEPARSER_HPP_
-#define COMPONENTTREEPARSER_HPP_
+#ifndef COMPONENTTREEPARSER_HPP
+#define COMPONENTTREEPARSER_HPP
 
 #include <vector>
 #include <stack>
@@ -43,7 +43,7 @@ P must provide:
   TODO: better way to return analyzers results?
 */
 
-template <typename G, typename A, typename P>
+template <typename G, typename A>
 // requires GraphAccessor<G>
 //      &&  ComponentAnalyzer<A>
 class ComponentTreeParser {
@@ -59,7 +59,7 @@ class ComponentTreeParser {
     using Result = typename A::Result;
     using Component = typename A::Component;
 
-    using PriorityQueue = P;
+    using PriorityQueue = typename G::PriorityQueue;
 
     ComponentTreeParser () = default;
 
@@ -67,6 +67,15 @@ class ComponentTreeParser {
         auto graph = GraphAccessor(data);
         auto analyzer = Analyzer{};
         auto boundary_nodes = PriorityQueue{};
+        return parse_(graph, analyzer, boundary_nodes);
+    }
+
+    Result operator() (GraphAccessor& graph, Analyzer& analyzer) {
+        auto boundary_nodes = PriorityQueue{};
+        return parse_(graph, analyzer, boundary_nodes);
+    }
+
+    Result operator() (GraphAccessor& graph, Analyzer& analyzer, PriorityQueue& boundary_nodes) {
         return parse_(graph, analyzer, boundary_nodes);
     }
 
@@ -102,8 +111,11 @@ class ComponentTreeParser {
 
 // definitions
 
-template <typename G, typename A, typename P>
-typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(G& graph, A& analyzer, P& boundary_nodes) {
+template <typename G, typename A>
+typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
+    typename ComponentTreeParser<G,A>::GraphAccessor& graph,
+    typename ComponentTreeParser<G,A>::Analyzer& analyzer,
+    typename ComponentTreeParser<G,A>::PriorityQueue& boundary_nodes) {
     // data structures
 
     auto component_stack = ComponentStack{analyzer};
@@ -150,8 +162,8 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(G
     return analyzer.get_result();
 }
 
-template <typename G, typename A, typename P>
-void ComponentTreeParser<G,A,P>::ComponentStack::raise_level(ComponentTreeParser<G,A,P>::Value level) {
+template <typename G, typename A>
+void ComponentTreeParser<G,A>::ComponentStack::raise_level(ComponentTreeParser<G,A>::Value level) {
     while (level >  analyzer_.get_level(components_.back())) {
         // level of second last component (exists, since current_level < inf)
         auto next_level = analyzer_.get_level(components_.rbegin()[1]);
@@ -165,7 +177,7 @@ void ComponentTreeParser<G,A,P>::ComponentStack::raise_level(ComponentTreeParser
     }
 }
 
-#endif // COMPONENTTREEPARSER_HPP_
+#endif // COMPONENTTREEPARSER_HPP
 
 
 
