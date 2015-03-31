@@ -23,7 +23,7 @@ int main() {
     cv::cvtColor(im, data, CV_BGR2GRAY);
 
 
-    ComponentTreeParser<OpenCVMatAccessor, OpenCVMatMserAnalyzer, OpenCVMatPriorityQueue> test;
+    ComponentTreeParser<MatAccessor, MatMserAnalyzer, MatPriorityQueue> test;
 
 
     auto start = std::chrono::high_resolution_clock::now();

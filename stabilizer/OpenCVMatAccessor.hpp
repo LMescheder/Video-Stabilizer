@@ -13,7 +13,7 @@
 // TODO: do more computations in advance (e.g. next index computations)
 // TODO: create a reset function to reuse the objects allocations
 // TODO: create constructor, getter and setter for member variables
-class OpenCVMatAccessor
+class MatAccessor
 {
 public:
     using NodeIndex = cv::Point2i;
@@ -23,7 +23,7 @@ public:
 
     static const Value inf = 255;
 
-    OpenCVMatAccessor(Data data) {
+    MatAccessor(Data data) {
         data_ = data;
         mask_ = cv::Mat::zeros(data.rows, data.cols, CV_8U);
     }
@@ -57,7 +57,7 @@ private:
 
 // TODO: store priority queue contiguously (more efficient?)
 // TODO: better way to pop?
-class OpenCVMatPriorityQueue {
+class MatPriorityQueue {
 public:
     void push(cv::Point2i point, uchar value) {
         points_[value].push_back(point);
@@ -73,7 +73,7 @@ private:
 
 
 // definitions
-boost::optional<OpenCVMatAccessor::NodeIndex> OpenCVMatAccessor::get_next_neighbor(OpenCVMatAccessor::NodeIndex node) {
+boost::optional<MatAccessor::NodeIndex> MatAccessor::get_next_neighbor(MatAccessor::NodeIndex node) {
     uchar& mask_value = mask_.at<uchar>(node);
 
     while (mask_value < 5) {
@@ -110,7 +110,7 @@ boost::optional<OpenCVMatAccessor::NodeIndex> OpenCVMatAccessor::get_next_neighb
 }
 
 
-boost::optional<cv::Point2i> OpenCVMatPriorityQueue::pop() {
+boost::optional<cv::Point2i> MatPriorityQueue::pop() {
     if (points_[minimum_].empty())
         return boost::none;
     else {

@@ -6,11 +6,9 @@
 //TODO: Put Mser extraction into derived class
 //TODO: Create derived class for tracking
 //TODO: Optimize history (less reallocation) by creating a (#minima * history_length) array
-//TODO: Put the current level here, not in Parser class, level is then processing level, not maximum level of points
-//      <- makes backwards difference as derivative more sensible, since the level corresponds to the maximum grey level
-//         before next points added (?)
-//TODO: add asserts
-class OpenCVMatMserAnalyzer {
+// Uses CRTP, so that no runtime cost is inflicted
+template <typename Child>
+class MatAnalyzer {
 public:
     struct ComponentStats {
         unsigned int age = 0;
@@ -48,34 +46,48 @@ public:
     void merge_component_into (Component& comp1, Component& comp2, uchar level);
 
     Component add_component (uchar level) {
-        return Component{level};
+        return Component(level);
     }
 
     // TODO: still makes a deep copy -> has to be optimized (would calling std::move be save?
     Result get_result() { return result_; }
 
-    bool is_finished() {
-        return finished_;
+protected:
+    Result result_;
+    const uchar delta_ = 5;
+
+
+    void extend_history_(Component& comp, uchar level);
+    void merge_componentstats_into_(const ComponentStats& comp1, ComponentStats& comp2);
+    void calculate_stability(Component& comp);
+
+    void check_component_ (Component& comp) {
+        static_cast<Child*>(this)->check_component_(static_cast<typename Child::Component&> (comp));
+    }
+};
+
+class MatMserAnalyzer : public MatAnalyzer<MatMserAnalyzer> {
+public:
+    struct Component : public MatAnalyzer<MatMserAnalyzer>::Component {
+        Component (uchar level) : MatAnalyzer<MatMserAnalyzer>::Component(level) {}
+    };
+
+    void check_component_(Component &comp);
+
+    Component add_component (uchar level) {
+        return Component(level);
     }
 
 private:
-    Result result_;
-    bool finished_ = false;
     const unsigned int min_N_ = 60;
     const unsigned int max_N_ = 14400;
-    const uchar delta_ = 5;
     const float min_stability_ = 20.;
-
-    void extend_history_(Component& comp, uchar level);
-
-
-    void merge_componentstats_into_(const ComponentStats& comp1, ComponentStats& comp2);
-    void calculate_stability(Component& comp);
-    void check_mser_ (Component& comp);
 };
 
+// definitions
 // TODO: Remove level from parameter list
-void OpenCVMatMserAnalyzer::add_node(cv::Point2i node, uchar level, OpenCVMatMserAnalyzer::Component &component) {
+template <typename Child>
+void MatAnalyzer<Child>::add_node(cv::Point2i node, uchar level, MatAnalyzer<Child>::Component &component) {
     assert(level == component.level);
     ComponentStats node_comp;
     node_comp.mean = cv::Vec2f(node.x, node.y);
@@ -88,7 +100,10 @@ void OpenCVMatMserAnalyzer::add_node(cv::Point2i node, uchar level, OpenCVMatMse
 
 // TODO: Remove level from parameter list
 // TODO: call extend history function instead of own function
-void OpenCVMatMserAnalyzer::merge_component_into(OpenCVMatMserAnalyzer::Component &comp1, OpenCVMatMserAnalyzer::Component &comp2, uchar level) {
+template <typename Child>
+void MatAnalyzer<Child>::merge_component_into(MatAnalyzer<Child>::Component &comp1,
+                                              MatAnalyzer<Child>::Component &comp2,
+                                              uchar level) {
     // take the history of the winner
     assert(comp1.level < comp2.level);
     assert(comp2.level <= level);
@@ -103,16 +118,19 @@ void OpenCVMatMserAnalyzer::merge_component_into(OpenCVMatMserAnalyzer::Componen
 }
 // TODO: remove level parameter
 // TODO: put check mser into subclass
-void OpenCVMatMserAnalyzer::extend_history_(OpenCVMatMserAnalyzer::Component &component, uchar level) {
+template <typename Child>
+void MatAnalyzer<Child>::extend_history_(MatAnalyzer<Child>::Component &component, uchar level) {
     assert(component.level < level);
     component.history.push_back(component.stats);
     //component.history_levels.push_back(component.level);
     calculate_stability(component);
-    check_mser_(component);
+    check_component_(component);
 
 }
 
-void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMserAnalyzer::ComponentStats &comp1, OpenCVMatMserAnalyzer::ComponentStats &comp2) {
+template <typename Child>
+void MatAnalyzer<Child>::merge_componentstats_into_(const MatAnalyzer<Child>::ComponentStats &comp1,
+                                                    MatAnalyzer<Child>::ComponentStats &comp2) {
     auto p = float(comp1.N) / float(comp1.N + comp2.N);
     auto q = float(comp2.N) / float(comp1.N + comp2.N);
 
@@ -125,7 +143,8 @@ void OpenCVMatMserAnalyzer::merge_componentstats_into_(const OpenCVMatMserAnalyz
     comp2.mean = p * comp1.mean + q * comp2.mean;
 }
 
-void OpenCVMatMserAnalyzer::calculate_stability(OpenCVMatMserAnalyzer::Component &comp) {
+template <typename Child>
+void MatAnalyzer<Child>::calculate_stability(MatAnalyzer<Child>::Component &comp) {
     if(comp.history.size() >= 2*delta_ + 1) {
         auto& comp0 = comp.history.rbegin()[2*delta_];
         auto& comp1 = comp.history.rbegin()[delta_];
@@ -142,7 +161,7 @@ void OpenCVMatMserAnalyzer::calculate_stability(OpenCVMatMserAnalyzer::Component
     */
 }
 
-void OpenCVMatMserAnalyzer::check_mser_(OpenCVMatMserAnalyzer::Component &comp) {
+void MatMserAnalyzer::check_component_(MatMserAnalyzer::Component &comp) {
     if (comp.history.size() >= 2*delta_ + 1) {
         auto& succ = comp.history.rbegin()[delta_-1];
         auto& examinee = comp.history.rbegin()[delta_];

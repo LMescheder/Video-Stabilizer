@@ -120,8 +120,7 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(G
         // get next node
         auto current_node = *current_node_or_none;
         component_stack.raise_level(graph.value(current_node));
-        if (analyzer.is_finished())
-            break;
+
         /*
             std::cout << "Current node: " << current_node
                       << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
@@ -147,8 +146,6 @@ typename ComponentTreeParser<G,A,P>::Result ComponentTreeParser<G,A,P>::parse_(G
             flowingdown_phase = false;
         }
         component_stack.push_node(graph.node(current_node), graph.value(current_node));
-        if (analyzer.is_finished())
-            break;
     }
     return analyzer.get_result();
 }
