@@ -45,7 +45,7 @@ public:
     MatAnalyzer (unsigned int delta) : delta_(delta) {}
 
     void raise_level (Component& comp, uchar level) {
-        assert(level > comp.level);
+        //assert(level > comp.level);
         extend_history_(comp,  level);
         comp.level = level;
     }
@@ -170,8 +170,8 @@ void MatAnalyzer<Child>::merge_component_into(MatAnalyzer<Child>::Component &com
                                               MatAnalyzer<Child>::Component &comp2,
                                               uchar level) {
     // take the history of the winner
-    assert(comp1.level < comp2.level);
-    assert(comp2.level <= level);
+    //assert(comp1.level < comp2.level);
+    //assert(comp2.level <= level);
 
     // update history
     if (comp1.stats.N > comp2.stats.N) {
@@ -185,7 +185,7 @@ void MatAnalyzer<Child>::merge_component_into(MatAnalyzer<Child>::Component &com
 // TODO: put check mser into subclass
 template <typename Child>
 void MatAnalyzer<Child>::extend_history_(MatAnalyzer<Child>::Component &component, uchar level) {
-    assert(component.level < level);
+    //assert(component.level < level);
     component.history.push_back(component.stats);
     //component.history_levels.push_back(component.level);
     calculate_stability(component);

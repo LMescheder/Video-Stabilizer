@@ -24,11 +24,19 @@ public:
     class PriorityQueue;
 
     static const Value inf = 255;
+    static const Value minf = 0;
 
-    MatAccessor(Data data, bool inverted = false)
-        : data_(data), inverted_(inverted) {
+
+
+    static Value less(Value val1, Value val2) {
+        return val1 < val2;
+    }
+
+    MatAccessor(Data data)
+        : data_(data) {
         mask_ = cv::Mat::zeros(data.rows, data.cols, CV_8U);
     }
+
 
     NodeIndex get_source() {
         auto new_node = NodeIndex{0, 0};
@@ -41,10 +49,7 @@ public:
     }
 
     Value value (NodeIndex node_idx) {
-        if (!inverted_)
-            return data_.at<uchar>(node_idx);
-        else
-            return 255 - data_.at<uchar>(node_idx);
+        return data_.at<uchar>(node_idx);
     }
 
 
@@ -57,7 +62,7 @@ public:
 private:
     Data data_;
     cv::Mat mask_;
-    bool inverted_ = false;
+
 };
 
 // TODO: store priority queue contiguously (more efficient?)
@@ -65,9 +70,15 @@ private:
 
 class MatAccessor::PriorityQueue {
 public:
+    PriorityQueue (bool inv=false)
+        : inverted_(inv) {}
+
     void push(cv::Point2i point, uchar value) {
+        if (inverted_)
+            value = 255 - value;
         points_[value].push_back(point);
         minimum_ = std::min(minimum_, value);
+
     }
 
     boost::optional<cv::Point2i> pop();
@@ -75,6 +86,7 @@ public:
 private:
     std::array<std::vector<cv::Point2i>, 256> points_;
     uchar minimum_ = 255;
+    bool inverted_ = false;
 };
 
 // definitions
