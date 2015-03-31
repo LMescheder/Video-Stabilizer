@@ -82,7 +82,7 @@ void test1 () {
 
         std::vector<cv::Point> hull;
         cv::convexHull(mser, hull);
-        cv::polylines(output_im, hull, true, cv::Scalar(0, 255, 0));
+        cv::polylines(output_im, hull, true, cv::Scalar(255, 0, 0));
         }
 
 
@@ -134,7 +134,7 @@ void test2()
 
 void test3()
 {
-    std::string filename = "../../data/Basket 30s.avi";
+    std::string filename = "../../data/Shop 30s.avi";
     cv::VideoCapture cap(filename);
 
     //if(!cap.isOpened())
