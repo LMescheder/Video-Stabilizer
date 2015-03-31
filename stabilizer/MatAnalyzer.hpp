@@ -21,6 +21,8 @@ public:
         unsigned int N = 0;
         cv::Vec2f mean = cv::Vec2f(0., 0.);
         cv::Matx22f cov = cv::Matx22f(0., 0., 0., 0.);
+        cv::Point2i min_point = cv::Point2i(0., 0.);
+        cv::Point2i max_point = cv::Point2i(0., 0.);
         float stability = 0.;
     };
 
@@ -30,8 +32,8 @@ public:
         std::vector<ComponentStats> history;
         //std::vector<uchar> history_levels;
 
-        Component (uchar value) : level(value) {
-        }
+        Component (uchar value)
+            : level(value) {}
     };
 
 
@@ -53,8 +55,11 @@ public:
 
     void merge_component_into (Component& comp1, Component& comp2, uchar level);
 
-    Component add_component (uchar level) {
-        return Component(level);
+    Component add_component (cv::Point2i point, uchar level) {
+        Component new_comp = Component(level);
+        new_comp.stats.N = 1;
+        new_comp.stats.mean = cv::Vec2f(point);
+        return new_comp;
     }
 
     // TODO: still makes a deep copy -> has to be optimized (would calling std::move be save?
@@ -92,6 +97,15 @@ public:
 
     Component add_component (uchar level) {
         return Component(level);
+    }
+
+    Component add_component (cv::Point2i point, uchar level) {
+        Component new_comp = Component(level);
+        new_comp.stats.N = 1;
+        new_comp.stats.mean = cv::Vec2f(point.x, point.y);
+        new_comp.stats.min_point = point;
+        new_comp.stats.max_point = point;
+        return new_comp;
     }
 
     void merge_component_into (Component& comp1, Component& comp2, uchar level) {

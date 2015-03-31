@@ -85,11 +85,11 @@ class ComponentTreeParser {
     struct ComponentStack {
         public:
         ComponentStack (Analyzer& analyzer) : analyzer_(analyzer), components_() {
-            push_component(GraphAccessor::inf);
+            components_.push_back(analyzer_.add_component(GraphAccessor::inf));
         }
 
-        void push_component(Value level) {
-            components_.push_back(analyzer_.add_component(level));
+        void push_component(Node node, Value level) {
+            components_.push_back(analyzer_.add_component(node, level));
             //current_levels_.push_back(level);
         }
         void push_node(Node node, Value level) {
@@ -154,10 +154,11 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
 
         // new minimum found?
         if (flowingdown_phase) {
-            component_stack.push_component(graph.value(current_node));
+            component_stack.push_component(graph.node(current_node), graph.value(current_node));
             flowingdown_phase = false;
+        } else {
+            component_stack.push_node(graph.node(current_node), graph.value(current_node));
         }
-        component_stack.push_node(graph.node(current_node), graph.value(current_node));
     }
     return analyzer.get_result();
 }
