@@ -51,14 +51,18 @@ public:
         return comp.level;
     }
 
-    void add_node( typename cv::Point2i node, uchar level, Component& component);
+    // TODO: Remove level from parameter list
+    void add_node( typename cv::Point2i node, uchar level, Component& component) {
+        assert(level == component.level);
+        ComponentStats node_comp = point_stats_(node);
+        merge_componentstats_into_(node_comp, component.stats);
+    }
 
     void merge_component_into (Component& comp1, Component& comp2, uchar level);
 
     Component add_component (cv::Point2i point, uchar level) {
         Component new_comp = Component(level);
-        new_comp.stats.N = 1;
-        new_comp.stats.mean = cv::Vec2f(point);
+        new_comp.stats = point_stats_(point);
         return new_comp;
     }
 
@@ -76,6 +80,16 @@ protected:
 
     void check_component_ (Component& comp) {
         static_cast<Child*>(this)->check_component_(static_cast<typename Child::Component&> (comp));
+    }
+
+    ComponentStats point_stats_(cv::Point2i point) {
+        ComponentStats stats;
+        stats.N = 1;
+        stats.mean = cv::Vec2f(point.x, point.y);
+        stats.min_point = point;
+        stats.max_point = point;
+
+        return stats;
     }
 };
 
@@ -142,18 +156,6 @@ private:
 // --------------------------------------- definitions --------------------------------------------
 // ------------------------------------------------------------------------------------------------
 
-// TODO: Remove level from parameter list
-template <typename Child>
-void MatAnalyzer<Child>::add_node(cv::Point2i node, uchar level, MatAnalyzer<Child>::Component &component) {
-    assert(level == component.level);
-    ComponentStats node_comp;
-    node_comp.mean = cv::Vec2f(node.x, node.y);
-    node_comp.N = 1;
-
-    merge_componentstats_into_(node_comp, component.stats);
-
-
-}
 
 // TODO: Remove level from parameter list
 // TODO: call extend history function instead of own function
@@ -198,6 +200,11 @@ void MatAnalyzer<Child>::merge_componentstats_into_(const MatAnalyzer<Child>::Co
 
     comp2.N = comp1.N + comp2.N;
     comp2.mean = p * comp1.mean + q * comp2.mean;
+
+    comp2.min_point.x = std::min(comp1.min_point.x, comp2.min_point.x);
+    comp2.min_point.y = std::min(comp1.min_point.y, comp2.min_point.y);
+    comp2.max_point.x = std::max(comp1.max_point.x, comp2.max_point.x);
+    comp2.max_point.y = std::max(comp1.max_point.y, comp2.max_point.y);
 }
 
 template <typename Child>
