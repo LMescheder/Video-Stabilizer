@@ -222,7 +222,7 @@ void MatAnalyzer<Child>::calculate_stability(MatAnalyzer<Child>::Component &comp
         auto& comp0 = comp.history.rbegin()[2*delta_];
         auto& comp1 = comp.history.rbegin()[delta_];
         auto& comp2 = comp.history.rbegin()[0];
-        comp1.stability = static_cast<float>(2*delta_ * comp0.N)/(comp2.N - comp0.N);
+        comp1.stability = static_cast<float>(2*delta_ * comp1.N)/(comp2.N - comp0.N);
     }
     /*
     if (comp.history.size() < delta_) {

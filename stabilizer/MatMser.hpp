@@ -52,8 +52,8 @@ public:
 
         cv::Mat ROI = im(cv::Range(stats.min_point.y, stats.max_point.y+1),
                          cv::Range(stats.min_point.x, stats.max_point.x+1));
-        MatAccessor graph(ROI);
 
+        MatAccessor graph(ROI);
         toprocess.push_back(graph.get_index(stats.source - stats.min_point) );
         while (!toprocess.empty()) {
             auto current_node = toprocess.back();
@@ -61,13 +61,14 @@ public:
 
             while(auto next_neighbor_or_none = graph.get_next_neighbor(current_node)) {
                 auto next_neighbor = *next_neighbor_or_none;
-                if ( stats.min_val <= graph.value(next_neighbor)
-                    && graph.value(next_neighbor) <= stats.max_val)
+                auto value = graph.value(next_neighbor);
+                if ( stats.min_val <= value && value <= stats.max_val)
                     toprocess.push_back(next_neighbor);
             }
 
             points.push_back(stats.min_point + graph.node(current_node));
         }
+        assert(points.size() == stats.N);
         return points;
     }
 

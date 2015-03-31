@@ -66,9 +66,9 @@ public:
     boost::optional<NodeIndex> get_next_neighbor (NodeIndex node);
 
 private:
-    bool inverted_;
     Data data_;
     cv::Mat mask_;
+    bool inverted_;
 
 };
 

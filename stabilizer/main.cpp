@@ -23,9 +23,9 @@ void test3 ();
 
 int main() {
     //test0();
-    //test1();
+    test1();
     //test2();
-    test3();
+    //test3();
 }
 
 
@@ -59,7 +59,7 @@ void test1 () {
 
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto result = mymser.find_msers(data);
+    auto result = mymser.find_msers_points(data);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
@@ -78,9 +78,12 @@ void test1 () {
 
     cv::Mat output_im = im.clone();
     for (auto& mser : result) {
-        cv::circle(output_im, cv::Point(mser.mean), 2, cv::Scalar(255, 0, 0));
-        cv::rectangle(output_im, mser.min_point, mser.max_point, cv::Scalar(255, 0, 0));
-    }
+        //cv::circle(output_im, cv::Point(mser.mean), 2, cv::Scalar(255, 0, 0));
+
+        std::vector<cv::Point> hull;
+        cv::convexHull(mser, hull);
+        cv::polylines(output_im, hull, true, cv::Scalar(0, 255, 0));
+        }
 
 
     for (auto& mser : cv_msers) {
@@ -131,7 +134,7 @@ void test2()
 
 void test3()
 {
-    std::string filename = "../../data/Shop 30s.avi";
+    std::string filename = "../../data/Basket 30s.avi";
     cv::VideoCapture cap(filename);
 
     //if(!cap.isOpened())
