@@ -6,7 +6,9 @@
 //TODO: Put Mser extraction into derived class
 //TODO: Create derived class for tracking
 //TODO: Optimize history (less reallocation) by creating a (#minima * history_length) array
-// Uses CRTP, so that no runtime cost is inflicted
+// Uses CRTP, so that no runtime cost is inflicted.
+// This class is thus purely abstract. It is neccessary to implement the check_component_ member
+// function in a derived class.
 template <typename Child>
 class MatAnalyzer {
 public:
@@ -30,6 +32,8 @@ public:
 
 
     using Result = std::vector<ComponentStats>;
+
+    MatAnalyzer (unsigned int delta) : delta_(delta) {}
 
     uchar raise_level (Component& comp, uchar level) {
         assert(level > comp.level);
@@ -66,22 +70,39 @@ protected:
     }
 };
 
+// Analyzes the component tree to find msers.
 class MatMserAnalyzer : public MatAnalyzer<MatMserAnalyzer> {
 public:
+    MatMserAnalyzer (unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
+                     float min_stability = 20.f)
+        : MatAnalyzer<MatMserAnalyzer>(delta),
+         min_N_(min_N), max_N_(max_N), min_stability_(min_stability) {}
+
     struct Component : public MatAnalyzer<MatMserAnalyzer>::Component {
         Component (uchar level) : MatAnalyzer<MatMserAnalyzer>::Component(level) {}
     };
 
-    void check_component_(Component &comp);
+    void check_component_(Component &comp) {
+        if (comp.history.size() >= 2*delta_ + 1) {
+            auto& succ = comp.history.rbegin()[delta_-1];
+            auto& examinee = comp.history.rbegin()[delta_];
+            auto& pred = comp.history.rbegin()[delta_ + 1];
+
+            if (examinee.stability > pred.stability && examinee.stability > succ.stability
+                    && min_N_ <= examinee.N && examinee.N <= max_N_
+                    && examinee.stability >= min_stability_)
+                result_.push_back(examinee);
+        }
+    }
 
     Component add_component (uchar level) {
         return Component(level);
     }
 
 private:
-    const unsigned int min_N_ = 60;
-    const unsigned int max_N_ = 14400;
-    const float min_stability_ = 20.;
+    const unsigned int min_N_;
+    const unsigned int max_N_;
+    const float min_stability_;
 };
 
 // definitions
@@ -161,16 +182,5 @@ void MatAnalyzer<Child>::calculate_stability(MatAnalyzer<Child>::Component &comp
     */
 }
 
-void MatMserAnalyzer::check_component_(MatMserAnalyzer::Component &comp) {
-    if (comp.history.size() >= 2*delta_ + 1) {
-        auto& succ = comp.history.rbegin()[delta_-1];
-        auto& examinee = comp.history.rbegin()[delta_];
-        auto& pred = comp.history.rbegin()[delta_ + 1];
 
-        if (examinee.stability > pred.stability && examinee.stability > succ.stability
-             && min_N_ <= examinee.N && examinee.N <= max_N_
-             && examinee.stability >= min_stability_)
-                result_.push_back(examinee);
-    }
-}
 #endif // OPENCVMATMSERANALYZER_HPP

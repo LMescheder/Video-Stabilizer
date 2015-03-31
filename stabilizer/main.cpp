@@ -1,6 +1,3 @@
-#include "ComponentTreeParser.hpp"
-#include "OpenCVMatAccessor.hpp"
-#include "OpenCVMatMserAnalyzer.hpp"
 /*
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -14,6 +11,9 @@
 #include <chrono>
 #include <vector>
 
+#include "ComponentTreeParser.hpp"
+#include "MatAnalyzer.hpp"
+#include "MatAccessor.hpp"
 
 int main() {
     const char* path = "/home/lars/Education/University/Semester_10_Lausanne/CV_Project/work/build/data/Lena.png";
