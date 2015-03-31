@@ -23,20 +23,26 @@ public:
 
     class PriorityQueue;
 
-    static const Value inf = 255;
-    static const Value minf = 0;
 
 
-
-    static Value less(Value val1, Value val2) {
-        return val1 < val2;
-    }
-
-    MatAccessor(Data data)
-        : data_(data) {
+    MatAccessor(Data data, bool inverted=false)
+        : data_(data), inverted_(inverted) {
         mask_ = cv::Mat::zeros(data.rows, data.cols, CV_8U);
     }
 
+    Value inf () const {
+        if (!inverted_)
+            return 255;
+        else
+            return 0;
+    }
+
+    bool less(Value val1, Value val2) const {
+        if (!inverted_)
+            return val1 < val2;
+        else
+            return val2 < val1;
+    }
 
     NodeIndex get_source() {
         auto new_node = NodeIndex{0, 0};
@@ -60,6 +66,7 @@ public:
     boost::optional<NodeIndex> get_next_neighbor (NodeIndex node);
 
 private:
+    bool inverted_;
     Data data_;
     cv::Mat mask_;
 

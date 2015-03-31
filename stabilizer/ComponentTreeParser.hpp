@@ -60,18 +60,17 @@ class ComponentTreeParser {
 
     using PriorityQueue = typename G::PriorityQueue;
 
-    ComponentTreeParser (bool inverted = false)
-        : inverted_(inverted) {}
+    ComponentTreeParser() = default;
 
-    Result operator() (const Data& data) {
-        auto graph = GraphAccessor(data);
+    Result operator() (const Data& data, bool inverted=false) {
+        auto graph = GraphAccessor(data, inverted);
         auto analyzer = Analyzer{};
-        auto boundary_nodes = PriorityQueue{inverted_};
+        auto boundary_nodes = PriorityQueue{inverted};
         return parse_(graph, analyzer, boundary_nodes);
     }
 
-    Result operator() (GraphAccessor& graph, Analyzer& analyzer) {
-        auto boundary_nodes = PriorityQueue{inverted_};
+    Result operator() (GraphAccessor& graph, Analyzer& analyzer, bool inverted=false) {
+        auto boundary_nodes = PriorityQueue{inverted};
         return parse_(graph, analyzer, boundary_nodes);
     }
 
@@ -79,22 +78,15 @@ class ComponentTreeParser {
         return parse_(graph, analyzer, boundary_nodes);
     }
 
-    bool inverted() const {
-        return inverted_;
-    }
-
-    void set_inverted (bool inv) {
-        inverted_ = inv;
-    }
 
     // implementation
     private:
 
     struct ComponentStack {
         public:
-        ComponentStack (const ComponentTreeParser& parser, Analyzer& analyzer)
-            : parser_(parser), analyzer_(analyzer), components_() {
-            components_.push_back(analyzer_.add_component(parser_.inf()));
+        ComponentStack (const GraphAccessor& graph, Analyzer& analyzer)
+            : graph_(graph), analyzer_(analyzer), components_(){
+            components_.push_back(analyzer_.add_component(graph_.inf()));
         }
 
         void push_component(Node node, Value level) {
@@ -109,7 +101,7 @@ class ComponentTreeParser {
 
        // std::vector<Value> current_levels_;
         Analyzer& analyzer_;
-        const ComponentTreeParser& parser_;
+        const GraphAccessor& graph_;
         std::vector<Component> components_;
     };
 
@@ -117,21 +109,6 @@ class ComponentTreeParser {
     // actual algorithm
     Result parse_(GraphAccessor& graph, Analyzer& analyzer, PriorityQueue& boundary_nodes);
 
-    bool less (Value val1, Value val2) const {
-        if (!inverted_)
-            return GraphAccessor::less(val1, val2);
-        else
-            return GraphAccessor::less(val2, val1);
-    }
-
-    Value inf () const {
-        if (!inverted_)
-            return GraphAccessor::inf;
-        else
-            return GraphAccessor::minf;
-    }
-
-    bool inverted_ = false;
 
 };
 
@@ -144,7 +121,7 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
     typename ComponentTreeParser<G,A>::PriorityQueue& boundary_nodes) {
     // data structures
 
-    auto component_stack = ComponentStack{*this, analyzer};
+    auto component_stack = ComponentStack{graph, analyzer};
     //auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriorityLess>{NodePriorityLess{graph}};
 
     // initialize
@@ -169,7 +146,7 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
         while (auto neighbor_or_none = graph.get_next_neighbor(current_node)) {
             auto neighbor_node = *neighbor_or_none;
             // flow (further) down?
-            if (less(graph.value(neighbor_node), graph.value(current_node))) {
+            if (graph.less(graph.value(neighbor_node), graph.value(current_node))) {
                 flowingdown_phase = true;
                 boundary_nodes.push(current_node, graph.value(current_node));
                 current_node = neighbor_node;
@@ -191,10 +168,10 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
 
 template <typename G, typename A>
 void ComponentTreeParser<G,A>::ComponentStack::raise_level(ComponentTreeParser<G,A>::Value level) {
-    while (parser_.less(analyzer_.get_level(components_.back()), level)) {
+    while (graph_.less(analyzer_.get_level(components_.back()), level)) {
         // level of second last component (exists, since current_level < inf)
         auto next_level = analyzer_.get_level(components_.rbegin()[1]);
-        if  (parser_.less(level, next_level)) {
+        if  (graph_.less(level, next_level)) {
             analyzer_.raise_level(components_.back(), level);
         } else {
             // is it correct to use level instead of next_level here?
