@@ -21,17 +21,14 @@ public:
         ComponentTreeParser<MatAccessor, MatMserAnalyzer> parser{};
         MatMserAnalyzer analyzer(delta_, min_N_, max_N_, min_stability_, min_diversity_);
 
-        MatAccessor graph1(image, true);
-        auto mser_stats1 = parser(graph1, analyzer, true);
-
-        //MatAccessor graph2(image);
-        //auto mser_stats2 = parser(graph2, analyzer, true);
+        auto mser_stats1 = parser(image, analyzer, false);
+        auto mser_stats2 = parser(image, analyzer, true);
 
         std::vector<ComponentStats> result;
         for (auto& stat : mser_stats1)
            result.push_back(stat);
-        //for (auto& stat : mser_stats2)
-        //    result.push_back(stat);
+        for (auto& stat : mser_stats2)
+            result.push_back(stat);
         return result;
     }
 
