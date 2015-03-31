@@ -16,14 +16,33 @@
 #include "MatAccessor.hpp"
 #include "MatMser.hpp"
 
+void test0 ();
 void test1 ();
 void test2 ();
 
 int main() {
+    //test0();
     //test1();
     test2();
 }
 
+
+void test0 () {
+    const char* path = "/home/lars/Education/University/Semester_10_Lausanne/CV_Project/work/build/data/Lena.png";
+    cv::Mat im = cv::imread(path, CV_LOAD_IMAGE_COLOR);
+
+    cv::Mat data;
+    cv::cvtColor(im, data, CV_BGR2GRAY);
+
+
+    MatMser mymser;
+
+
+    auto start = std::chrono::high_resolution_clock::now();
+    auto result = mymser.find_msers(data);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+}
 
 
 void test1 () {
@@ -76,7 +95,8 @@ void test1 () {
 
 void test2()
 {
-    cv::VideoCapture cap(0);
+    std::string filename = "../../data/Shop 30s.avi";
+    cv::VideoCapture cap(filename);
 
     //if(!cap.isOpened())
     //   return -1;
