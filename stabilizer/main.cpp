@@ -45,10 +45,11 @@ int main() {
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
-    cv::Mat output_im = data.clone();
-    for (auto& mser : result)
+    cv::Mat output_im = im.clone();
+    for (auto& mser : result) {
         cv::circle(output_im, cv::Point(mser.mean), 2, cv::Scalar(255, 0, 0));
-
+        cv::rectangle(output_im, mser.min_point, mser.max_point, cv::Scalar(255, 0, 0));
+    }
 
 
     for (auto& mser : cv_msers) {

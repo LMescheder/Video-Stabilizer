@@ -20,7 +20,7 @@ public:
         MatMserAnalyzer analyzer(delta_, min_N_, max_N_, min_stability_, min_diversity_);
         ComponentTreeParser<MatAccessor, MatMserAnalyzer> parser{};
 
-        auto mser_stats = parser(graph, analyzer);
+        auto mser_stats1 = parser(graph, analyzer);
     }
 
 
