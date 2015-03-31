@@ -18,6 +18,8 @@ template <typename Child>
 class MatAnalyzer {
 public:
     struct ComponentStats {
+        uchar min_val;
+        uchar max_val;
         unsigned int N = 0;
         cv::Vec2f mean = cv::Vec2f(0., 0.);
         cv::Matx22f cov = cv::Matx22f(0., 0., 0., 0.);
@@ -54,7 +56,7 @@ public:
     // TODO: Remove level from parameter list
     void add_node( typename cv::Point2i node, uchar level, Component& component) {
         assert(level == component.level);
-        ComponentStats node_comp = point_stats_(node);
+        ComponentStats node_comp = point_stats_(node, level);
         merge_componentstats_into_(node_comp, component.stats);
     }
 
@@ -62,7 +64,7 @@ public:
 
     Component add_component (cv::Point2i point, uchar level) {
         Component new_comp = Component(level);
-        new_comp.stats = point_stats_(point);
+        new_comp.stats = point_stats_(point, level);
         return new_comp;
     }
 
@@ -82,13 +84,14 @@ protected:
         static_cast<Child*>(this)->check_component_(static_cast<typename Child::Component&> (comp));
     }
 
-    ComponentStats point_stats_(cv::Point2i point) {
+    ComponentStats point_stats_(cv::Point2i point, uchar value) {
         ComponentStats stats;
         stats.N = 1;
         stats.mean = cv::Vec2f(point.x, point.y);
         stats.min_point = point;
         stats.max_point = point;
-
+        stats.min_val = value;
+        stats.max_val = value;
         return stats;
     }
 };
@@ -205,6 +208,9 @@ void MatAnalyzer<Child>::merge_componentstats_into_(const MatAnalyzer<Child>::Co
     comp2.min_point.y = std::min(comp1.min_point.y, comp2.min_point.y);
     comp2.max_point.x = std::max(comp1.max_point.x, comp2.max_point.x);
     comp2.max_point.y = std::max(comp1.max_point.y, comp2.max_point.y);
+
+    comp2.min_val = std::min(comp1.min_val, comp2.min_val);
+    comp2.max_val = std::max(comp1.max_val, comp2.max_val);
 }
 
 template <typename Child>

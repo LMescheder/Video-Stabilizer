@@ -21,24 +21,12 @@ public:
     using Value = uchar;
     using Data = cv::Mat;
 
-    class PriorityQueue {
-    public:
-        void push(cv::Point2i point, uchar value) {
-            points_[value].push_back(point);
-            minimum_ = std::min(minimum_, value);
-        }
-
-        boost::optional<cv::Point2i> pop();
-
-    private:
-        std::array<std::vector<cv::Point2i>, 256> points_;
-        uchar minimum_ = 255;
-    };
+    class PriorityQueue;
 
     static const Value inf = 255;
 
-    MatAccessor(Data data) {
-        data_ = data;
+    MatAccessor(Data data, bool inverted = false)
+        : data_(data), inverted_(inverted) {
         mask_ = cv::Mat::zeros(data.rows, data.cols, CV_8U);
     }
 
@@ -53,7 +41,7 @@ public:
     }
 
     Value value (NodeIndex node) {
-        if (!inverted)
+        if (!inverted_)
             return data_.at<uchar>(node);
         else
             return 255 - data_.at<uchar>(node);
@@ -66,13 +54,25 @@ public:
 private:
     Data data_;
     cv::Mat mask_;
-    bool inverted = false;
+    bool inverted_ = false;
 };
 
 // TODO: store priority queue contiguously (more efficient?)
 // TODO: better way to pop?
 
+class MatAccessor::PriorityQueue {
+public:
+    void push(cv::Point2i point, uchar value) {
+        points_[value].push_back(point);
+        minimum_ = std::min(minimum_, value);
+    }
 
+    boost::optional<cv::Point2i> pop();
+
+private:
+    std::array<std::vector<cv::Point2i>, 256> points_;
+    uchar minimum_ = 255;
+};
 
 // definitions
 boost::optional<MatAccessor::NodeIndex> MatAccessor::get_next_neighbor(MatAccessor::NodeIndex node) {

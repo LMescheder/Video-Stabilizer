@@ -16,7 +16,17 @@
 #include "MatAccessor.hpp"
 #include "MatMser.hpp"
 
+void test1 ();
+void test2 ();
+
 int main() {
+    //test1();
+    test2();
+}
+
+
+
+void test1 () {
     const char* path = "/home/lars/Education/University/Semester_10_Lausanne/CV_Project/work/build/data/Lena.png";
     cv::Mat im = cv::imread(path, CV_LOAD_IMAGE_COLOR);
 
@@ -24,11 +34,11 @@ int main() {
     cv::cvtColor(im, data, CV_BGR2GRAY);
 
 
-    ComponentTreeParser<MatAccessor, MatMserAnalyzer> test;
+    MatMser mymser;
 
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto result = test(data);
+    auto result = mymser.find_msers(data);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
@@ -62,8 +72,39 @@ int main() {
     cv::imshow("MSER", output_im);
 
     cv::waitKey(0);
-
 }
 
+void test2()
+{
+    cv::VideoCapture cap(0);
+
+    //if(!cap.isOpened())
+    //   return -1;
+
+    cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
+
+    MatMser mymser;
+
+    while (true) {
+        cv::Mat frame;
+        cap >> frame;
+        cv::Mat gray;
+        cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+
+        auto result = mymser.find_msers(gray);
+
+        for (auto& mser : result) {
+            cv::circle(frame, cv::Point(mser.mean), 2, cv::Scalar(255, 0, 0));
+            cv::rectangle(frame, mser.min_point, mser.max_point, cv::Scalar(255, 0, 0));
+        }
+
+        cv::imshow("Video", frame);
+
+        if (cv::waitKey(1) >= 0) {
+            break;
+        }
+    }
+
+}
 
 
