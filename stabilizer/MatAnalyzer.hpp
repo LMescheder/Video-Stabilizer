@@ -3,12 +3,17 @@
 
 #include "opencv2/core.hpp"
 
-//TODO: Put Mser extraction into derived class
-//TODO: Create derived class for tracking
-//TODO: Optimize history (less reallocation) by creating a (#minima * history_length) array
-// Uses CRTP, so that no runtime cost is inflicted.
-// This class is thus purely abstract. It is neccessary to implement the check_component_ member
-// function in a derived class.
+// ------------------------------------------------------------------------------------------------
+// ------------------------------- declarations ---------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
+/* TODO: Put Mser extraction into derived class
+ * TODO: Create derived class for tracking
+ * TODO: Optimize history (less reallocation) by creating a (#minima * history_length) array
+ * Uses CRTP, so that no runtime cost is inflicted.
+ * This class is thus purely abstract. It is neccessary to implement the check_component_ member
+ * function in a derived class.
+*/
 template <typename Child>
 class MatAnalyzer {
 public:
@@ -35,7 +40,7 @@ public:
 
     MatAnalyzer (unsigned int delta) : delta_(delta) {}
 
-    uchar raise_level (Component& comp, uchar level) {
+    void raise_level (Component& comp, uchar level) {
         assert(level > comp.level);
         extend_history_(comp,  level);
         comp.level = level;
@@ -58,7 +63,7 @@ public:
 
 protected:
     Result result_;
-    const uchar delta_ = 5;
+    const unsigned int delta_ = 5;
 
 
     void extend_history_(Component& comp, uchar level);
@@ -70,17 +75,31 @@ protected:
     }
 };
 
-// Analyzes the component tree to find msers.
+/* Analyzes the component tree to find msers.
+ *
+ */
 class MatMserAnalyzer : public MatAnalyzer<MatMserAnalyzer> {
 public:
     MatMserAnalyzer (unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
-                     float min_stability = 20.f)
+                     float min_stability = 20.f, float min_diversity=.5f)
         : MatAnalyzer<MatMserAnalyzer>(delta),
-         min_N_(min_N), max_N_(max_N), min_stability_(min_stability) {}
+         min_N_(min_N), max_N_(max_N), min_stability_(min_stability), min_diversity_(min_diversity) {}
 
     struct Component : public MatAnalyzer<MatMserAnalyzer>::Component {
         Component (uchar level) : MatAnalyzer<MatMserAnalyzer>::Component(level) {}
+
+        unsigned int last_mser_N = 0;
     };
+
+    Component add_component (uchar level) {
+        return Component(level);
+    }
+
+    void merge_component_into (Component& comp1, Component& comp2, uchar level) {
+        if (comp1.stats.N > comp2.stats.N )
+            comp2.last_mser_N = comp1.last_mser_N;
+        MatAnalyzer<MatMserAnalyzer>::merge_component_into(comp1, comp2, level);
+    }
 
     void check_component_(Component &comp) {
         if (comp.history.size() >= 2*delta_ + 1) {
@@ -88,24 +107,30 @@ public:
             auto& examinee = comp.history.rbegin()[delta_];
             auto& pred = comp.history.rbegin()[delta_ + 1];
 
+            auto diversity = static_cast<float> (examinee.N - comp.last_mser_N) / examinee.N;
             if (examinee.stability > pred.stability && examinee.stability > succ.stability
                     && min_N_ <= examinee.N && examinee.N <= max_N_
-                    && examinee.stability >= min_stability_)
+                    && examinee.stability >= min_stability_
+                    && diversity >= min_diversity_) {
                 result_.push_back(examinee);
+                comp.last_mser_N = examinee.N;
+            }
         }
     }
 
-    Component add_component (uchar level) {
-        return Component(level);
-    }
+
 
 private:
     const unsigned int min_N_;
     const unsigned int max_N_;
     const float min_stability_;
+    const float min_diversity_;
 };
 
-// definitions
+// ------------------------------------------------------------------------------------------------
+// --------------------------------------- definitions --------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
 // TODO: Remove level from parameter list
 template <typename Child>
 void MatAnalyzer<Child>::add_node(cv::Point2i node, uchar level, MatAnalyzer<Child>::Component &component) {
