@@ -15,7 +15,6 @@ struct MatComponentStats {
 	cv::Point2i max_point = cv::Point2i(0., 0.);
 	uchar min_val = 255;
 	uchar max_val = 0;
-	float stability = 0.;
 	cv::Point2i source = cv::Point2i(0., 0.);
 
 	MatComponentStats() = default;
@@ -64,9 +63,11 @@ public:
 
     struct Component {
         uchar level;
+		uchar stability;
         ComponentStats stats;
         std::vector<ComponentStats> history;
-		std::vector<uchar> history_levels;
+		std::vector<uchar> level_history;
+		std::vector<uchar> stability_history;
 
 		Component(uchar value)
 			: level{value} {}
@@ -96,7 +97,8 @@ public:
 		if (comp1.stats.N > comp2.stats.N) {
 			extend_history_(comp1);
 			comp2.history = std::move(comp1.history);
-			comp2.history_levels = std::move(comp1.history_levels);
+			comp2.level_history = std::move(comp1.level_history);
+			comp2.stability_history = std::move(comp1.stability_history);
 		 }
 
 		comp2.stats.merge(comp1.stats);
@@ -127,10 +129,15 @@ protected:
 
 	void extend_history_(Component& component) {
 		component.history.push_back(component.stats);
-		component.history_levels.push_back(component.level);
+		component.level_history.push_back(component.level);
+		component.stability_history.push_back(component.stability);
+
+		assert(component.history.size() == component.level_history.size());
+		assert(component.history.size() == component.stability_history.size());
+
 		calculate_stability(component);
 		check_component_(component);
-		assert(component.history.size() == component.history_levels.size());
+
 	}
 
 	void calculate_stability(Component& comp) {
@@ -138,12 +145,14 @@ protected:
 			auto& comp0 = comp.history.rbegin()[2*delta_];
 			auto& comp1 = comp.history.rbegin()[delta_];
 			auto& comp2 = comp.history.rbegin()[0];
-			auto& level0 = comp.history_levels.rbegin()[2*delta_];
+			auto& level0 = comp.level_history.rbegin()[2*delta_];
 //			auto& level1 = comp.history_levels.rbegin()[delta_];
-			auto& level2 = comp.history_levels.rbegin()[0];
+			auto& level2 = comp.level_history.rbegin()[0];
+
+			auto& stability1 = comp.stability_history.rbegin()[delta_];
 
 			assert(comp0.N < comp1.N && comp1.N < comp2.N);
-			comp1.stability = static_cast<float>(comp1.N * std::abs(level2 - level0))/(comp2.N - comp0.N);
+			stability1 = static_cast<float>(comp1.N * std::abs(level2 - level0))/(comp2.N - comp0.N);
 			//comp1.stability = static_cast<float>(comp1.N * 2 * delta_)/(comp2.N - comp0.N);
 		}
 	}
@@ -193,14 +202,16 @@ public:
 
 	void check_component_(Component &comp) {
 		if (comp.history.size() >= 2*delta_ + 1) {
-			auto& succ = comp.history.rbegin()[delta_];
 			auto& examinee = comp.history.rbegin()[delta_+1];
-			auto& pred = comp.history.rbegin()[delta_+2];
+
+			auto& succ_stability = comp.stability_history.rbegin()[delta_];
+			auto& examinee_stability = comp.stability_history.rbegin()[delta_+1];
+			auto& pred_stability = comp.stability_history.rbegin()[delta_+2];
 
 			auto diversity = static_cast<float> (examinee.N - comp.last_mser_N) / examinee.N;
-			if (examinee.stability > pred.stability && examinee.stability > succ.stability
+			if (examinee_stability > pred_stability && examinee_stability > succ_stability
 					&& min_N_ <= examinee.N && examinee.N <= max_N_
-					&& examinee.stability >= min_stability_
+					&& examinee_stability >= min_stability_
 					&& diversity >= min_diversity_) {
 				result_.push_back(examinee);
 				comp.last_mser_N = examinee.N;
