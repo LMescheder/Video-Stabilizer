@@ -26,8 +26,8 @@ int main() {
     //test0();
     //test1();
     //test2();
-    //test3();
-    test4();
+    test3();
+    //test4();
 }
 
 
@@ -193,7 +193,7 @@ void test4()
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
         up_msers = mymser.retrieve_msers(frame, up_msers, false);
-        down_msers = mymser.retrieve_msers(frame, up_msers, true);
+        down_msers = mymser.retrieve_msers(frame, down_msers, true);
 
         auto up_points =mymser.mult_stats_to_points(up_msers, frame);
         auto down_points =mymser.mult_stats_to_points(down_msers, frame);

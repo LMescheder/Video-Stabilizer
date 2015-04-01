@@ -54,17 +54,17 @@ public:
         return NodeIndex{0, 0};
     }
 
-    Node node(NodeIndex node_idx) {
+    Node node(NodeIndex node_idx) const {
         return offset_ + node_idx;
     }
 
-    Value value (NodeIndex node_idx) {
+    Value value (NodeIndex node_idx) const {
         return data_.at<uchar>(node_idx);
     }
 
 
-    NodeIndex get_index (const Node& node){
-        return node;
+    NodeIndex get_index (const Node& node) const{
+        return node - offset_;
     }
 
     boost::optional<NodeIndex> get_next_neighbor (NodeIndex node);

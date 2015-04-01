@@ -10,7 +10,7 @@
 struct MatComponentStats {
     unsigned int N = 0;
     float stability = 0.;
-    cv::Point2f mean = cv::Vec2f(0., 0.);
+    cv::Point2f mean = cv::Point2f(0., 0.);
     cv::Matx22f cov = cv::Matx22f(0., 0., 0., 0.);
     cv::Point2i min_point = cv::Point2i(0., 0.);
     cv::Point2i max_point = cv::Point2i(0., 0.);
@@ -26,8 +26,8 @@ struct MatComponentStats {
 
     void merge(const MatComponentStats& comp1) {
         auto& comp2 = *this;
-        auto p = float(comp1.N) / float(N + comp2.N);
-        auto q = float(comp2.N) / float(N + comp2.N);
+        auto p = float(comp1.N) / float(comp1.N + comp2.N);
+        auto q = float(comp2.N) / float(comp1.N + comp2.N);
 
         cv::Vec2f dmean = comp2.mean - comp1.mean;
         for (auto i : {0, 1})
@@ -44,6 +44,10 @@ struct MatComponentStats {
 
         comp2.min_val = std::min(comp1.min_val, comp2.min_val);
         comp2.max_val = std::max(comp1.max_val, comp2.max_val);
+
+        assert(min_point.x - 1e4 < mean.x && mean.x < max_point.x + 1e4);
+        assert(min_point.y - 1e4 < mean.y && mean.y < max_point.y + 1e4);
+
     }
 
     void merge(cv::Point2i point, uchar value) {
@@ -287,8 +291,8 @@ protected:
     void check_component_(Component &comp) {
         assert(comp.history.size() == comp.level_history.size());
         if (comp.history.size() >= 2*delta_ + 1) {
-            auto& pred = comp.history.rbegin()[2*delta_ + 1];
-            uchar pred_level = comp.level_history.rbegin()[2*delta_ + 1];
+            auto& pred = comp.history.rbegin()[2*delta_];
+            uchar pred_level = comp.level_history.rbegin()[2*delta_];
             auto& examinee = comp.history.rbegin()[delta_];
             uchar level = comp.level_history.rbegin()[delta_];
             auto& succ = comp.history.rbegin()[0];
@@ -297,6 +301,7 @@ protected:
 
             // compute cost function
             float cost = 0;
+            auto& target_stats = target_stats_;
             cost += (target_stats_.mean.x - examinee.mean.x)*(target_stats_.mean.x - examinee.mean.x);
             cost += (target_stats_.mean.y - examinee.mean.y)*(target_stats_.mean.y - examinee.mean.y);
             cost += (target_stats_.N - examinee.N)*(target_stats_.N - examinee.N);

@@ -71,22 +71,22 @@ class ComponentTreeParser {
 
     Result operator() (const Data& data, Analyzer& analyzer, bool inverted=false) {
         auto graph = GraphAccessor(data, inverted);
-		analyzer.reset();
+        analyzer.reset();
         auto boundary_nodes = PriorityQueue{inverted};
         return parse_(graph, analyzer, boundary_nodes);
     }
 
     Result operator() (GraphAccessor& graph, Analyzer& analyzer, bool inverted=false) {
-		graph.reset();
-		analyzer.reset();
+        graph.reset();
+        analyzer.reset();
         auto boundary_nodes = PriorityQueue{inverted};
         return parse_(graph, analyzer, boundary_nodes);
     }
 
     Result operator() (GraphAccessor& graph, Analyzer& analyzer, PriorityQueue& boundary_nodes) {
-		graph.reset();
-		analyzer.reset();
-		boundary_nodes.reset();
+        graph.reset();
+        analyzer.reset();
+        boundary_nodes.reset();
         return parse_(graph, analyzer, boundary_nodes);
     }
 
@@ -98,22 +98,24 @@ class ComponentTreeParser {
         public:
         ComponentStack (const GraphAccessor& graph, Analyzer& analyzer)
             : graph_(graph), analyzer_(analyzer), components_(){
-            components_.push_back(analyzer_.add_component(graph_.inf()));
+            //components_.push_back(analyzer_.add_component(graph_.inf()));
         }
 
-        void push_component(Node node, Value level) {
-            components_.push_back(analyzer_.add_component(node, level));
+        void push_component(NodeIndex node_idx, Value level) {
+            assert(components_.empty() || graph_.less(level, analyzer_.get_level(components_.back())));
+            components_.push_back(analyzer_.add_component(node_idx, level));
             //current_levels_.push_back(level);
         }
-		void push_node(Node node) {
-			analyzer_.add_node(node, components_.back());
+        void push_node(NodeIndex node_idx) {
+            assert(analyzer_.get_level(components_.back()) == graph_.value(node_idx));
+            analyzer_.add_node(graph_.node(node_idx), components_.back());
         }
 
         void raise_level(Value level);
 
        // std::vector<Value> current_levels_;
-		const GraphAccessor& graph_;
-		Analyzer& analyzer_;
+        const GraphAccessor& graph_;
+        Analyzer& analyzer_;
         std::vector<Component> components_;
     };
 
@@ -146,7 +148,9 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
     while (auto current_node_or_none = boundary_nodes.pop()) {
         // get next node
         auto current_node = *current_node_or_none;
-        component_stack.raise_level(graph.value(current_node));
+
+        if (!flowingdown_phase)
+            component_stack.raise_level(graph.value(current_node));
 
         /*
             std::cout << "Current node: " << current_node
@@ -167,12 +171,13 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
             }
         }
 
+        auto node = graph.node(current_node);
         // new minimum found?
         if (flowingdown_phase) {
-            component_stack.push_component(graph.node(current_node), graph.value(current_node));
+            component_stack.push_component(current_node, graph.value(current_node));
             flowingdown_phase = false;
         } else {
-			component_stack.push_node(graph.node(current_node));
+            component_stack.push_node(current_node);
         }
     }
     return analyzer.get_result();
@@ -182,12 +187,12 @@ template <typename G, typename A>
 void ComponentTreeParser<G,A>::ComponentStack::raise_level(ComponentTreeParser<G,A>::Value level) {
     while (graph_.less(analyzer_.get_level(components_.back()), level)) {
         // level of second last component (exists, since current_level < inf)
-        auto next_level = analyzer_.get_level(components_.rbegin()[1]);
-        if  (graph_.less(level, next_level)) {
+        if  (components_.size() == 1 ||
+             graph_.less(level, analyzer_.get_level(components_.rbegin()[1]))) {
             analyzer_.raise_level(components_.back(), level);
         } else {
             // is it correct to use level instead of next_level here?
-			analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
+            analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
             components_.pop_back();
         }
     }

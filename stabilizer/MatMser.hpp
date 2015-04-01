@@ -74,6 +74,9 @@ public:
     }
 
     std::vector<cv::Point2i> stats_to_points (const MatMserAnalyzer::ComponentStats& stats, const cv::Mat& im) {
+        if (stats.N == 0)
+            return {};
+
         std::vector<MatAccessor::NodeIndex> toprocess;
         std::vector<cv::Point2i> points;
 
@@ -83,8 +86,8 @@ public:
         cv::Mat ROI = im(cv::Range(stats.min_point.y, stats.max_point.y+1),
                          cv::Range(stats.min_point.x, stats.max_point.x+1));
 
-        MatAccessor graph(ROI);
-        toprocess.push_back(graph.get_index(stats.source - stats.min_point) );
+        MatAccessor graph(ROI, false, stats.min_point);
+        toprocess.push_back(graph.get_index(stats.source) );
         while (!toprocess.empty()) {
             auto current_node = toprocess.back();
             toprocess.pop_back();
@@ -96,10 +99,11 @@ public:
                     toprocess.push_back(next_neighbor);
             }
 
-            points.push_back(stats.min_point + graph.node(current_node));
+            points.push_back(graph.node(current_node));
         }
-
-        assert(points.size() == stats.N);
+        if (points.size() != stats.N)
+            std::cout << points.size() << ' ' << stats.N << std::endl;
+        //assert(points.size() == stats.N);
         return points;
     }
 
