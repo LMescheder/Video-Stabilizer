@@ -56,8 +56,8 @@ struct MatComponentStats {
  * This class is thus purely abstract. It is neccessary to implement the check_component_ member
  * function in a derived class.
 */
-template <typename Child>
-class MatAnalyzer {
+
+class MatMserAnalyzer {
 public:
 	using ComponentStats = MatComponentStats;
 
@@ -65,6 +65,8 @@ public:
         uchar level;
 		uchar stability;
         ComponentStats stats;
+		unsigned int last_mser_N = 0;
+
         std::vector<ComponentStats> history;
 		std::vector<uchar> level_history;
 		std::vector<uchar> stability_history;
@@ -79,7 +81,9 @@ public:
 
     using Result = std::vector<ComponentStats>;
 
-    MatAnalyzer (unsigned int delta) : delta_(delta) {}
+	MatMserAnalyzer (unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
+				 float min_stability = 20.f, float min_diversity=.5f)
+	 : delta_(delta), min_N_(min_N), max_N_(max_N), min_stability_(min_stability), min_diversity_(min_diversity) {}
 
     void raise_level (Component& comp, uchar level) {
 		assert(level != comp.level);
@@ -93,12 +97,14 @@ public:
 
 	void merge_component_into(Component& comp1, Component& comp2) {
 		assert(comp1.level != comp2.level);
+
 		// take the history of the winner
 		if (comp1.stats.N > comp2.stats.N) {
 			extend_history_(comp1);
 			comp2.history = std::move(comp1.history);
 			comp2.level_history = std::move(comp1.level_history);
 			comp2.stability_history = std::move(comp1.stability_history);
+			comp2.last_mser_N = comp1.last_mser_N;
 		 }
 
 		comp2.stats.merge(comp1.stats);
@@ -125,7 +131,10 @@ public:
 protected:
     Result result_;
     const unsigned int delta_ = 5;
-
+	const unsigned int min_N_;
+	const unsigned int max_N_;
+	const float min_stability_;
+	const float min_diversity_;
 
 	void extend_history_(Component& component) {
 		component.history.push_back(component.stats);
@@ -158,48 +167,6 @@ protected:
 	}
 
 
-    void check_component_ (Component& comp) {
-        static_cast<Child*>(this)->check_component_(static_cast<typename Child::Component&> (comp));
-    }
-
-};
-
-/* Analyzes the component tree to find msers.
- *
- */
-class MatMserAnalyzer : public MatAnalyzer<MatMserAnalyzer> {
-public:
-    MatMserAnalyzer (unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
-                     float min_stability = 20.f, float min_diversity=.5f)
-        : MatAnalyzer<MatMserAnalyzer>(delta),
-         min_N_(min_N), max_N_(max_N), min_stability_(min_stability), min_diversity_(min_diversity) {}
-
-    struct Component : public MatAnalyzer<MatMserAnalyzer>::Component {
-		Component (uchar level) : MatAnalyzer<MatMserAnalyzer>::Component(level) {}
-		Component (cv::Point2i point, uchar level) : MatAnalyzer<MatMserAnalyzer>::Component(point, level) {}
-
-        unsigned int last_mser_N = 0;
-    };
-
-	Component add_component (uchar level) {
-		return Component{level};
-	}
-
-	Component add_component (cv::Point2i point, uchar level) {
-		return Component(point, level);
-    }
-
-	void add_node( typename cv::Point2i node, Component& component) {
-		component.stats.merge(node, component.level);
-	}
-
-
-	void merge_component_into (Component& comp1, Component& comp2) {
-        if (comp1.stats.N > comp2.stats.N )
-            comp2.last_mser_N = comp1.last_mser_N;
-		MatAnalyzer<MatMserAnalyzer>::merge_component_into(comp1, comp2);
-	}
-
 	void check_component_(Component &comp) {
 		if (comp.history.size() >= 2*delta_ + 1) {
 			auto& examinee = comp.history.rbegin()[delta_+1];
@@ -217,13 +184,9 @@ public:
 				comp.last_mser_N = examinee.N;
 			}
 		}
-	}
+    }
 
-private:
-    const unsigned int min_N_;
-    const unsigned int max_N_;
-    const float min_stability_;
-    const float min_diversity_;
 };
+
 
 #endif // MATMSERANALYZER_HPP
