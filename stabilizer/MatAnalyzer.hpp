@@ -47,7 +47,13 @@ struct MatComponentStats {
 	void merge(cv::Point2i point, uchar value) {
 		merge(MatComponentStats{point, value});
 	}
+
+
 };
+
+float compute_stability(uchar pred_N, uchar pred_level, uchar N, uchar level, uchar succ_N, uchar succ_level) {
+	return static_cast<float>(N * std::abs(succ_level - pred_level))/(succ_N - pred_N);
+}
 
 /* TODO: Put Mser extraction into derived class
  * TODO: Create derived class for tracking
@@ -63,7 +69,7 @@ public:
 
     struct Component {
         uchar level;
-		uchar stability;
+		uchar stability = 0;
         ComponentStats stats;
 		unsigned int last_mser_N = 0;
 
@@ -84,6 +90,10 @@ public:
 	MatMserAnalyzer (unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
 				 float min_stability = 20.f, float min_diversity=.5f)
 	 : delta_(delta), min_N_(min_N), max_N_(max_N), min_stability_(min_stability), min_diversity_(min_diversity) {}
+
+	void reset(){
+		result_.clear();
+	}
 
     void raise_level (Component& comp, uchar level) {
 		assert(level != comp.level);
@@ -155,14 +165,13 @@ protected:
 			auto& comp1 = comp.history.rbegin()[delta_];
 			auto& comp2 = comp.history.rbegin()[0];
 			auto& level0 = comp.level_history.rbegin()[2*delta_];
-//			auto& level1 = comp.history_levels.rbegin()[delta_];
+			auto& level1 = comp.level_history.rbegin()[delta_];
 			auto& level2 = comp.level_history.rbegin()[0];
 
 			auto& stability1 = comp.stability_history.rbegin()[delta_];
 
 			assert(comp0.N < comp1.N && comp1.N < comp2.N);
-			stability1 = static_cast<float>(comp1.N * std::abs(level2 - level0))/(comp2.N - comp0.N);
-			//comp1.stability = static_cast<float>(comp1.N * 2 * delta_)/(comp2.N - comp0.N);
+			stability1 = compute_stability(comp0.N, level0, comp1.N, level1, comp2.N, level2);
 		}
 	}
 
@@ -185,6 +194,104 @@ protected:
 			}
 		}
     }
+
+};
+
+/* MserRetriever
+ *
+ *
+ */
+
+
+class MatFindMserAnalyzer {
+public:
+	using ComponentStats = MatComponentStats;
+
+	struct Component {
+		uchar level;
+		uchar stability = 0;
+		ComponentStats stats;
+
+		std::vector<uchar> area_history;
+		std::vector<uchar> level_history;
+
+		Component(uchar value)
+			: level{value} {}
+
+		Component(cv::Point2i point, uchar value)
+			: level{value}, stats{point, value} {}
+	};
+
+
+	using Result = ComponentStats;
+
+	MatFindMserAnalyzer (ComponentStats previous_stats, unsigned int delta=5)
+	 : delta_{delta}, previous_stats_{previous_stats} {}
+
+	void reset(){
+
+	}
+
+	void raise_level (Component& comp, uchar level) {
+		assert(level != comp.level);
+		extend_history_(comp);
+		comp.level = level;
+	}
+
+	uchar get_level (const Component& comp) const{
+		return comp.level;
+	}
+
+	void merge_component_into(Component& comp1, Component& comp2) {
+		assert(comp1.level != comp2.level);
+
+		// take the history of the winner
+		if (comp1.stats.N > comp2.stats.N) {
+			extend_history_(comp1);
+			comp2.area_history = std::move(comp1.area_history);
+			comp2.level_history = std::move(comp1.level_history);
+		 }
+
+		comp2.stats.merge(comp1.stats);
+	}
+
+
+	Component add_component (cv::Point2i point, uchar level) {
+		return Component(point, level);
+	}
+
+	Component add_component (uchar level) {
+		return Component(level);
+	}
+
+	void add_node( typename cv::Point2i node, Component& component) {
+		component.stats.merge(node, component.level);
+	}
+
+	Result get_result() {
+		return result_;
+	}
+
+protected:
+	Result result_;
+	const unsigned int delta_ = 5;
+	const ComponentStats previous_stats_;
+	float current_optimal = 0;
+
+	void extend_history_(Component& component) {
+		component.area_history.push_back(component.stats.N);
+		component.level_history.push_back(component.level);
+
+		assert(component.area_history.size() == component.level_history.size());
+
+		check_component_(component);
+
+	}
+
+
+	void check_component_(Component &comp) {
+
+	}
 
 };
 

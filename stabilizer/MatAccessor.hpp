@@ -30,6 +30,10 @@ public:
         mask_ = cv::Mat::zeros(data.rows, data.cols, CV_8U);
     }
 
+	void reset() {
+		mask_ = 0;
+	}
+
     Value inf () const {
         if (!inverted_)
             return 255;
@@ -79,6 +83,12 @@ class MatAccessor::PriorityQueue {
 public:
     PriorityQueue (bool inv=false)
         : inverted_(inv) {}
+
+	void reset_() {
+		minimum_ = 255;
+		for (auto& stack : points_)
+			stack.clear();
+	}
 
     void push(cv::Point2i point, uchar value) {
         if (inverted_)

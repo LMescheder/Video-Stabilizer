@@ -71,16 +71,22 @@ class ComponentTreeParser {
 
     Result operator() (const Data& data, Analyzer& analyzer, bool inverted=false) {
         auto graph = GraphAccessor(data, inverted);
+		analyzer.reset();
         auto boundary_nodes = PriorityQueue{inverted};
         return parse_(graph, analyzer, boundary_nodes);
     }
 
     Result operator() (GraphAccessor& graph, Analyzer& analyzer, bool inverted=false) {
+		graph.reset();
+		analyzer.reset();
         auto boundary_nodes = PriorityQueue{inverted};
         return parse_(graph, analyzer, boundary_nodes);
     }
 
     Result operator() (GraphAccessor& graph, Analyzer& analyzer, PriorityQueue& boundary_nodes) {
+		graph.reset();
+		analyzer.reset();
+		boundary_nodes.reset();
         return parse_(graph, analyzer, boundary_nodes);
     }
 
