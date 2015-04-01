@@ -46,12 +46,25 @@ public:
         return mult_stats_to_points(detect_msers(image), image);
     }
 
-    ComponentStats retrieve_msers (const cv::Mat& image, const ComponentStats& target_stats,
-                                                            float target_stability, bool reverse) {
+    ComponentStats retrieve_mser (const cv::Mat& image, const ComponentStats& target_stats, bool reverse) {
         ComponentTreeParser<MatAccessor, MatFindMserAnalyzer> parser{};
-        MatFindMserAnalyzer analyzer(target_stats, target_stability, delta_);
+        MatFindMserAnalyzer analyzer(target_stats, delta_);
 
-        return parser(image, analyzer, reverse);
+        cv::Mat ROI = image(cv::Range(std::max((int) 0.9 * target_stats.min_point.y, 0),
+                                      std::min((int) 1.1 * target_stats.max_point.y+1, image.cols)),
+                            cv::Range(std::max((int) 0.9 * target_stats.min_point.x, 0),
+                                      std::min((int) 1.1 * target_stats.max_point.x+1, image.rows)));
+        return parser(ROI, analyzer, reverse);
+    }
+
+    std::vector<ComponentStats> retrieve_msers (const cv::Mat& image,
+                                   const std::vector<ComponentStats>& target_stats,
+                                   bool reverse) {
+        std::vector<ComponentStats> result;
+        result.reserve(target_stats.size());
+        for (auto& s : target_stats)
+            result.push_back(retrieve_mser(image, s, reverse));
+        return result;
     }
 
     std::vector<cv::Point2i> stats_to_points (const MatMserAnalyzer::ComponentStats& stats, const cv::Mat& im) {

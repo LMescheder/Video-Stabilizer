@@ -20,12 +20,14 @@ void test0 ();
 void test1 ();
 void test2 ();
 void test3 ();
+void test4();
 
 int main() {
     //test0();
-	//test1();
-	//test2();
-	test3();
+    //test1();
+    //test2();
+    //test3();
+    test4();
 }
 
 
@@ -41,14 +43,14 @@ void test0 () {
 
 
     auto start = std::chrono::high_resolution_clock::now();
-	auto result = mymser.detect_msers(data);
+    auto result = mymser.detect_msers(data);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 }
 
 
 void test1 () {
-	const char* path = "../../data/Lena.png";
+    const char* path = "../../data/Lena.png";
     cv::Mat im = cv::imread(path, CV_LOAD_IMAGE_COLOR);
 
     cv::Mat data;
@@ -59,7 +61,7 @@ void test1 () {
 
 
     auto start = std::chrono::high_resolution_clock::now();
-	auto result = mymser.detect_msers_points(data);
+    auto result = mymser.detect_msers_points(data);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
@@ -89,7 +91,7 @@ void test1 () {
     for (auto& mser : cv_msers) {
         std::vector<cv::Point> hull;
         cv::convexHull(mser, hull);
-		cv::polylines(output_im, hull, true, cv::Scalar(0, 255, 0));
+        cv::polylines(output_im, hull, true, cv::Scalar(0, 255, 0));
     }
 
 
@@ -116,7 +118,7 @@ void test2()
         cv::Mat gray;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-		auto result = mymser.detect_msers(gray);
+        auto result = mymser.detect_msers(gray);
 
         for (auto& mser : result) {
             cv::circle(frame, cv::Point(mser.mean), 2, cv::Scalar(255, 0, 0));
@@ -150,7 +152,7 @@ void test3()
         cv::Mat gray;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-		auto result = mymser.detect_msers_points(gray);
+        auto result = mymser.detect_msers_points(gray);
 
         for (auto& mser : result) {
             std::vector<cv::Point> hull;
@@ -167,3 +169,52 @@ void test3()
 
 }
 
+void test4()
+{
+    std::string filename = "../../data/Shop 30s.avi";
+    cv::VideoCapture cap(filename);
+
+    //if(!cap.isOpened())
+    //   return -1;
+
+    cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
+
+    MatMser mymser;
+    cv::Mat frame;
+    cap >> frame;
+
+    auto up_msers = mymser.detect_msers(frame, MatMser::upwards);
+    auto down_msers = mymser.detect_msers(frame, MatMser::downwards);
+
+    while (true) {
+
+        cap >> frame;
+        cv::Mat gray;
+        cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+
+        up_msers = mymser.retrieve_msers(frame, up_msers, false);
+        down_msers = mymser.retrieve_msers(frame, up_msers, true);
+
+        auto up_points =mymser.mult_stats_to_points(up_msers, frame);
+        auto down_points =mymser.mult_stats_to_points(down_msers, frame);
+
+        for (auto& mser : up_points) {
+            std::vector<cv::Point> hull;
+            cv::convexHull(mser, hull);
+             cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+        }
+
+        for (auto& mser : down_points) {
+            std::vector<cv::Point> hull;
+            cv::convexHull(mser, hull);
+            cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+        }
+
+        cv::imshow("Video", frame);
+
+        if (cv::waitKey(1) >= 0) {
+            break;
+        }
+    }
+
+}
