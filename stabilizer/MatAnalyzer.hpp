@@ -116,7 +116,9 @@ public:
 	}
 
     // TODO: put into derived classes
-    Result get_result() { return std::move(result_); result_.clear();}
+	Result get_result() {
+		return std::move(result_);
+	}
 
 protected:
     Result result_;
@@ -136,13 +138,13 @@ protected:
 			auto& comp0 = comp.history.rbegin()[2*delta_];
 			auto& comp1 = comp.history.rbegin()[delta_];
 			auto& comp2 = comp.history.rbegin()[0];
-//			auto& level0 = comp.history_levels.rbegin()[2*delta_];
+			auto& level0 = comp.history_levels.rbegin()[2*delta_];
 //			auto& level1 = comp.history_levels.rbegin()[delta_];
-//			auto& level2 = comp.history_levels.rbegin()[0];
+			auto& level2 = comp.history_levels.rbegin()[0];
 
 			assert(comp0.N < comp1.N && comp1.N < comp2.N);
-			//comp1.stability = static_cast<float>(comp1.N * std::abs(level2 - level0))/(comp2.N - comp0.N);
-			comp1.stability = static_cast<float>(comp1.N * delta_)/(comp2.N - comp1.N);
+			comp1.stability = static_cast<float>(comp1.N * std::abs(level2 - level0))/(comp2.N - comp0.N);
+			//comp1.stability = static_cast<float>(comp1.N * 2 * delta_)/(comp2.N - comp0.N);
 		}
 	}
 
@@ -196,7 +198,7 @@ public:
 			auto& pred = comp.history.rbegin()[delta_+2];
 
 			auto diversity = static_cast<float> (examinee.N - comp.last_mser_N) / examinee.N;
-			if (examinee.stability > 1.1*pred.stability && examinee.stability > 1.1*succ.stability
+			if (examinee.stability > pred.stability && examinee.stability > succ.stability
 					&& min_N_ <= examinee.N && examinee.N <= max_N_
 					&& examinee.stability >= min_stability_
 					&& diversity >= min_diversity_) {
