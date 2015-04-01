@@ -48,7 +48,7 @@ void test0 () {
 
 
 void test1 () {
-    const char* path = "/home/lars/Education/University/Semester_10_Lausanne/CV_Project/work/build/data/Lena.png";
+	const char* path = "../../data/Lena.png";
     cv::Mat im = cv::imread(path, CV_LOAD_IMAGE_COLOR);
 
     cv::Mat data;
@@ -89,7 +89,7 @@ void test1 () {
     for (auto& mser : cv_msers) {
         std::vector<cv::Point> hull;
         cv::convexHull(mser, hull);
-        cv::polylines(output_im, hull, true, cv::Scalar(0, 255, 0));
+		//cv::polylines(output_im, hull, true, cv::Scalar(0, 255, 0));
     }
 
 

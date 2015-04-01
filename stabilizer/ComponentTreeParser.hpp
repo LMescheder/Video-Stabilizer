@@ -99,15 +99,15 @@ class ComponentTreeParser {
             components_.push_back(analyzer_.add_component(node, level));
             //current_levels_.push_back(level);
         }
-        void push_node(Node node, Value level) {
-            analyzer_.add_node(node, level, components_.back());
+		void push_node(Node node) {
+			analyzer_.add_node(node, components_.back());
         }
 
         void raise_level(Value level);
 
        // std::vector<Value> current_levels_;
-        Analyzer& analyzer_;
-        const GraphAccessor& graph_;
+		const GraphAccessor& graph_;
+		Analyzer& analyzer_;
         std::vector<Component> components_;
     };
 
@@ -166,7 +166,7 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
             component_stack.push_component(graph.node(current_node), graph.value(current_node));
             flowingdown_phase = false;
         } else {
-            component_stack.push_node(graph.node(current_node), graph.value(current_node));
+			component_stack.push_node(graph.node(current_node));
         }
     }
     return analyzer.get_result();
@@ -181,7 +181,7 @@ void ComponentTreeParser<G,A>::ComponentStack::raise_level(ComponentTreeParser<G
             analyzer_.raise_level(components_.back(), level);
         } else {
             // is it correct to use level instead of next_level here?
-            analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1], level);
+			analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
             components_.pop_back();
         }
     }
