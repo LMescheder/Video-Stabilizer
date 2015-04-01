@@ -25,14 +25,14 @@ public:
 
 
 
-    MatAccessor(Data data, bool inverted=false)
-        : data_(data), inverted_(inverted) {
+    MatAccessor(Data data, bool inverted=false, cv::Point2i offset=cv::Point2i{0,0})
+        : data_(data), inverted_(inverted), offset_{offset} {
         mask_ = cv::Mat::zeros(data.rows, data.cols, CV_8U);
     }
 
-	void reset() {
-		mask_ = 0;
-	}
+    void reset() {
+        mask_ = 0;
+    }
 
     Value inf () const {
         if (!inverted_)
@@ -55,7 +55,7 @@ public:
     }
 
     Node node(NodeIndex node_idx) {
-        return node_idx;
+        return offset_ + node_idx;
     }
 
     Value value (NodeIndex node_idx) {
@@ -73,6 +73,7 @@ private:
     Data data_;
     cv::Mat mask_;
     bool inverted_;
+    cv::Point2i offset_;
 
 };
 
@@ -84,11 +85,11 @@ public:
     PriorityQueue (bool inv=false)
         : inverted_(inv) {}
 
-	void reset_() {
-		minimum_ = 255;
-		for (auto& stack : points_)
-			stack.clear();
-	}
+    void reset_() {
+        minimum_ = 255;
+        for (auto& stack : points_)
+            stack.clear();
+    }
 
     void push(cv::Point2i point, uchar value) {
         if (inverted_)

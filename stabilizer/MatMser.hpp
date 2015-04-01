@@ -50,11 +50,17 @@ public:
         ComponentTreeParser<MatAccessor, MatFindMserAnalyzer> parser{};
         MatFindMserAnalyzer analyzer(target_stats, delta_);
 
-        cv::Mat ROI = image(cv::Range(std::max((int) 0.9 * target_stats.min_point.y, 0),
-                                      std::min((int) 1.1 * target_stats.max_point.y+1, image.cols)),
-                            cv::Range(std::max((int) 0.9 * target_stats.min_point.x, 0),
-                                      std::min((int) 1.1 * target_stats.max_point.x+1, image.rows)));
-        return parser(ROI, analyzer, reverse);
+        int dx = static_cast<int> (.05 * (target_stats.max_point.x - target_stats.min_point.x));
+        int dy = static_cast<int> (.05 * (target_stats.max_point.y - target_stats.min_point.y));
+        cv::Point2i p1{std::max(target_stats.min_point.x - dx, 0),
+                       std::max(target_stats.min_point.y - dy, 0)};
+        cv::Point2i p2{std::min(target_stats.max_point.x + dx, image.cols-1),
+                       std::min(target_stats.max_point.y + dy, image.rows-1)};
+
+        cv::Mat ROI = image(cv::Range(p1.y, p2.y+1), cv::Range(p1.x, p2.x+1));
+        MatAccessor graph(ROI, reverse, p1);
+
+        return parser(graph, analyzer, reverse);
     }
 
     std::vector<ComponentStats> retrieve_msers (const cv::Mat& image,
