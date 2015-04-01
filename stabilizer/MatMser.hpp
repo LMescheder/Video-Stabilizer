@@ -12,8 +12,8 @@ class MatMser
 public:
     using ComponentStats = MatMserAnalyzer::ComponentStats;
 
-    MatMser(unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
-            float min_stability = 20.f, float min_diversity=.5f)
+	MatMser(unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
+			float min_stability = 20.f, float min_diversity=.5f)
         : delta_(delta), min_N_(min_N), max_N_(max_N),
           min_stability_(min_stability), min_diversity_(min_diversity) {}
 

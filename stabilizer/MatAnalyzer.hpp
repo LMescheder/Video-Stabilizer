@@ -39,7 +39,7 @@ public:
         uchar level;
         ComponentStats stats;
         std::vector<ComponentStats> history;
-        //std::vector<uchar> history_levels;
+		std::vector<uchar> history_levels;
 
 		Component(uchar value)
 			: level{value} {}
@@ -179,6 +179,7 @@ void MatAnalyzer<Child>::merge_component_into(MatAnalyzer<Child>::Component &com
     if (comp1.stats.N > comp2.stats.N) {
         extend_history_(comp1, comp2.level);
         comp2.history = std::move(comp1.history);
+		comp2.history_levels = std::move(comp1.history_levels);
      }
 
     merge_componentstats_into_(comp1.stats, comp2.stats);
@@ -189,10 +190,10 @@ template <typename Child>
 void MatAnalyzer<Child>::extend_history_(MatAnalyzer<Child>::Component &component, uchar level) {
     assert(component.level != level);
     component.history.push_back(component.stats);
-    //component.history_levels.push_back(component.level);
+	component.history_levels.push_back(component.level);
     calculate_stability(component);
     check_component_(component);
-
+	assert(component.history.size() == component.history_levels.size());
 }
 
 template <typename Child>
@@ -224,7 +225,12 @@ void MatAnalyzer<Child>::calculate_stability(MatAnalyzer<Child>::Component &comp
         auto& comp0 = comp.history.rbegin()[2*delta_];
         auto& comp1 = comp.history.rbegin()[delta_];
         auto& comp2 = comp.history.rbegin()[0];
-        comp1.stability = static_cast<float>(2*delta_ * comp1.N)/(comp2.N - comp0.N);
+		auto& level0 = comp.history_levels.rbegin()[2*delta_];
+		auto& level1 = comp.history_levels.rbegin()[delta_];
+		auto& level2 = comp.history_levels.rbegin()[0];
+
+		assert(comp0.N < comp1.N && comp1.N < comp2.N);
+		comp1.stability = static_cast<float>(comp1.N * std::abs(level2 - level1))/(comp2.N - comp1.N);
     }
     /*
     if (comp.history.size() < delta_) {
