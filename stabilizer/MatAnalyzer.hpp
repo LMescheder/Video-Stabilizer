@@ -27,6 +27,12 @@ public:
         cv::Point2i max_point = cv::Point2i(0., 0.);
         float stability = 0.;
         cv::Point2i source = cv::Point2i(0., 0.);
+
+		ComponentStats() = default;
+
+		ComponentStats(cv::Point2i point, uchar value)
+			: N{1}, mean{point.x, point.y}, min_point{point}, max_point{point},
+			  min_val{value}, max_val{value}, source{point} {}
     };
 
     struct Component {
@@ -35,8 +41,11 @@ public:
         std::vector<ComponentStats> history;
         //std::vector<uchar> history_levels;
 
-        Component (uchar value)
-            : level(value) {}
+		Component(uchar value)
+			: level{value} {}
+
+		Component(cv::Point2i point, uchar value)
+			: level{value}, stats{point, value} {}
     };
 
 
@@ -54,21 +63,23 @@ public:
         return comp.level;
     }
 
-    // TODO: Remove level from parameter list
-    void add_node( typename cv::Point2i node, uchar level, Component& component) {
-        assert(level == component.level);
-        ComponentStats node_comp = point_stats_(node, level);
-        merge_componentstats_into_(node_comp, component.stats);
-    }
+
 
     void merge_component_into (Component& comp1, Component& comp2, uchar level);
 
-    Component add_component (cv::Point2i point, uchar level) {
-        Component new_comp = Component(level);
-        new_comp.stats = point_stats_(point, level);
-        new_comp.stats.source = point;
-        return new_comp;
+	Component add_component (cv::Point2i point, uchar level) {
+		return Component(point, level);
     }
+
+	Component add_component (uchar level) {
+		return Component(level);
+	}
+
+	// TODO: Remove level from parameter list
+	void add_node( typename cv::Point2i node, uchar level, Component& component) {
+		assert(level == component.level);
+		merge_componentstats_into_( {node, component.level}, component.stats);
+	}
 
     // TODO: put into derived classes
     Result get_result() { return std::move(result_); result_.clear();}
@@ -86,16 +97,6 @@ protected:
         static_cast<Child*>(this)->check_component_(static_cast<typename Child::Component&> (comp));
     }
 
-    ComponentStats point_stats_(cv::Point2i point, uchar value) {
-        ComponentStats stats;
-        stats.N = 1;
-        stats.mean = cv::Vec2f(point.x, point.y);
-        stats.min_point = point;
-        stats.max_point = point;
-        stats.min_val = value;
-        stats.max_val = value;
-        return stats;
-    }
 };
 
 /* Analyzes the component tree to find msers.
@@ -109,21 +110,25 @@ public:
          min_N_(min_N), max_N_(max_N), min_stability_(min_stability), min_diversity_(min_diversity) {}
 
     struct Component : public MatAnalyzer<MatMserAnalyzer>::Component {
-        Component (uchar level) : MatAnalyzer<MatMserAnalyzer>::Component(level) {}
+		Component (uchar level) : MatAnalyzer<MatMserAnalyzer>::Component(level) {}
+		Component (cv::Point2i point, uchar level) : MatAnalyzer<MatMserAnalyzer>::Component(point, level) {}
 
         unsigned int last_mser_N = 0;
     };
 
-    Component add_component (uchar level) {
-        return Component(level);
+	Component add_component (uchar level) {
+		return Component{level};
+	}
+
+	Component add_component (cv::Point2i point, uchar level) {
+		return Component(point, level);
     }
 
-    Component add_component (cv::Point2i point, uchar level) {
-        Component new_comp = Component(level);
-        new_comp.stats = point_stats_(point, level);
-        new_comp.stats.source = point;
-        return new_comp;
-    }
+	void add_node( typename cv::Point2i node, uchar level, Component& component) {
+		assert(level == component.level);
+		merge_componentstats_into_( {node, component.level}, component.stats);
+	}
+
 
     void merge_component_into (Component& comp1, Component& comp2, uchar level) {
         if (comp1.stats.N > comp2.stats.N )
