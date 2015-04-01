@@ -44,12 +44,13 @@ struct MatComponentStats {
 		comp2.min_val = std::min(comp1.min_val, comp2.min_val);
 		comp2.max_val = std::max(comp1.max_val, comp2.max_val);
 	}
+
 	void merge(cv::Point2i point, uchar value) {
 		merge(MatComponentStats{point, value});
 	}
-
-
 };
+
+
 
 float compute_stability(uchar pred_N, uchar pred_level, uchar N, uchar level, uchar succ_N, uchar succ_level) {
 	return static_cast<float>(N * std::abs(succ_level - pred_level))/(succ_N - pred_N);
@@ -197,7 +198,7 @@ protected:
 
 };
 
-/* MserRetriever
+/* FindMserAnalyzer
  *
  *
  */
@@ -212,7 +213,7 @@ public:
 		uchar stability = 0;
 		ComponentStats stats;
 
-		std::vector<uchar> area_history;
+		std::vector<ComponentStats> history;
 		std::vector<uchar> level_history;
 
 		Component(uchar value)
@@ -225,8 +226,8 @@ public:
 
 	using Result = ComponentStats;
 
-	MatFindMserAnalyzer (ComponentStats previous_stats, unsigned int delta=5)
-	 : delta_{delta}, previous_stats_{previous_stats} {}
+	MatFindMserAnalyzer (ComponentStats target_stats, float target_stability, unsigned int delta=5)
+	 : delta_{delta}, target_stats_{target_stats}, target_stability_{target_stability} {}
 
 	void reset(){
 
@@ -248,7 +249,7 @@ public:
 		// take the history of the winner
 		if (comp1.stats.N > comp2.stats.N) {
 			extend_history_(comp1);
-			comp2.area_history = std::move(comp1.area_history);
+			comp2.history = std::move(comp1.history);
 			comp2.level_history = std::move(comp1.level_history);
 		 }
 
@@ -275,14 +276,15 @@ public:
 protected:
 	Result result_;
 	const unsigned int delta_ = 5;
-	const ComponentStats previous_stats_;
-	float current_optimal = 0;
+	const ComponentStats target_stats_;
+	const float target_stability_ = 0.;
+	float current_optimal = -1;
 
 	void extend_history_(Component& component) {
-		component.area_history.push_back(component.stats.N);
+		component.history.push_back(component.stats);
 		component.level_history.push_back(component.level);
 
-		assert(component.area_history.size() == component.level_history.size());
+		assert(component.history.size() == component.level_history.size());
 
 		check_component_(component);
 
@@ -290,7 +292,28 @@ protected:
 
 
 	void check_component_(Component &comp) {
+		assert(comp.history.size() == comp.level_history.size());
+		if (comp.history.size() >= 2*delta_ + 1) {
+			auto& pred = comp.history.rbegin()[2*delta_ + 1];
+			uchar pred_level = comp.level_history.rbegin()[2*delta_ + 1];
+			auto& examinee = comp.history.rbegin()[delta_];
+			uchar level = comp.level_history.rbegin()[delta_];
+			auto& succ = comp.history.rbegin()[0];
+			uchar succ_level = comp.level_history.rbegin()[0];
+			float examinee_stability = compute_stability(pred.N, pred_level, examinee.N, level, succ.N, succ_level);
 
+			// compute cost function
+			float cost = 0;
+			cost += (target_stats_.mean.x - examinee.mean.x)*(target_stats_.mean.x - examinee.mean.x);
+			cost += (target_stats_.mean.y - examinee.mean.y)*(target_stats_.mean.y - examinee.mean.y);
+			cost += (target_stats_.N - examinee.N)*(target_stats_.N - examinee.N);
+			cost += (target_stability_ - examinee_stability)*(target_stability_ - examinee_stability);
+
+			if (current_optimal < 0 || cost < current_optimal) {
+				result_ = examinee;
+				current_optimal = cost;
+			}
+		}
 	}
 
 };

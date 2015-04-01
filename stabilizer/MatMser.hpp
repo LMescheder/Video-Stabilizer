@@ -11,39 +11,50 @@ class MatMser
 {
 public:
     using ComponentStats = MatMserAnalyzer::ComponentStats;
+    enum direction {
+        upwards = 1,
+        downwards = 2
+    };
 
-	MatMser(unsigned int delta=2, unsigned int min_N=60, unsigned int max_N=14400,
-			float min_stability = 40.f, float min_diversity=.2f)
+    MatMser(unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
+            float min_stability = 40.f, float min_diversity=.2f)
         : delta_(delta), min_N_(min_N), max_N_(max_N),
           min_stability_(min_stability), min_diversity_(min_diversity) {}
 
-    std::vector<ComponentStats> find_msers (const cv::Mat& image) {
+    std::vector<ComponentStats> detect_msers (const cv::Mat& image, int dir=upwards|downwards) {
         ComponentTreeParser<MatAccessor, MatMserAnalyzer> parser{};
         MatMserAnalyzer analyzer(delta_, min_N_, max_N_, min_stability_, min_diversity_);
 
-        auto mser_stats1 = parser(image, analyzer, false);
-        auto mser_stats2 = parser(image, analyzer, true);
-
         std::vector<ComponentStats> result;
-        for (auto& stat : mser_stats1)
-           result.push_back(stat);
-        for (auto& stat : mser_stats2)
-            result.push_back(stat);
+
+        if (dir & upwards) {
+            auto mser_stats1 = parser(image, analyzer, false);
+            for (auto& stat : mser_stats1)
+               result.push_back(stat);
+        }
+
+        if (dir & downwards) {
+            auto mser_stats2 = parser(image, analyzer, true);
+            for (auto& stat : mser_stats2)
+               result.push_back(stat);
+        }
+
         return result;
     }
 
-    std::vector<std::vector<cv::Point2i>> find_msers_points (const cv::Mat& image) {
-        std::vector<ComponentStats> msers = find_msers(image);
-        std::vector<std::vector<cv::Point2i>> points;
-        points.reserve(msers.size());
-
-        for (auto& stats : msers)
-            points.push_back(find_points(stats, image));
-
-        return points;
+    std::vector<std::vector<cv::Point2i>> detect_msers_points (const cv::Mat& image) {
+        return mult_stats_to_points(detect_msers(image), image);
     }
 
-    std::vector<cv::Point2i> find_points (const MatMserAnalyzer::ComponentStats& stats, const cv::Mat& im) {
+    ComponentStats retrieve_msers (const cv::Mat& image, const ComponentStats& target_stats,
+                                                            float target_stability, bool reverse) {
+        ComponentTreeParser<MatAccessor, MatFindMserAnalyzer> parser{};
+        MatFindMserAnalyzer analyzer(target_stats, target_stability, delta_);
+
+        return parser(image, analyzer, reverse);
+    }
+
+    std::vector<cv::Point2i> stats_to_points (const MatMserAnalyzer::ComponentStats& stats, const cv::Mat& im) {
         std::vector<MatAccessor::NodeIndex> toprocess;
         std::vector<cv::Point2i> points;
 
@@ -73,6 +84,16 @@ public:
         return points;
     }
 
+    std::vector<std::vector<cv::Point2i>> mult_stats_to_points (const std::vector<MatMserAnalyzer::ComponentStats>& stats,
+                                                                const cv::Mat& image) {
+        std::vector<std::vector<cv::Point2i>> points;
+        points.reserve(stats.size());
+
+        for (auto& s : stats)
+          points.push_back(stats_to_points(s, image));
+
+        return points;
+    }
 
 private:
     unsigned int delta_;

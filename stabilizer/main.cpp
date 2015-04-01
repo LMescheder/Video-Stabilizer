@@ -41,7 +41,7 @@ void test0 () {
 
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto result = mymser.find_msers(data);
+	auto result = mymser.detect_msers(data);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 }
@@ -59,7 +59,7 @@ void test1 () {
 
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto result = mymser.find_msers_points(data);
+	auto result = mymser.detect_msers_points(data);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
@@ -116,7 +116,7 @@ void test2()
         cv::Mat gray;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        auto result = mymser.find_msers(gray);
+		auto result = mymser.detect_msers(gray);
 
         for (auto& mser : result) {
             cv::circle(frame, cv::Point(mser.mean), 2, cv::Scalar(255, 0, 0));
@@ -150,7 +150,7 @@ void test3()
         cv::Mat gray;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        auto result = mymser.find_msers_points(gray);
+		auto result = mymser.detect_msers_points(gray);
 
         for (auto& mser : result) {
             std::vector<cv::Point> hull;
