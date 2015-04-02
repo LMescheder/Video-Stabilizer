@@ -147,25 +147,20 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
     //auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriorityLess>{NodePriorityLess{graph}};
 
     // initialize
-    auto source_node = graph.get_source();
-    boundary_nodes.push(source_node, graph.value(source_node));
+    auto current_node = graph.get_source();
     bool flowingdown_phase = true;
     //auto current_node = graph.get_source();
 
     // we are done, when there is no boundary node left
-    while (auto current_node_or_none = boundary_nodes.pop()) {
+    while (true) {
         // get next node
-        auto current_node = *current_node_or_none;
         auto node = graph.node(current_node);
         auto val = graph.value(current_node);
 
-        if (!flowingdown_phase)
-            component_stack.raise_level(graph.value(current_node));
-
         /*
-            std::cout << "Current node: " << current_node
-                      << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
-            */
+        std::cout << "Current node: " << current_node
+                  << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
+        */
 
         // explore neighborhood of current node
         // the accessor has to make sure, that we access every node only once
@@ -181,6 +176,8 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
             }
         }
 
+        // all neighbors already added
+
         // new minimum found?
         if (flowingdown_phase) {
             component_stack.push_component(current_node, graph.value(current_node));
@@ -188,7 +185,18 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
         } else {
             component_stack.push_node(current_node);
         }
+
+        auto current_node_or_none = boundary_nodes.pop();
+
+        // are we done?
+        if (!current_node_or_none)
+            break;
+
+        current_node = *current_node_or_none;
+        // process component stack
+        component_stack.raise_level(graph.value(current_node));
     }
+
     return analyzer.get_result();
 }
 

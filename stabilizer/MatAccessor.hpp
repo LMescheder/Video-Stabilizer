@@ -51,7 +51,7 @@ public:
     NodeIndex get_source() {
         auto new_node = NodeIndex{0, 0};
         mask_.at<uchar>(new_node) = 1;
-        return NodeIndex{0, 0};
+        return new_node;
     }
 
     Node node(NodeIndex node_idx) const {
@@ -63,8 +63,10 @@ public:
     }
 
 
-    NodeIndex get_index (const Node& node) const{
-        return node - offset_;
+    NodeIndex get_index (const Node& node) {
+        NodeIndex new_node = node - offset_;
+        mask_.at<uchar>(new_node) = 1;
+        return new_node;
     }
 
     boost::optional<NodeIndex> get_next_neighbor (NodeIndex node);
@@ -111,12 +113,13 @@ private:
 boost::optional<MatAccessor::NodeIndex> MatAccessor::get_next_neighbor(MatAccessor::NodeIndex node) {
     uchar& mask_value = mask_.at<uchar>(node);
 
+    assert(1 <= mask_value);
+    assert(mask_value <= 5);
+
     while (mask_value < 5) {
         NodeIndex next_node;
 
         switch (mask_value) {
-        case 0:
-            next_node = node;
         case 1:
             next_node = NodeIndex{node.x + 1, node.y};
             break;
@@ -136,7 +139,7 @@ boost::optional<MatAccessor::NodeIndex> MatAccessor::get_next_neighbor(MatAccess
                && 0 <= next_node.y  && next_node.y < data_.rows ) {
             uchar& next_mask_value = mask_.at<uchar>(next_node);
             if (next_mask_value == 0) {
-                ++next_mask_value;
+                next_mask_value = 1;
                 return next_node;
             }
         }
