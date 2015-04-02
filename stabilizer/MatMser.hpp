@@ -60,6 +60,7 @@ public:
         cv::Mat ROI = image(cv::Range(p1.y, p2.y+1), cv::Range(p1.x, p2.x+1));
         MatAccessor graph(ROI, reverse, p1);
 
+        auto val = ROI.at<uchar>(0, 0);
         return parser(graph, analyzer, reverse);
     }
 

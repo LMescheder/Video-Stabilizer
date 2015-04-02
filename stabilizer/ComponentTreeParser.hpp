@@ -117,6 +117,14 @@ class ComponentTreeParser {
         const GraphAccessor& graph_;
         Analyzer& analyzer_;
         std::vector<Component> components_;
+
+        Value level (unsigned int i) {
+            return analyzer_.get_level(components_.rbegin()[i]);
+        }
+
+        Component& component (unsigned int i) {
+            return components_.rbegin()[i];
+        }
     };
 
 
@@ -148,6 +156,8 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
     while (auto current_node_or_none = boundary_nodes.pop()) {
         // get next node
         auto current_node = *current_node_or_none;
+        auto node = graph.node(current_node);
+        auto val = graph.value(current_node);
 
         if (!flowingdown_phase)
             component_stack.raise_level(graph.value(current_node));
@@ -171,7 +181,6 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
             }
         }
 
-        auto node = graph.node(current_node);
         // new minimum found?
         if (flowingdown_phase) {
             component_stack.push_component(current_node, graph.value(current_node));
@@ -184,15 +193,15 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
 }
 
 template <typename G, typename A>
-void ComponentTreeParser<G,A>::ComponentStack::raise_level(ComponentTreeParser<G,A>::Value level) {
-    while (graph_.less(analyzer_.get_level(components_.back()), level)) {
+void ComponentTreeParser<G,A>::ComponentStack::raise_level(ComponentTreeParser<G,A>::Value new_level) {
+    while (graph_.less(level(0), new_level)) {
         // level of second last component (exists, since current_level < inf)
-        if  (components_.size() == 1 ||
-             graph_.less(level, analyzer_.get_level(components_.rbegin()[1]))) {
-            analyzer_.raise_level(components_.back(), level);
+        if  (components_.size() == 1 || graph_.less(new_level, level(1))) {
+            analyzer_.raise_level(component(0), new_level);
         } else {
+            assert(graph_.less(level(0), level(1)));
             // is it correct to use level instead of next_level here?
-            analyzer_.merge_component_into(components_.rbegin()[0], components_.rbegin()[1]);
+            analyzer_.merge_component_into(component(0), component(1));
             components_.pop_back();
         }
     }

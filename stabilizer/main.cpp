@@ -26,8 +26,8 @@ int main() {
     //test0();
     //test1();
     //test2();
-    test3();
-    //test4();
+    //test3();
+    test4();
 }
 
 
@@ -195,8 +195,8 @@ void test4()
         up_msers = mymser.retrieve_msers(frame, up_msers, false);
         down_msers = mymser.retrieve_msers(frame, down_msers, true);
 
-        auto up_points =mymser.mult_stats_to_points(up_msers, frame);
-        auto down_points =mymser.mult_stats_to_points(down_msers, frame);
+        auto up_points = mymser.mult_stats_to_points(up_msers, frame);
+        auto down_points = mymser.mult_stats_to_points(down_msers, frame);
 
         for (auto& mser : up_points) {
             std::vector<cv::Point> hull;

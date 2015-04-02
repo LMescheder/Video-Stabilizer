@@ -208,7 +208,6 @@ public:
 
     struct Component {
         uchar level;
-        uchar stability = 0;
         ComponentStats stats;
 
         std::vector<ComponentStats> history;
@@ -225,7 +224,7 @@ public:
     using Result = ComponentStats;
 
     MatFindMserAnalyzer (ComponentStats target_stats, unsigned int delta=5)
-     : delta_{delta}, target_stats_{target_stats}  {}
+     : delta_{delta}, target_stats_{target_stats} {}
 
     void reset(){
 
