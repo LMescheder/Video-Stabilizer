@@ -63,7 +63,7 @@ public:
     }
 
 
-    NodeIndex get_index (const Node& node) {
+    NodeIndex get_source (const Node& node) {
         NodeIndex new_node = node - offset_;
         mask_.at<uchar>(new_node) = 1;
         return new_node;

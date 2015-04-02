@@ -26,8 +26,8 @@ int main() {
     //test0();
     //test1();
     //test2();
-    test3();
-    //test4();
+    //test3();
+    test4();
 }
 
 
@@ -181,22 +181,24 @@ void test4()
 
     MatMser mymser;
     cv::Mat frame;
+    cv::Mat gray;
     cap >> frame;
+    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-    auto up_msers = mymser.detect_msers(frame, MatMser::upwards);
-    auto down_msers = mymser.detect_msers(frame, MatMser::downwards);
+    auto up_msers = mymser.detect_msers(gray, MatMser::upwards);
+    auto down_msers = mymser.detect_msers(gray, MatMser::downwards);
 
     while (true) {
 
         cap >> frame;
-        cv::Mat gray;
+
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        up_msers = mymser.retrieve_msers(frame, up_msers, false);
-        down_msers = mymser.retrieve_msers(frame, down_msers, true);
+        auto new_up_msers = mymser.retrieve_msers(gray, up_msers, false);
+        auto new_down_msers = mymser.retrieve_msers(gray, down_msers, true);
 
-        auto up_points = mymser.mult_stats_to_points(up_msers, frame);
-        auto down_points = mymser.mult_stats_to_points(down_msers, frame);
+        auto up_points = mymser.mult_stats_to_points(up_msers, gray);
+        auto down_points = mymser.mult_stats_to_points(down_msers, gray);
 
         for (auto& mser : up_points) {
             std::vector<cv::Point> hull;

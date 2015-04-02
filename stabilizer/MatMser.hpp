@@ -88,7 +88,7 @@ public:
                          cv::Range(stats.min_point.x, stats.max_point.x+1));
 
         MatAccessor graph(ROI, false, stats.min_point);
-        toprocess.push_back(graph.get_index(stats.source) );
+        toprocess.push_back(graph.get_source(stats.source) );
         while (!toprocess.empty()) {
             auto current_node = toprocess.back();
             toprocess.pop_back();
