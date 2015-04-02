@@ -203,7 +203,7 @@ void test4()
         for (auto& mser : up_points) {
             std::vector<cv::Point> hull;
             cv::convexHull(mser, hull);
-             cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+            cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
         }
 
         for (auto& mser : down_points) {

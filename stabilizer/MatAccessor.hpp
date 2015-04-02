@@ -25,9 +25,14 @@ public:
 
 
 
-    MatAccessor(Data data, bool inverted=false, cv::Point2i offset=cv::Point2i{0,0})
-        : data_(data), inverted_(inverted), offset_{offset} {
+    MatAccessor(Data data, bool inverted=false)
+        : data_(data), inverted_(inverted) {
         mask_ = cv::Mat::zeros(data.rows, data.cols, CV_8U);
+    }
+
+    MatAccessor(Data data, cv::Point2i offset, bool inverted=false)
+        : MatAccessor(data, inverted) {
+        offset_ = offset;
     }
 
     void reset() {
