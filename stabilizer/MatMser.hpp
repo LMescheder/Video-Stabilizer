@@ -102,9 +102,8 @@ public:
 
             points.push_back(graph.node(current_node));
         }
-        if (points.size() != stats.N)
-            std::cout << points.size() << ' ' << stats.N << std::endl;
-        //assert(points.size() == stats.N);
+
+        assert(points.size() == stats.N);
         return points;
     }
 

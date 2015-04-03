@@ -194,11 +194,11 @@ void test4()
 
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        auto new_up_msers = mymser.retrieve_msers(gray, up_msers, false);
-        auto new_down_msers = mymser.retrieve_msers(gray, down_msers, true);
+        up_msers = mymser.retrieve_msers(gray, up_msers, false);
+        down_msers = mymser.retrieve_msers(gray, down_msers, true);
 
-        auto up_points = mymser.mult_stats_to_points(new_up_msers, gray);
-        auto down_points = mymser.mult_stats_to_points(new_down_msers, gray);
+        auto up_points = mymser.mult_stats_to_points(up_msers, gray);
+        auto down_points = mymser.mult_stats_to_points(down_msers, gray);
 
         for (auto& mser : up_points) {
             if (mser.size() > 0) {
