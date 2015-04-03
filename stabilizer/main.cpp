@@ -197,19 +197,23 @@ void test4()
         auto new_up_msers = mymser.retrieve_msers(gray, up_msers, false);
         auto new_down_msers = mymser.retrieve_msers(gray, down_msers, true);
 
-        auto up_points = mymser.mult_stats_to_points(up_msers, gray);
-        auto down_points = mymser.mult_stats_to_points(down_msers, gray);
+        auto up_points = mymser.mult_stats_to_points(new_up_msers, gray);
+        auto down_points = mymser.mult_stats_to_points(new_down_msers, gray);
 
         for (auto& mser : up_points) {
-            std::vector<cv::Point> hull;
-            cv::convexHull(mser, hull);
-            cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+            if (mser.size() > 0) {
+                std::vector<cv::Point> hull;
+                cv::convexHull(mser, hull);
+                cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+            }
         }
 
         for (auto& mser : down_points) {
-            std::vector<cv::Point> hull;
-            cv::convexHull(mser, hull);
-            cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+            if (mser.size() > 0) {
+                std::vector<cv::Point> hull;
+                cv::convexHull(mser, hull);
+                cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+            }
         }
 
         cv::imshow("Video", frame);

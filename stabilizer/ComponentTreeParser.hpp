@@ -103,7 +103,7 @@ class ComponentTreeParser {
 
         void push_component(NodeIndex node_idx, Value level) {
             assert(components_.empty() || graph_.less(level, analyzer_.get_level(components_.back())));
-            components_.push_back(analyzer_.add_component(node_idx, level));
+            components_.push_back(analyzer_.add_component(graph_.node(node_idx), level));
             //current_levels_.push_back(level);
         }
         void push_node(NodeIndex node_idx) {

@@ -27,6 +27,7 @@ public:
 
     MatAccessor(Data data, bool inverted=false)
         : data_(data), inverted_(inverted) {
+        assert(data.type() == CV_8U);
         mask_ = cv::Mat::zeros(data.rows, data.cols, CV_8U);
     }
 
