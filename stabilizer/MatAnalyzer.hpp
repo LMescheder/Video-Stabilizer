@@ -16,13 +16,16 @@ struct MatComponentStats {
     cv::Point2i max_point = cv::Point2i(0., 0.);
     uchar min_val = 255;
     uchar max_val = 0;
+    float mean_val = 0;
     cv::Point2i source = cv::Point2i(0., 0.);
 
+    // remove?
     MatComponentStats() = default;
 
     MatComponentStats(cv::Point2i point, uchar value)
         : N{1}, mean{point}, min_point{point}, max_point{point},
-          min_val{value}, max_val{value}, source{point} {}
+          min_val{value}, max_val{value}, mean_val{value},
+          source{point} {}
 
     void merge(const MatComponentStats& comp1) {
         auto& comp2 = *this;
@@ -44,7 +47,7 @@ struct MatComponentStats {
 
         comp2.min_val = std::min(comp1.min_val, comp2.min_val);
         comp2.max_val = std::max(comp1.max_val, comp2.max_val);
-
+        comp2.mean_val = p * comp1.mean_val + q * comp2.mean_val;
         assert(min_point.x - 1e4 < mean.x && mean.x < max_point.x + 1e4);
         assert(min_point.y - 1e4 < mean.y && mean.y < max_point.y + 1e4);
 

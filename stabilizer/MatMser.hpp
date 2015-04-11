@@ -16,7 +16,7 @@ public:
         downwards = 2
     };
 
-    MatMser(unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
+    MatMser(unsigned int delta=25, unsigned int min_N=60, unsigned int max_N=14400,
             float min_stability = 40.f, float min_diversity=.2f)
         : delta_(delta), min_N_(min_N), max_N_(max_N),
           min_stability_(min_stability), min_diversity_(min_diversity) {}
@@ -50,8 +50,8 @@ public:
         ComponentTreeParser<MatAccessor, MatFindMserAnalyzer> parser{};
         MatFindMserAnalyzer analyzer(target_stats, delta_);
 
-        int dx = static_cast<int> (.05 * (target_stats.max_point.x - target_stats.min_point.x));
-        int dy = static_cast<int> (.05 * (target_stats.max_point.y - target_stats.min_point.y));
+        int dx = static_cast<int> (.01 * std::max(image.rows, image.cols));
+        int dy = dx;
         cv::Point2i p1{std::max(target_stats.min_point.x - dx, 0),
                        std::max(target_stats.min_point.y - dy, 0)};
         cv::Point2i p2{std::min(target_stats.max_point.x + dx, image.cols-1),
