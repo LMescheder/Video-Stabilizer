@@ -136,7 +136,7 @@ void test2()
 
 void test3()
 {
-    std::string filename = "../../data/Shop 30s.avi";
+    std::string filename = "../../data/lake.mp4";
     cv::VideoCapture cap(filename);
 
     //if(!cap.isOpened())
@@ -144,7 +144,7 @@ void test3()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mymser;
+    MatMser mymser(10, 200, 14400, 10.f, .2f);
 
     while (true) {
         cv::Mat frame;
@@ -171,7 +171,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/lena.mp4";
+   auto filename = "../../data/basket.avi";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 

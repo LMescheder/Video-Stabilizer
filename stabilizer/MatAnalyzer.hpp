@@ -308,8 +308,8 @@ private:
             // compute cost function
             float cost = 0;
 
-            float width = target_stats_.max_point.x - target_stats_.min_point.x;
-            float height = target_stats_.max_point.y - target_stats_.min_point.y;
+            float size[] = {target_stats_.max_point.x - target_stats_.min_point.x,
+                            target_stats_.max_point.y - target_stats_.min_point.y};
 
             cost += compute_error_(examinee.mean.x, target_stats_.mean.x);
             cost += compute_error_(examinee.mean.y, target_stats_.mean.y);
@@ -317,7 +317,7 @@ private:
             cost += compute_error_(examinee.max_point.y, target_stats_.max_point.y);
             cost += compute_error_(examinee.min_point.x, target_stats_.min_point.x);
             cost += compute_error_(examinee.min_point.y, target_stats_.min_point.y);
-            cost += compute_error_(examinee.N, target_stats_.N, target_stats_.N*100);
+            cost += compute_error_(examinee.N, target_stats_.N);
             cost += compute_error_(examinee.mean_val, target_stats_.mean_val);
             cost += compute_error_(examinee.min_val, target_stats_.min_val );
             cost += compute_error_(examinee.max_val, target_stats_.max_val);
@@ -325,7 +325,7 @@ private:
 
             for (auto i : {0, 1})
                 for (auto j : {0, 1})
-                    cost += compute_error_(examinee.cov(i, j), target_stats_.cov(i, j));
+                    cost += 0 * compute_error_(examinee.cov(i, j), target_stats_.cov(i, j), size[i]*size[j]);
 
 
             if ((cost < max_error_) && (current_optimal_ < 0 || cost < current_optimal_)

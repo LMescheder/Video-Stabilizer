@@ -2,7 +2,7 @@
 #define MATMSER_HPP
 
 #include <vector>
-#include "opencv2/core.hpp"
+#include "opencv2/opencv.hpp"
 #include "ComponentTreeParser.hpp"
 #include "MatAccessor.hpp"
 #include "MatAnalyzer.hpp"
