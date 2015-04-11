@@ -171,16 +171,16 @@ void test3()
 
 void test4()
 {
-    std::string filename = "../../data/Shop 30s.avi";
-    //cv::VideoCapture cap(filename);
-    cv::VideoCapture cap(0);
+   auto filename = "../../data/Basket 30s.avi";
+   cv::VideoCapture cap(filename);
+   //cv::VideoCapture cap(0);
 
     //if(!cap.isOpened())
     //   return -1;
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mymser(5, 60, 14400, 40.f, .2f);
+    MatMser mymser(4, 0, 14400, 100.f, .2f);
     cv::Mat frame;
     cv::Mat gray;
     cap >> frame;
@@ -198,26 +198,29 @@ void test4()
         up_msers = mymser.retrieve_msers(gray, up_msers, false);
         down_msers = mymser.retrieve_msers(gray, down_msers, true);
 
-        auto up_points = mymser.mult_stats_to_points(up_msers, gray);
-        auto down_points = mymser.mult_stats_to_points(down_msers, gray);
+        cv::Mat out_frame = frame.clone();
 
-        for (auto& mser : up_points) {
-            if (mser.size() > 0) {
+        for (auto& mser : up_msers) {
+            if (mser.N > 0) {
+                auto points = mymser.stats_to_points(mser, gray);
                 std::vector<cv::Point> hull;
-                cv::convexHull(mser, hull);
-                cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+                cv::convexHull(points, hull);
+                cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0));
+                cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
             }
         }
 
-        for (auto& mser : down_points) {
-            if (mser.size() > 0) {
+        for (auto& mser : down_msers) {
+            if (mser.N > 0) {
+                auto points = mymser.stats_to_points(mser, gray);
                 std::vector<cv::Point> hull;
-                cv::convexHull(mser, hull);
-                cv::polylines(frame, hull, true, cv::Scalar(0, 255, 0));
+                cv::convexHull(points, hull);
+                cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0));
+                cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
             }
         }
 
-        cv::imshow("Video", frame);
+        cv::imshow("Video", out_frame);
 
         if (cv::waitKey(1) >= 0) {
             break;

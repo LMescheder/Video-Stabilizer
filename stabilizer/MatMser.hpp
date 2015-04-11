@@ -16,7 +16,7 @@ public:
         downwards = 2
     };
 
-    MatMser(unsigned int delta=25, unsigned int min_N=60, unsigned int max_N=14400,
+    MatMser(unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
             float min_stability = 40.f, float min_diversity=.2f)
         : delta_(delta), min_N_(min_N), max_N_(max_N),
           min_stability_(min_stability), min_diversity_(min_diversity) {}
@@ -60,7 +60,6 @@ public:
         cv::Mat ROI = image(cv::Range(p1.y, p2.y+1), cv::Range(p1.x, p2.x+1));
         MatAccessor graph(ROI, p1, reverse);
 
-        auto val = ROI.at<uchar>(0, 0);
         return parser(graph, analyzer, reverse);
     }
 

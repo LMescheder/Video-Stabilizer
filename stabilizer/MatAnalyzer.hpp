@@ -60,8 +60,10 @@ struct MatComponentStats {
 
 
 
-float compute_stability(uchar pred_N, uchar pred_level, uchar N, uchar level, uchar succ_N, uchar succ_level) {
-    return static_cast<float>(N * std::abs(succ_level - pred_level))/(succ_N - pred_N);
+float compute_stability(unsigned int pred_N, uchar pred_level, unsigned int N, uchar level, unsigned int succ_N, uchar succ_level) {
+    float stability =  static_cast<float>(N * std::abs(succ_level - pred_level))/(succ_N - pred_N);
+    assert(stability >= 0);
+    return stability;
 }
 
 /* TODO: Put Mser extraction into derived class
@@ -273,12 +275,13 @@ public:
         return result_;
     }
 
-protected:
+private:
     Result result_;
     const unsigned int delta_ = 5;
     const ComponentStats target_stats_;
-    float current_optimal = -1;
-    const float max_error = 15000.;
+    float current_optimal_ = -1;
+    const float max_error_ = 2000.;
+    float min_stability_ = 0.;
 
     void extend_history_(Component& component) {
         component.history.push_back(component.stats);
@@ -308,14 +311,24 @@ protected:
             cost += (target_stats_.mean.x - examinee.mean.x)*(target_stats_.mean.x - examinee.mean.x);
             cost += (target_stats_.mean.y - examinee.mean.y)*(target_stats_.mean.y - examinee.mean.y);
             cost += (target_stats_.N - examinee.N)*(target_stats_.N - examinee.N);
-            cost += (target_stats_.stability - examinee.stability)*(target_stats_.stability - examinee.stability);
+            //cost += (target_stats_.stability - examinee.stability)*(target_stats_.stability - examinee.stability);
+            cost += (target_stats_.mean_val - examinee.mean_val)*(target_stats_.mean_val - examinee.mean_val);
+            cost += (target_stats_.min_val - examinee.min_val)*(target_stats_.min_val - examinee.min_val);
+            cost += (target_stats_.max_val - examinee.max_val)*(target_stats_.max_val - examinee.max_val);
+
+            cost += .25*(target_stats.max_point.x - examinee.max_point.x)*(target_stats.max_point.x - examinee.max_point.x);
+            cost += .25*(target_stats.max_point.y - examinee.max_point.y)*(target_stats.max_point.y - examinee.max_point.y);
+            cost += .25*(target_stats.min_point.x - examinee.min_point.x)*(target_stats.min_point.x - examinee.min_point.x);
+            cost += .25*(target_stats.min_point.y - examinee.min_point.y)*(target_stats.min_point.y - examinee.min_point.y);
+
             for (auto i : {0, 1})
                 for (auto j : {0, 1})
                     cost += .25 * (target_stats_.cov(i,j) - examinee.cov(i, j))*(target_stats_.cov(i,j) - examinee.cov(i, j));
 
-            if ((cost < max_error) && (current_optimal < 0 || cost < current_optimal)) {
+            if ((cost < max_error_) && (current_optimal_ < 0 || cost < current_optimal_)
+                    && examinee.stability >= min_stability_) {
                 result_ = examinee;
-                current_optimal = cost;
+                current_optimal_ = cost;
             }
         }
     }
