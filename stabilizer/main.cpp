@@ -136,7 +136,7 @@ void test2()
 
 void test3()
 {
-    std::string filename = "../../data/lake.mp4";
+    std::string filename = "../../data/basket.avi";
     cv::VideoCapture cap(filename);
 
     //if(!cap.isOpened())
@@ -180,29 +180,28 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mymser(10, 200, 14400, 10.f, .2f);
+    MatMser mser_detector(15, 200, 14400, 30.f, .2f, 30.f, 1e3);
     cv::Mat frame;
     cv::Mat gray;
     cap >> frame;
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-    auto up_msers = mymser.detect_msers(gray, MatMser::upwards);
-    auto down_msers = mymser.detect_msers(gray, MatMser::downwards);
+    auto up_msers = mser_detector.detect_msers(gray, MatMser::upwards);
+    auto down_msers = mser_detector.detect_msers(gray, MatMser::downwards);
 
     while (true) {
-
         cap >> frame;
-
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        up_msers = mymser.retrieve_msers(gray, up_msers, false);
-        down_msers = mymser.retrieve_msers(gray, down_msers, true);
+        auto old_msers = up_msers;
+        up_msers = mser_detector.retrieve_msers(gray, up_msers, false);
+        down_msers = mser_detector.retrieve_msers(gray, down_msers, true);
 
         cv::Mat out_frame = frame.clone();
 
         for (auto& mser : up_msers) {
             if (mser.N > 0) {
-                auto points = mymser.stats_to_points(mser, gray);
+                auto points = mser_detector.stats_to_points(mser, gray);
                 std::vector<cv::Point> hull;
                 cv::convexHull(points, hull);
                 cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0));
@@ -212,7 +211,7 @@ void test4()
 
         for (auto& mser : down_msers) {
             if (mser.N > 0) {
-                auto points = mymser.stats_to_points(mser, gray);
+                auto points = mser_detector.stats_to_points(mser, gray);
                 std::vector<cv::Point> hull;
                 cv::convexHull(points, hull);
                 cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0));

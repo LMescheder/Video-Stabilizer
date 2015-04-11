@@ -2,6 +2,7 @@
 #define MATMSERANALYZER_HPP
 
 #include "opencv2/core.hpp"
+#include <cmath>
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------- declarations ---------------------------------------------------
@@ -228,8 +229,8 @@ public:
 
     using Result = ComponentStats;
 
-    MatFindMserAnalyzer (ComponentStats target_stats, unsigned int delta=5)
-     : delta_{delta}, target_stats_{target_stats} {}
+    MatFindMserAnalyzer (ComponentStats target_stats, unsigned int delta=5, float max_error=1000, float min_stability=0.)
+     : target_stats_{target_stats}, delta_{delta}, max_error_{max_error}, min_stability_{min_stability} {}
 
     void reset(){
 
@@ -277,11 +278,19 @@ public:
 
 private:
     Result result_;
-    const unsigned int delta_ = 5;
-    const ComponentStats target_stats_;
+    ComponentStats target_stats_;
     float current_optimal_ = -1;
-    const float max_error_ = 2000.;
+
+    unsigned int delta_ = 5;
+    float max_error_ = 1.e3;
     float min_stability_ = 0.;
+
+    float weight_mean_ = 1.;
+    float weight_boundingbox_ = 1.e2;
+    float weight_mean_val_ = 1.;
+    float weight_interval_ = 1.;
+    float weight_N_ = 1.e3;
+    float weight_cov_ = 1.e3;
 
     void extend_history_(Component& component) {
         component.history.push_back(component.stats);
@@ -311,22 +320,23 @@ private:
             float size[] = {target_stats_.max_point.x - target_stats_.min_point.x,
                             target_stats_.max_point.y - target_stats_.min_point.y};
 
-            cost += compute_error_(examinee.mean.x, target_stats_.mean.x);
-            cost += compute_error_(examinee.mean.y, target_stats_.mean.y);
-            cost += compute_error_(examinee.max_point.x, target_stats_.max_point.x);
-            cost += compute_error_(examinee.max_point.y, target_stats_.max_point.y);
-            cost += compute_error_(examinee.min_point.x, target_stats_.min_point.x);
-            cost += compute_error_(examinee.min_point.y, target_stats_.min_point.y);
-            cost += compute_error_(examinee.N, target_stats_.N);
-            cost += compute_error_(examinee.mean_val, target_stats_.mean_val);
-            cost += compute_error_(examinee.min_val, target_stats_.min_val );
-            cost += compute_error_(examinee.max_val, target_stats_.max_val);
+            cost += .5*weight_mean_ * compute_error_(examinee.mean.x, target_stats_.mean.x);
+            cost += .5*weight_mean_ * compute_error_(examinee.mean.y, target_stats_.mean.y);
+            cost += .5*weight_boundingbox_* compute_rel_error_(examinee.max_point.x - examinee.min_point.x,
+                                                           target_stats_.max_point.x - target_stats_.min_point.x);
+            cost += .5*weight_boundingbox_ * compute_rel_error_(examinee.max_point.y - examinee.min_point.y,
+                                                            target_stats_.max_point.y - target_stats_.min_point.y);
 
+            cost += weight_N_ * compute_rel_error_(examinee.N, target_stats_.N);
+            cost += weight_mean_val_ * compute_error_(examinee.mean_val, target_stats_.mean_val);
+            cost += .5*weight_interval_ * compute_error_(examinee.min_val,  target_stats_.min_val );
+            cost += .5*weight_interval_ * compute_error_(examinee.max_val,  target_stats_.max_val );
 
             for (auto i : {0, 1})
                 for (auto j : {0, 1})
-                    cost += 0 * compute_error_(examinee.cov(i, j), target_stats_.cov(i, j), size[i]*size[j]);
+                    cost +=  .25*weight_cov_ * compute_rel_error_(examinee.cov(i, j), target_stats_.cov(i, j));
 
+            //cost += 1.e4/(examinee.stability * examinee.stability);
 
             if ((cost < max_error_) && (current_optimal_ < 0 || cost < current_optimal_)
                     && examinee.stability >= min_stability_) {
@@ -336,10 +346,16 @@ private:
         }
     }
 
-    float compute_error_(float val, float target, float norm=1.) {
-        float err = (val - target)/norm;
+    float compute_error_(float val, float target) {
+        float err = (val - target);
         return err*err;
     }
+
+    float compute_rel_error_(float val, float target) {
+        float err = (val - target)/target;
+        return err*err;
+    }
+
 };
 
 

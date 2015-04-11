@@ -17,9 +17,12 @@ public:
     };
 
     MatMser(unsigned int delta=5, unsigned int min_N=60, unsigned int max_N=14400,
-            float min_stability = 40.f, float min_diversity=.2f)
+            float min_stability = 20.f, float min_diversity=.2f,
+            float min_retrieval_stability=.5f, float max_retrieval_error=1e4)
         : delta_(delta), min_N_(min_N), max_N_(max_N),
-          min_stability_(min_stability), min_diversity_(min_diversity) {}
+          min_stability_(min_stability), min_diversity_(min_diversity),
+          min_retrieval_stability_{min_retrieval_stability}, max_retrieval_error_{max_retrieval_error}
+        {}
 
     std::vector<ComponentStats> detect_msers (const cv::Mat& image, int dir=upwards|downwards) {
         ComponentTreeParser<MatAccessor, MatMserAnalyzer> parser{};
@@ -48,7 +51,7 @@ public:
 
     ComponentStats retrieve_mser (const cv::Mat& image, const ComponentStats& target_stats, bool reverse) {
         ComponentTreeParser<MatAccessor, MatFindMserAnalyzer> parser{};
-        MatFindMserAnalyzer analyzer(target_stats, delta_);
+        MatFindMserAnalyzer analyzer(target_stats, delta_, max_retrieval_error_, min_retrieval_stability_);
 
         int dx = static_cast<int> (.01 * std::max(image.rows, image.cols));
         int dy = dx;
@@ -123,6 +126,8 @@ private:
     unsigned int max_N_;
     float min_stability_;
     float min_diversity_;
+    float min_retrieval_stability_;
+    float max_retrieval_error_;
 
 
 };
