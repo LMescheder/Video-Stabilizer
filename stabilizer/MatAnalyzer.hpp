@@ -275,6 +275,7 @@ protected:
     const unsigned int delta_ = 5;
     const ComponentStats target_stats_;
     float current_optimal = -1;
+    const float max_error = 15000.;
 
     void extend_history_(Component& component) {
         component.history.push_back(component.stats);
@@ -305,8 +306,11 @@ protected:
             cost += (target_stats_.mean.y - examinee.mean.y)*(target_stats_.mean.y - examinee.mean.y);
             cost += (target_stats_.N - examinee.N)*(target_stats_.N - examinee.N);
             cost += (target_stats_.stability - examinee.stability)*(target_stats_.stability - examinee.stability);
+            for (auto i : {0, 1})
+                for (auto j : {0, 1})
+                    cost += .25 * (target_stats_.cov(i,j) - examinee.cov(i, j))*(target_stats_.cov(i,j) - examinee.cov(i, j));
 
-            if (current_optimal < 0 || cost < current_optimal) {
+            if ((cost < max_error) && (current_optimal < 0 || cost < current_optimal)) {
                 result_ = examinee;
                 current_optimal = cost;
             }

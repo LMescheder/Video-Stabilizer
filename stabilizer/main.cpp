@@ -172,14 +172,15 @@ void test3()
 void test4()
 {
     std::string filename = "../../data/Shop 30s.avi";
-    cv::VideoCapture cap(filename);
+    //cv::VideoCapture cap(filename);
+    cv::VideoCapture cap(0);
 
     //if(!cap.isOpened())
     //   return -1;
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mymser;
+    MatMser mymser(5, 60, 14400, 40.f, .2f);
     cv::Mat frame;
     cv::Mat gray;
     cap >> frame;
