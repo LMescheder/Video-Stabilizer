@@ -307,23 +307,26 @@ private:
 
             // compute cost function
             float cost = 0;
-            auto& target_stats = target_stats_;
-            cost += (target_stats_.mean.x - examinee.mean.x)*(target_stats_.mean.x - examinee.mean.x);
-            cost += (target_stats_.mean.y - examinee.mean.y)*(target_stats_.mean.y - examinee.mean.y);
-            cost += (target_stats_.N - examinee.N)*(target_stats_.N - examinee.N);
-            //cost += (target_stats_.stability - examinee.stability)*(target_stats_.stability - examinee.stability);
-            cost += (target_stats_.mean_val - examinee.mean_val)*(target_stats_.mean_val - examinee.mean_val);
-            cost += (target_stats_.min_val - examinee.min_val)*(target_stats_.min_val - examinee.min_val);
-            cost += (target_stats_.max_val - examinee.max_val)*(target_stats_.max_val - examinee.max_val);
 
-            cost += .25*(target_stats.max_point.x - examinee.max_point.x)*(target_stats.max_point.x - examinee.max_point.x);
-            cost += .25*(target_stats.max_point.y - examinee.max_point.y)*(target_stats.max_point.y - examinee.max_point.y);
-            cost += .25*(target_stats.min_point.x - examinee.min_point.x)*(target_stats.min_point.x - examinee.min_point.x);
-            cost += .25*(target_stats.min_point.y - examinee.min_point.y)*(target_stats.min_point.y - examinee.min_point.y);
+            float width = target_stats_.max_point.x - target_stats_.min_point.x;
+            float height = target_stats_.max_point.y - target_stats_.min_point.y;
+
+            cost += compute_error_(examinee.mean.x, target_stats_.mean.x);
+            cost += compute_error_(examinee.mean.y, target_stats_.mean.y);
+            cost += compute_error_(examinee.max_point.x, target_stats_.max_point.x);
+            cost += compute_error_(examinee.max_point.y, target_stats_.max_point.y);
+            cost += compute_error_(examinee.min_point.x, target_stats_.min_point.x);
+            cost += compute_error_(examinee.min_point.y, target_stats_.min_point.y);
+            cost += compute_error_(examinee.N, target_stats_.N, target_stats_.N*100);
+            cost += compute_error_(examinee.mean_val, target_stats_.mean_val);
+            cost += compute_error_(examinee.min_val, target_stats_.min_val );
+            cost += compute_error_(examinee.max_val, target_stats_.max_val);
+
 
             for (auto i : {0, 1})
                 for (auto j : {0, 1})
-                    cost += .25 * (target_stats_.cov(i,j) - examinee.cov(i, j))*(target_stats_.cov(i,j) - examinee.cov(i, j));
+                    cost += compute_error_(examinee.cov(i, j), target_stats_.cov(i, j));
+
 
             if ((cost < max_error_) && (current_optimal_ < 0 || cost < current_optimal_)
                     && examinee.stability >= min_stability_) {
@@ -333,6 +336,10 @@ private:
         }
     }
 
+    float compute_error_(float val, float target, float norm=1.) {
+        float err = (val - target)/norm;
+        return err*err;
+    }
 };
 
 

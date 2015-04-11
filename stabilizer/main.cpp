@@ -171,7 +171,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/Basket 30s.avi";
+   auto filename = "../../data/lena.mp4";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 
@@ -180,7 +180,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mymser(4, 0, 14400, 100.f, .2f);
+    MatMser mymser(10, 200, 14400, 10.f, .2f);
     cv::Mat frame;
     cv::Mat gray;
     cap >> frame;
