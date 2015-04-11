@@ -171,7 +171,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/basket.avi";
+   auto filename = "../../data/path.mp4";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 
@@ -180,7 +180,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(15, 200, 14400, 30.f, .2f, 30.f, 1e3);
+    MatMser mser_detector(15, 200, 14400, 40.f, .2f, 40.f, 1e3);
     cv::Mat frame;
     cv::Mat gray;
     cap >> frame;
@@ -189,7 +189,9 @@ void test4()
     auto up_msers = mser_detector.detect_msers(gray, MatMser::upwards);
     auto down_msers = mser_detector.detect_msers(gray, MatMser::downwards);
 
-    while (true) {
+    bool recompute = false;
+
+    for (int i=1; true; i = (i+1) % 10) {
         cap >> frame;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
@@ -219,6 +221,11 @@ void test4()
             }
         }
 
+        // recompute
+        if (recompute && i == 0) {
+            up_msers = mser_detector.detect_msers(gray, MatMser::upwards);
+            down_msers = mser_detector.detect_msers(gray, MatMser::downwards);
+        }
         cv::imshow("Video", out_frame);
 
         if (cv::waitKey(1) >= 0) {
