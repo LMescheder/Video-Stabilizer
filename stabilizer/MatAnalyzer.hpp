@@ -67,6 +67,7 @@ float compute_stability(unsigned int pred_N, uchar pred_level, unsigned int N, u
     return stability;
 }
 
+
 /* TODO: Put Mser extraction into derived class
  * TODO: Create derived class for tracking
  * TODO: Optimize history (less reallocation) by creating a (#minima * history_length) array
@@ -148,7 +149,7 @@ public:
         return std::move(result_);
     }
 
-protected:
+private:
     Result result_;
     const unsigned int delta_ = 5;
     const unsigned int min_N_;
@@ -169,16 +170,16 @@ protected:
 
     void calculate_stability(Component& comp) {
         if(comp.history.size() >= 2*delta_ + 1) {
-            auto& comp0 = comp.history.rbegin()[2*delta_];
-            auto& comp1 = comp.history.rbegin()[delta_];
-            auto& comp2 = comp.history.rbegin()[0];
-            auto& level0 = comp.level_history.rbegin()[2*delta_];
-            auto& level1 = comp.level_history.rbegin()[delta_];
-            auto& level2 = comp.level_history.rbegin()[0];
+            auto& pred = comp.history.rbegin()[2*delta_];
+            uchar pred_level = comp.level_history.rbegin()[2*delta_];
+            auto& examinee = comp.history.rbegin()[delta_];
+            uchar level = comp.level_history.rbegin()[delta_];
+            auto& succ = comp.history.rbegin()[0];
+            uchar succ_level = comp.level_history.rbegin()[0];
 
+            assert(pred.N < examinee.N && examinee.N < succ.N);
 
-            assert(comp0.N < comp1.N && comp1.N < comp2.N);
-            comp1.stability = compute_stability(comp0.N, level0, comp1.N, level1, comp2.N, level2);
+            examinee.stability = compute_stability(pred.N, pred_level, examinee.N, level, succ.N, succ_level);
         }
     }
 
@@ -298,21 +299,26 @@ private:
 
         assert(component.history.size() == component.level_history.size());
 
+        calculate_stability(component);
         check_component_(component);
-
     }
 
 
     void check_component_(Component &comp) {
         assert(comp.history.size() == comp.level_history.size());
-        if (comp.history.size() >= 2*delta_ + 1) {
-            auto& pred = comp.history.rbegin()[2*delta_];
-            uchar pred_level = comp.level_history.rbegin()[2*delta_];
-            auto& examinee = comp.history.rbegin()[delta_];
-            uchar level = comp.level_history.rbegin()[delta_];
-            auto& succ = comp.history.rbegin()[0];
-            uchar succ_level = comp.level_history.rbegin()[0];
-            examinee.stability = compute_stability(pred.N, pred_level, examinee.N, level, succ.N, succ_level);
+
+
+        if (comp.history.size() >= 2*delta_ + 2) {
+            auto& pred = comp.history.rbegin()[delta_+2];
+            uchar pred_level = comp.level_history.rbegin()[delta_+2];
+            auto& examinee = comp.history.rbegin()[delta_+1];
+            uchar level = comp.level_history.rbegin()[delta_+1];
+            auto& succ = comp.history.rbegin()[delta_];
+            uchar succ_level = comp.level_history.rbegin()[delta_];
+
+            float dstability1 = (examinee.stability - pred.stability)/std::abs(level - pred_level);
+            float dstability2 = (succ.stability - examinee.stability)/std::abs(succ_level - level);
+
 
             // compute cost function
             float cost = 0;
@@ -332,6 +338,8 @@ private:
             cost += .5*weight_interval_ * compute_error_(examinee.min_val,  target_stats_.min_val );
             cost += .5*weight_interval_ * compute_error_(examinee.max_val,  target_stats_.max_val );
 
+            cost += 1e5 * std::max(dstability1 * dstability2, 0.f);
+
             for (auto i : {0, 1})
                 for (auto j : {0, 1})
                     cost +=  .25*weight_cov_ * compute_rel_error_(examinee.cov(i, j), target_stats_.cov(i, j));
@@ -343,6 +351,21 @@ private:
                 result_ = examinee;
                 current_optimal_ = cost;
             }
+        }
+    }
+
+    void calculate_stability(Component& comp) {
+        if(comp.history.size() >= 2*delta_ + 1) {
+            auto& pred = comp.history.rbegin()[2*delta_];
+            uchar pred_level = comp.level_history.rbegin()[2*delta_];
+            auto& examinee = comp.history.rbegin()[delta_];
+            uchar level = comp.level_history.rbegin()[delta_];
+            auto& succ = comp.history.rbegin()[0];
+            uchar succ_level = comp.level_history.rbegin()[0];
+
+            assert(pred.N < examinee.N && examinee.N < succ.N);
+
+            examinee.stability = compute_stability(pred.N, pred_level, examinee.N, level, succ.N, succ_level);
         }
     }
 

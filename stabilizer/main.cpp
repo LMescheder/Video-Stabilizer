@@ -180,7 +180,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(15, 200, 14400, 40.f, .2f, 40.f, 1e3);
+    MatMser mser_detector(15, 200, 14400, 30.f, .2f, 30.f, 1e3);
     cv::Mat frame;
     cv::Mat gray;
     cap >> frame;
@@ -195,7 +195,6 @@ void test4()
         cap >> frame;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        auto old_msers = up_msers;
         up_msers = mser_detector.retrieve_msers(gray, up_msers, false);
         down_msers = mser_detector.retrieve_msers(gray, down_msers, true);
 
