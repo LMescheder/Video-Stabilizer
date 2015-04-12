@@ -291,7 +291,7 @@ private:
     float weight_mean_val_ = 1.e1;
     float weight_interval_ = 0.e0;
     float weight_N_ = 1.e2;
-    float weight_cov_ = 1.e1;
+    float weight_cov_ = 1.e2;
     float weight_dstability_= 1.e0;
 
     void extend_history_(Component& component) {

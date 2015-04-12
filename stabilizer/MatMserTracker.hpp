@@ -17,9 +17,10 @@ public:
     void update (const cv::Mat& image) {
         if (count_ == 0) {
             up_msers_ = mser_detector_.detect_msers(image, MatMser::upwards);
-            up_means_ = MatMser::extract_means(up_msers_);
+            up_msers_0_ = up_msers_;
             down_msers_ = mser_detector_.detect_msers(image, MatMser::downwards);
-            down_means_ = MatMser::extract_means(down_msers_);
+            down_msers_0_ = down_msers_;
+
         } else {
             track_means_(up_msers_, up_means_, image);
             track_means_(down_msers_, down_means_, image);
@@ -39,6 +40,38 @@ public:
         return down_msers_;
     }
 
+    std::vector<ComponentStats> msers () const {
+        std::vector<ComponentStats> result;
+        result.reserve(up_msers_.size() + down_msers_.size());
+        for (auto& m : up_msers_)
+            if (m.N > 0)
+                result.push_back(m);
+        for (auto& m : down_msers_)
+            if (m.N > 0)
+                result.push_back(m);
+        return result;
+    }
+
+    const std::vector<ComponentStats>& up_msers_0 () const {
+        return up_msers_0_;
+    }
+
+    const std::vector<ComponentStats>& down_msers_0 () const {
+        return down_msers_0_;
+    }
+
+    std::vector<ComponentStats> msers_0 () const {
+        std::vector<ComponentStats> result;
+        result.reserve(up_msers_0_.size() + down_msers_0_.size());
+        for (std::size_t i = 0; i < up_msers_.size(); ++i)
+            if (up_msers_[i].N > 0)
+                result.push_back(up_msers_0_[i]);
+        for (std::size_t i = 0; i < down_msers_.size(); ++i)
+            if (down_msers_[i].N > 0)
+                result.push_back(down_msers_0_[i]);
+        return result;
+    }
+
     const std::vector<cv::Point2f>& up_means () const {
         return up_means_;
     }
@@ -54,8 +87,14 @@ private:
     std::vector<ComponentStats> down_msers_;
     cv::Mat last_image_;
 
+    std::vector<ComponentStats> up_msers_0_;
+    std::vector<ComponentStats> down_msers_0_;
+
+    // TODO: delete
     std::vector<cv::Point2f> up_means_;
     std::vector<cv::Point2f> down_means_;
+
+
 
     void track_means_(std::vector<ComponentStats>& msers, std::vector<cv::Point2f>& means,
                       const cv::Mat& new_image) {

@@ -23,14 +23,21 @@ void test2 ();
 void test3 ();
 void test4();
 void test5();
+void test6(std::string filename);
 
-int main() {
+int main(int argc, char** argv) {
+    std::string filename;
+    if (argc >= 2)
+        filename = argv[1];
+    else
+        filename = "basket.avi";
     //test0();
     //test1();
     //test2();
     //test3();
-    test4();
+    //test4();
     //test5();
+    test6(filename);
 }
 
 
@@ -175,7 +182,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/lake.mp4";
+   auto filename = "../../data/train2.mp4";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 
@@ -184,7 +191,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(2, 50, 3000, 20.f, .1f, 20.f, 1e2);;
+    MatMser mser_detector(2, 50, 3000, 150.f, .1f, 100.f, 1e2);;
     MatMserTracker  tracker(mser_detector);
 
     cv::Mat frame;
@@ -276,4 +283,98 @@ void test5()
         p1 = p2;
     }
 
+}
+
+void test6(std::string filename)
+{
+   bool show = true;
+    MatMser mser_detector(2, 50, 3000, 75.f, .1f, 50.f, 1e2);;
+
+   std::string path = "../../data/" + filename;
+   cv::VideoCapture cap(path);
+
+   int frame_width=   cap.get(CV_CAP_PROP_FRAME_WIDTH);
+   int frame_height=   cap.get(CV_CAP_PROP_FRAME_HEIGHT);
+   int N = cap.get(CV_CAP_PROP_FRAME_COUNT);
+   cv::VideoWriter vout("../../output/output.avi",
+                           CV_FOURCC('M','J','P','G'),
+                           30,
+                           cv::Size(frame_width,frame_height),
+                           true);
+   //cv::VideoCapture cap(0);
+
+    //if(!cap.isOpened())
+    //   return -1;
+
+    if (show) {
+        cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
+        cv::namedWindow( "Stabilized", CV_WINDOW_AUTOSIZE );
+    }
+
+    MatMserTracker  tracker(mser_detector);
+
+    cv::Mat frame;
+    cv::Mat gray;
+    int i = 0;
+    while (cap.isOpened()) {
+        auto start = std::chrono::high_resolution_clock::now();
+        if (!cap.read(frame))
+            break;
+        cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+        tracker.update(gray);
+
+        cv::Mat H = cv::findHomography(MatMser::extract_means(tracker.msers()),
+                                       MatMser::extract_means(tracker.msers_0()));
+        cv::Mat stabilized;
+        cv::warpPerspective(frame, stabilized, H, cv::Size(frame.cols, frame.rows));
+
+        vout.write(stabilized);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto time = std::chrono::duration_cast<std::chrono::milliseconds>
+                            (end - start).count();
+
+        ++i;
+        std::cout << i << "/" << N << " done! ( " << time << "ms )\n";
+
+
+        if (show) {
+            cv::Mat out_frame = frame.clone();
+
+            for (auto& mser : tracker.up_msers()) {
+                if (mser.N > 0) {
+                    auto points = MatMser::stats_to_points(mser, gray);
+                    std::vector<cv::Point> hull;
+                    cv::convexHull(points, hull);
+                    cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0), 1.5);
+                    cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
+                }
+            }
+
+
+            for (auto& mser : tracker.down_msers()) {
+                if (mser.N > 0) {
+                    auto points = MatMser::stats_to_points(mser, gray);
+                    std::vector<cv::Point> hull;
+                    cv::convexHull(points, hull);
+                    cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0), 1.5);
+                    cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
+                }
+            }
+
+            cv::imshow("Video", out_frame);
+            cv::imshow("Stabilized", stabilized);
+
+
+            if (cv::waitKey(1) >= 0) {
+                break;
+            }
+        }
+
+    }
+
+    cap.release();
+    vout.release();
+    if (show)
+        cv::destroyAllWindows();
 }

@@ -18,6 +18,7 @@ LIBS += -lopencv_core -lopencv_highgui
 LIBS += -lopencv_imgproc -lopencv_imgcodecs
 LIBS += -lopencv_video -lopencv_videoio
 LIBS += -lopencv_features2d
+LIBS += -lopencv_videostab -lopencv_stitching -lopencv_calib3d
 
 QMAKE_CXXFLAGS_RELEASE -= -O0
 QMAKE_CXXFLAGS_RELEASE -= -O1
