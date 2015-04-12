@@ -171,7 +171,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/shop.avi";
+   auto filename = "../../data/lake.mp4";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 

@@ -185,7 +185,7 @@ private:
 
 
     void check_component_(Component &comp) {
-        if (comp.history.size() >= 2*delta_ + 1) {
+        if (comp.history.size() >= 2*delta_ + 1 && comp.history.size() >= delta_ + 3) {
             auto& succ = comp.history.rbegin()[delta_];
             auto& examinee = comp.history.rbegin()[delta_+1];
             auto& pred = comp.history.rbegin()[delta_+2];
@@ -286,12 +286,13 @@ private:
     float max_error_ = 1.e3;
     float min_stability_ = 0.;
 
-    float weight_mean_ = 1.;
+    float weight_mean_ = 1.e0;
     float weight_boundingbox_ = 1.e2;
     float weight_mean_val_ = 1.;
     float weight_interval_ = 1.e0;
     float weight_N_ = 1.e3;
     float weight_cov_ = 1.e3;
+    float weight_dstability_= 1.e6;
 
     void extend_history_(Component& component) {
         component.history.push_back(component.stats);
@@ -308,7 +309,7 @@ private:
         assert(comp.history.size() == comp.level_history.size());
 
 
-        if (comp.history.size() >= 2*delta_ + 2) {
+        if (comp.history.size() >= 2*delta_ + 1 && comp.history.size() >= delta_ + 3) {
             auto& pred = comp.history.rbegin()[delta_+2];
             uchar pred_level = comp.level_history.rbegin()[delta_+2];
             auto& examinee = comp.history.rbegin()[delta_+1];
@@ -335,8 +336,8 @@ private:
             //cost += .5*weight_interval_ * compute_neg_error_(examinee.min_val,  target_stats_.min_val);
             //cost += .5*weight_interval_ * compute_pos_error_(examinee.max_val,  target_stats_.max_val );
 
-            cost += 1e4 * compute_neg_error_(dstability1, 0.);
-            cost += 1e4 * compute_pos_error_(dstability2, 0.);
+            cost += weight_dstability_ * compute_neg_error_(dstability1, 0.);
+            cost += weight_dstability_ * compute_pos_error_(dstability2, 0.);
 
 
             for (auto i : {0, 1})
