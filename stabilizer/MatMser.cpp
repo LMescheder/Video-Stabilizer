@@ -35,6 +35,7 @@ MatMser::ComponentStats MatMser::retrieve_mser(const cv::Mat &image, const MatMs
 
     int dx = static_cast<int> (.01 * std::max(image.rows, image.cols));
     int dy = dx;
+
     cv::Point2i p1{std::max(target_stats.min_point.x - dx, 0),
                 std::max(target_stats.min_point.y - dy, 0)};
     cv::Point2i p2{std::min(target_stats.max_point.x + dx, image.cols-1),

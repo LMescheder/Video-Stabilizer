@@ -28,7 +28,7 @@ public:
         }
 
         ++count_;
-        last_image_ = image;
+        last_image_ = image.clone();
     }
 
     const std::vector<ComponentStats>& up_msers () const {
@@ -39,6 +39,13 @@ public:
         return down_msers_;
     }
 
+    const std::vector<cv::Point2f>& up_means () const {
+        return up_means_;
+    }
+
+    const std::vector<cv::Point2f>& down_means () const {
+        return down_means_;
+    }
 private:
 
     MatMser mser_detector_;
@@ -53,14 +60,21 @@ private:
     void track_means_(std::vector<ComponentStats>& msers, std::vector<cv::Point2f>& means,
                       const cv::Mat& new_image) {
 
-        std::vector<cv::Point2f> new_means;
+        means = MatMser::extract_means(msers);
+        std::vector<cv::Point2f> new_means(means.size());
         cv::Mat err, status;
 
         cv::calcOpticalFlowPyrLK(last_image_, new_image, means, new_means, status, err);
         means = new_means;
 
-        for (std::size_t i=0; i<msers.size(); ++i)
-            msers[i].mean = means[i];
+        for (std::size_t i=0; i<msers.size(); ++i) {
+            cv::Point2f t = new_means[i] - msers[i].mean;
+            cv::Point2i tint{static_cast<int>(t.x), static_cast<int>(t.y)};
+            msers[i].mean += t;
+            msers[i].min_point = MatMser::clamp(msers[i].min_point + tint, new_image);
+            msers[i].max_point += MatMser::clamp(msers[i].max_point + tint, new_image);
+            msers[i].source += MatMser::clamp(msers[i].source + tint, new_image);
+        }
     }
 };
 

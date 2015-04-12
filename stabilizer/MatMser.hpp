@@ -42,6 +42,13 @@ public:
 
     static std::vector<cv::Point2f> extract_means (const std::vector<ComponentStats>& stats);
 
+    static cv::Point2i clamp(cv::Point2i p, const cv::Mat& image  ) {
+        int x = std::min(std::max(p.x, 0), image.cols-1);
+        int y = std::min(std::max(p.y, 0), image.rows-1);
+
+        return {x, y};
+    }
+
     // getter and setter functions
     unsigned int delta () const {
         return delta_;
@@ -100,7 +107,6 @@ private:
     float min_diversity_;
     float min_retrieval_stability_;
     float max_retrieval_error_;
-
 
 };
 

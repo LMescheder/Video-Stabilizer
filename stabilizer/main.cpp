@@ -175,7 +175,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/basket.avi";
+   auto filename = "../../data/shop.avi";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 
@@ -184,7 +184,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(2, 60, 14400, 30.f, .2f, 40.f, 5e2);;
+    MatMser mser_detector(2, 60, 14400, 30.f, .2f, 30.f, 5e3);;
     MatMserTracker  tracker(mser_detector);
 
     cv::Mat frame;
@@ -206,6 +206,7 @@ void test4()
             }
         }
 
+
         for (auto& mser : tracker.down_msers()) {
             if (mser.N > 0) {
                 auto points = MatMser::stats_to_points(mser, gray);
@@ -215,6 +216,11 @@ void test4()
                 cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
             }
         }
+        //for (auto& mean : tracker.up_means())
+        //    cv::circle(out_frame, mean, 3, cv::Scalar(0, 0, 255));
+
+        //for (auto& mean : tracker.down_means())
+        //    cv::circle(out_frame, mean, 3, cv::Scalar(0, 0, 255));
 
         cv::imshow("Video", out_frame);
 
