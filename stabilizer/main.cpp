@@ -175,7 +175,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/basket.avi";
+   auto filename = "../../data/train2.mp4";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 
@@ -184,7 +184,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(2, 60, 14400, 20.f, .2f, 20.f, 1e4);;
+    MatMser mser_detector(2, 60, 14400, 20.f, .2f, 20.f, 1e3);;
     MatMserTracker  tracker(mser_detector);
 
     cv::Mat frame;
