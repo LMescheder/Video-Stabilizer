@@ -286,12 +286,12 @@ private:
     float max_error_ = 1.e3;
     float min_stability_ = 0.;
 
-    float weight_mean_ = 1.e0;
+    float weight_mean_ = 1.e6;
     float weight_boundingbox_ = 1.e2;
     float weight_mean_val_ = 1.;
     float weight_interval_ = 1.e0;
-    float weight_N_ = 1.e2;
-    float weight_cov_ = 1.e2;
+    float weight_N_ = 1.e4;
+    float weight_cov_ = 1.e4;
     float weight_dstability_= 1.e2;
 
     void extend_history_(Component& component) {
@@ -324,8 +324,11 @@ private:
             // compute cost function
             float cost = 0;
 
-            cost += .5*weight_mean_ * compute_error_(examinee.mean.x, target_stats_.mean.x);
-            cost += .5*weight_mean_ * compute_error_(examinee.mean.y, target_stats_.mean.y);
+
+            cost += .5*weight_mean_ * compute_error_(examinee.mean.x, target_stats_.mean.x,
+                                                     target_stats_.max_point.x - target_stats_.min_point.x);
+            cost += .5*weight_mean_ * compute_error_(examinee.mean.y, target_stats_.mean.y,
+                                                     target_stats_.max_point.y - target_stats_.min_point.y);
             cost += .5*weight_boundingbox_* compute_rel_error_(examinee.max_point.x - examinee.min_point.x,
                                                            target_stats_.max_point.x - target_stats_.min_point.x);
             cost += .5*weight_boundingbox_ * compute_rel_error_(examinee.max_point.y - examinee.min_point.y,
@@ -369,8 +372,8 @@ private:
         }
     }
 
-    float compute_error_(float val, float target) {
-        float err = (val - target);
+    float compute_error_(float val, float target, float norm=1.f) {
+        float err = (val - target)/norm;
         return err*err;
     }
 

@@ -33,8 +33,11 @@ MatMser::ComponentStats MatMser::retrieve_mser(const cv::Mat &image, const MatMs
     ComponentTreeParser<MatAccessor, MatFindMserAnalyzer> parser{};
     MatFindMserAnalyzer analyzer(target_stats, delta_, max_retrieval_error_, min_retrieval_stability_);
 
-    int dx = static_cast<int> (.01 * (target_stats.max_point.x - target_stats.min_point.x));
-    int dy = static_cast<int> (.01 * (target_stats.max_point.y - target_stats.min_point.y));
+    int dx = static_cast<int> (roi_factor_ * (target_stats.max_point.x - target_stats.min_point.x));
+    int dy = static_cast<int> (roi_factor_ * (target_stats.max_point.y - target_stats.min_point.y));
+
+    dx = std::max(10, dx);
+    dy = std::max(10, dy);
 
     cv::Point2i p1{std::max(target_stats.min_point.x - dx, 0),
                 std::max(target_stats.min_point.y - dy, 0)};

@@ -108,6 +108,7 @@ private:
     float min_retrieval_stability_;
     float max_retrieval_error_;
 
+    float roi_factor_ = .2;
 };
 
 #endif // MATMSER_HPP

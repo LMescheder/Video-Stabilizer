@@ -60,7 +60,7 @@ private:
     void track_means_(std::vector<ComponentStats>& msers, std::vector<cv::Point2f>& means,
                       const cv::Mat& new_image) {
 
-        //means = MatMser::extract_means(msers);
+        means = MatMser::extract_means(msers);
         std::vector<cv::Point2f> new_means(means.size());
         cv::Mat err, status;
 
