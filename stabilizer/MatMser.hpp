@@ -35,12 +35,12 @@ public:
                                    bool reverse);
 
     // utility functions
-    std::vector<cv::Point2i> stats_to_points (const MatMserAnalyzer::ComponentStats& stats, const cv::Mat& im);
+    static std::vector<cv::Point2i> stats_to_points (const MatMserAnalyzer::ComponentStats& stats, const cv::Mat& im);
 
-    std::vector<std::vector<cv::Point2i>> mult_stats_to_points (const std::vector<MatMserAnalyzer::ComponentStats>& stats,
+    static std::vector<std::vector<cv::Point2i>> mult_stats_to_points (const std::vector<MatMserAnalyzer::ComponentStats>& stats,
                                                                 const cv::Mat& image);
 
-    std::vector<cv::Point2f> extract_means (const std::vector<ComponentStats>& stats);
+    static std::vector<cv::Point2f> extract_means (const std::vector<ComponentStats>& stats);
 
     // getter and setter functions
     unsigned int delta () const {

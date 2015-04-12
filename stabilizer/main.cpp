@@ -15,6 +15,7 @@
 #include "MatAnalyzer.hpp"
 #include "MatAccessor.hpp"
 #include "MatMser.hpp"
+#include "MatMserTracker.hpp"
 
 void test0 ();
 void test1 ();
@@ -28,8 +29,8 @@ int main() {
     //test1();
     //test2();
     //test3();
-    //test4();
-    test5();
+    test4();
+    //test5();
 }
 
 
@@ -183,29 +184,21 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser  mser_detector(2, 10, 7500, 30.f, .2f, 30.f, 1e3);
+    MatMser mser_detector(2, 60, 14400, 30.f, .2f, 40.f, 5e2);;
+    MatMserTracker  tracker(mser_detector);
+
     cv::Mat frame;
     cv::Mat gray;
-    cap >> frame;
-    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-
-    auto up_msers = mser_detector.detect_msers(gray, MatMser::upwards);
-    auto down_msers = mser_detector.detect_msers(gray, MatMser::downwards);
-
-    bool recompute = false;
-
-    for (int i=1; true; i = (i+1) % 10) {
+    while (true) {
         cap >> frame;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-
-        up_msers = mser_detector.retrieve_msers(gray, up_msers, false);
-        down_msers = mser_detector.retrieve_msers(gray, down_msers, true);
+        tracker.update(gray);
 
         cv::Mat out_frame = frame.clone();
 
-        for (auto& mser : up_msers) {
+        for (auto& mser : tracker.up_msers()) {
             if (mser.N > 0) {
-                auto points = mser_detector.stats_to_points(mser, gray);
+                auto points = MatMser::stats_to_points(mser, gray);
                 std::vector<cv::Point> hull;
                 cv::convexHull(points, hull);
                 cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0));
@@ -213,9 +206,9 @@ void test4()
             }
         }
 
-        for (auto& mser : down_msers) {
+        for (auto& mser : tracker.down_msers()) {
             if (mser.N > 0) {
-                auto points = mser_detector.stats_to_points(mser, gray);
+                auto points = MatMser::stats_to_points(mser, gray);
                 std::vector<cv::Point> hull;
                 cv::convexHull(points, hull);
                 cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0));
@@ -223,11 +216,6 @@ void test4()
             }
         }
 
-        // recompute
-        if (recompute && i == 0) {
-            up_msers = mser_detector.detect_msers(gray, MatMser::upwards);
-            down_msers = mser_detector.detect_msers(gray, MatMser::downwards);
-        }
         cv::imshow("Video", out_frame);
 
         if (cv::waitKey(1) >= 0) {
@@ -239,7 +227,7 @@ void test4()
 
 void test5()
 {
-    std::string filename = "../../data/path.mp4";
+    std::string filename = "../../data/basket.avi";
     cv::VideoCapture cap(filename);
 
     //if(!cap.isOpened())
