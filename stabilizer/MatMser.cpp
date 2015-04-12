@@ -97,3 +97,19 @@ std::vector<std::vector<cv::Point2i> > MatMser::mult_stats_to_points(const std::
 
     return points;
 }
+
+std::vector<cv::Point2f> MatMser::extract_means(const std::vector<ComponentStats>& stats)
+{
+    std::vector<cv::Point2f> result;
+    result.reserve(stats.size());
+
+    for (auto& s : stats)
+        result.push_back(s.mean);
+
+    return result;
+}
+
+
+
+
+

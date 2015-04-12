@@ -21,13 +21,15 @@ void test1 ();
 void test2 ();
 void test3 ();
 void test4();
+void test5();
 
 int main() {
     //test0();
     //test1();
     //test2();
     //test3();
-    test4();
+    //test4();
+    test5();
 }
 
 
@@ -57,11 +59,11 @@ void test1 () {
     cv::cvtColor(im, data, CV_BGR2GRAY);
 
 
-    MatMser mymser;
+    MatMser  mser_detector(2, 60, 14400, 30.f, .2f, 40.f, 5e2);
 
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto result = mymser.detect_msers_points(data);
+    auto result = mser_detector.detect_msers_points(data);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
@@ -78,31 +80,32 @@ void test1 () {
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Operations took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
-    cv::Mat output_im = im.clone();
+    cv::Mat output_im1 = im.clone();
+    cv::Mat output_im2 = im.clone();
     for (auto& mser : result) {
         //cv::circle(output_im, cv::Point(mser.mean), 2, cv::Scalar(255, 0, 0));
 
         std::vector<cv::Point> hull;
         cv::convexHull(mser, hull);
-        cv::polylines(output_im, hull, true, cv::Scalar(255, 0, 0));
+        cv::polylines(output_im1, hull, true, cv::Scalar(0, 255, 0));
         }
 
 
     for (auto& mser : cv_msers) {
         std::vector<cv::Point> hull;
         cv::convexHull(mser, hull);
-        cv::polylines(output_im, hull, true, cv::Scalar(0, 255, 0));
+        cv::polylines(output_im2, hull, true, cv::Scalar(0, 255, 0));
     }
 
 
-    cv::imshow("MSER", output_im);
-
+    cv::imshow("my MSER", output_im1);
+    cv::imshow("opencv MSER", output_im2);
     cv::waitKey(0);
 }
 
 void test2()
 {
-    std::string filename = "../../data/Shop 30s.avi";
+    std::string filename = "../../data/shop.avi";
     cv::VideoCapture cap(filename);
 
     //if(!cap.isOpened())
@@ -110,7 +113,7 @@ void test2()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mymser;
+    MatMser  mser_detector(2, 60, 14400, 30.f, .2f, 40.f, 5e2);
 
     while (true) {
         cv::Mat frame;
@@ -118,7 +121,7 @@ void test2()
         cv::Mat gray;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        auto result = mymser.detect_msers(gray);
+        auto result = mser_detector.detect_msers(gray);
 
         for (auto& mser : result) {
             cv::circle(frame, cv::Point(mser.mean), 2, cv::Scalar(255, 0, 0));
@@ -171,7 +174,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/lake.mp4";
+   auto filename = "../../data/basket.avi";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 
@@ -180,7 +183,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(15, 200, 14400, 1.f, .1f, 1.f, 5e2);
+    MatMser  mser_detector(2, 10, 7500, 30.f, .2f, 30.f, 1e3);
     cv::Mat frame;
     cv::Mat gray;
     cap >> frame;
@@ -230,6 +233,52 @@ void test4()
         if (cv::waitKey(1) >= 0) {
             break;
         }
+    }
+
+}
+
+void test5()
+{
+    std::string filename = "../../data/path.mp4";
+    cv::VideoCapture cap(filename);
+
+    //if(!cap.isOpened())
+    //   return -1;
+
+    cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
+
+    MatMser mser_detector(10, 200, 14400, 10.f, .2f);
+    cv::Mat frame;
+    cap >> frame;
+    cv::Mat gray;
+    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+
+    auto msers = mser_detector.detect_msers(gray);
+
+    std::vector<cv::Point2f> p0 = mser_detector.extract_means(msers);
+    std::vector<cv::Point2f> p1 = p0;
+    std::vector<float> err(p1.size(), 0.f);
+    std::vector<bool> status(p1.size(), true);
+
+    std::vector<cv::Point2f> p2(p1.size());
+
+    while (true) {
+        auto oldgray = gray.clone();
+
+        cap >> frame;
+        cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+
+        cv::calcOpticalFlowPyrLK(oldgray, gray, p1, p2, status, err);
+
+        for (auto& point : p2)
+            cv::circle(frame, point, 2., cv::Scalar(0, 255, 0));
+
+        cv::imshow("Video", frame);
+
+        if (cv::waitKey(1) >= 0) {
+            break;
+        }
+        p1 = p2;
     }
 
 }
