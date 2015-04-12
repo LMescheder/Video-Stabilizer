@@ -175,7 +175,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/train2.mp4";
+   auto filename = "../../data/lake.mp4";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 
@@ -184,7 +184,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(2, 60, 14400, 20.f, .2f, 20.f, 1e3);;
+    MatMser mser_detector(2, 50, 3000, 20.f, .1f, 20.f, 1e2);;
     MatMserTracker  tracker(mser_detector);
 
     cv::Mat frame;
@@ -201,7 +201,7 @@ void test4()
                 auto points = MatMser::stats_to_points(mser, gray);
                 std::vector<cv::Point> hull;
                 cv::convexHull(points, hull);
-                cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0));
+                cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0), 1.5);
                 cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
             }
         }
@@ -212,16 +212,17 @@ void test4()
                 auto points = MatMser::stats_to_points(mser, gray);
                 std::vector<cv::Point> hull;
                 cv::convexHull(points, hull);
-                cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0));
+                cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0), 1.5);
                 cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
             }
         }
+        /*
         for (auto& mean : tracker.up_means())
             cv::circle(out_frame, mean, 3, cv::Scalar(0, 0, 255));
 
         for (auto& mean : tracker.down_means())
             cv::circle(out_frame, mean, 3, cv::Scalar(0, 0, 255));
-
+        */
         cv::imshow("Video", out_frame);
 
         if (cv::waitKey(1) >= 0) {

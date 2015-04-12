@@ -286,13 +286,13 @@ private:
     float max_error_ = 1.e3;
     float min_stability_ = 0.;
 
-    float weight_mean_ = 1.e6;
-    float weight_boundingbox_ = 1.e2;
-    float weight_mean_val_ = 1.;
-    float weight_interval_ = 1.e0;
-    float weight_N_ = 1.e4;
-    float weight_cov_ = 1.e4;
-    float weight_dstability_= 1.e2;
+    float weight_mean_ = 1.e4;
+    float weight_boundingbox_ = 5.e1;
+    float weight_mean_val_ = 1.e1;
+    float weight_interval_ = 0.e0;
+    float weight_N_ = 1.e2;
+    float weight_cov_ = 1.e1;
+    float weight_dstability_= 1.e0;
 
     void extend_history_(Component& component) {
         component.history.push_back(component.stats);
@@ -335,9 +335,9 @@ private:
                                                             target_stats_.max_point.y - target_stats_.min_point.y);
 
             cost += weight_N_ * compute_rel_error_(examinee.N, target_stats_.N);
-            cost += weight_mean_val_ * compute_error_(examinee.mean_val, target_stats_.mean_val);
-            //cost += .5*weight_interval_ * compute_neg_error_(examinee.min_val,  target_stats_.min_val);
-            //cost += .5*weight_interval_ * compute_pos_error_(examinee.max_val,  target_stats_.max_val );
+            cost += weight_mean_val_ * compute_error_(examinee.mean_val, target_stats_.mean_val, 255);
+            cost += .5*weight_interval_ * compute_error_(examinee.min_val,  target_stats_.min_val, 255);
+            cost += .5*weight_interval_ * compute_error_(examinee.max_val,  target_stats_.max_val, 255);
 
             cost += weight_dstability_ * compute_neg_error_(dstability1, 0.);
             cost += weight_dstability_ * compute_pos_error_(dstability2, 0.);
