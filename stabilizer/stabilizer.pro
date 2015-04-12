@@ -5,12 +5,14 @@ HEADERS += \
     ComponentTreeParser.hpp \
     MatAccessor.hpp \
     MatAnalyzer.hpp \
-    MatMser.hpp
+    MatMser.hpp \
+    MatMserTracker.hpp
 
 SOURCES += \
     main.cpp \
     MatMser.cpp \
-    MatAccessor.cpp
+    MatAccessor.cpp \
+    MatMserTracker.cpp
 
 LIBS += -lopencv_core -lopencv_highgui
 LIBS += -lopencv_imgproc -lopencv_imgcodecs
