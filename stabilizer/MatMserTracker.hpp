@@ -17,10 +17,12 @@ public:
     void update (const cv::Mat& image) {
         if (count_ == 0) {
             up_msers_ = mser_detector_.detect_msers(image, MatMser::upwards);
+            up_means_ = MatMser::extract_means(up_msers_);
             down_msers_ = mser_detector_.detect_msers(image, MatMser::downwards);
+            down_means_ = MatMser::extract_means(down_msers_);
         } else {
-            track_means_(up_msers_, image);
-            track_means_(down_msers_, image);
+            track_means_(up_msers_, up_means_, image);
+            track_means_(down_msers_, down_means_, image);
             up_msers_ = mser_detector_.retrieve_msers(image, up_msers_, false);
             down_msers_ = mser_detector_.retrieve_msers(image, down_msers_, true);
         }
@@ -45,17 +47,20 @@ private:
     std::vector<ComponentStats> down_msers_;
     cv::Mat last_image_;
 
-    void track_means_(std::vector<ComponentStats>& msers, const cv::Mat& new_image) {
-        std::vector<cv::Point2f> points = MatMser::extract_means(msers);
-        std::vector<cv::Point2f> new_points;
+    std::vector<cv::Point2f> up_means_;
+    std::vector<cv::Point2f> down_means_;
 
+    void track_means_(std::vector<ComponentStats>& msers, std::vector<cv::Point2f>& means,
+                      const cv::Mat& new_image) {
+
+        std::vector<cv::Point2f> new_means;
         cv::Mat err, status;
 
-        cv::calcOpticalFlowPyrLK(last_image_, new_image, points, new_points, status, err);
+        cv::calcOpticalFlowPyrLK(last_image_, new_image, means, new_means, status, err);
+        means = new_means;
 
         for (std::size_t i=0; i<msers.size(); ++i)
-            msers[i].mean = new_points[i];
-
+            msers[i].mean = means[i];
     }
 };
 
