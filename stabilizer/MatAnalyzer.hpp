@@ -290,9 +290,9 @@ private:
     float weight_boundingbox_ = 1.e2;
     float weight_mean_val_ = 1.;
     float weight_interval_ = 1.e0;
-    float weight_N_ = 1.e4;
-    float weight_cov_ = 1.e3;
-    float weight_dstability_= 1.e6;
+    float weight_N_ = 1.e2;
+    float weight_cov_ = 1.e2;
+    float weight_dstability_= 1.e2;
 
     void extend_history_(Component& component) {
         component.history.push_back(component.stats);

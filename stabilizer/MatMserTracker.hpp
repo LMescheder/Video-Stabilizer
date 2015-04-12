@@ -60,7 +60,7 @@ private:
     void track_means_(std::vector<ComponentStats>& msers, std::vector<cv::Point2f>& means,
                       const cv::Mat& new_image) {
 
-        means = MatMser::extract_means(msers);
+        //means = MatMser::extract_means(msers);
         std::vector<cv::Point2f> new_means(means.size());
         cv::Mat err, status;
 
@@ -70,10 +70,10 @@ private:
         for (std::size_t i=0; i<msers.size(); ++i) {
             cv::Point2f t = new_means[i] - msers[i].mean;
             cv::Point2i tint{static_cast<int>(t.x), static_cast<int>(t.y)};
-            msers[i].mean += t;
+            msers[i].mean = msers[i].mean + t;
             msers[i].min_point = MatMser::clamp(msers[i].min_point + tint, new_image);
-            msers[i].max_point += MatMser::clamp(msers[i].max_point + tint, new_image);
-            msers[i].source += MatMser::clamp(msers[i].source + tint, new_image);
+            msers[i].max_point = MatMser::clamp(msers[i].max_point + tint, new_image);
+            msers[i].source =    MatMser::clamp(msers[i].source + tint, new_image);
         }
     }
 };

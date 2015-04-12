@@ -184,7 +184,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(2, 60, 14400, 30.f, .2f, 30.f, 5e3);;
+    MatMser mser_detector(2, 60, 14400, 100.f, .2f, 100.f, 1e3);;
     MatMserTracker  tracker(mser_detector);
 
     cv::Mat frame;
@@ -216,11 +216,11 @@ void test4()
                 cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
             }
         }
-        //for (auto& mean : tracker.up_means())
-        //    cv::circle(out_frame, mean, 3, cv::Scalar(0, 0, 255));
+        for (auto& mean : tracker.up_means())
+            cv::circle(out_frame, mean, 3, cv::Scalar(0, 0, 255));
 
-        //for (auto& mean : tracker.down_means())
-        //    cv::circle(out_frame, mean, 3, cv::Scalar(0, 0, 255));
+        for (auto& mean : tracker.down_means())
+            cv::circle(out_frame, mean, 3, cv::Scalar(0, 0, 255));
 
         cv::imshow("Video", out_frame);
 
