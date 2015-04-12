@@ -154,9 +154,6 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
     // we are done, when there is no boundary node left
     while (true) {
         // get next node
-        auto node = graph.node(current_node);
-        auto val = graph.value(current_node);
-
         /*
         std::cout << "Current node: " << current_node
                   << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;

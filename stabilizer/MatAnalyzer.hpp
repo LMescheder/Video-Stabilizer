@@ -25,7 +25,7 @@ struct MatComponentStats {
 
     MatComponentStats(cv::Point2i point, uchar value)
         : N{1}, mean{point}, min_point{point}, max_point{point},
-          min_val{value}, max_val{value}, mean_val{value},
+          min_val{value}, max_val{value}, mean_val{static_cast<float>(value)},
           source{point} {}
 
     void merge(const MatComponentStats& comp1) {
@@ -61,7 +61,7 @@ struct MatComponentStats {
 
 
 
-float compute_stability(unsigned int pred_N, uchar pred_level, unsigned int N, uchar level, unsigned int succ_N, uchar succ_level) {
+inline float compute_stability(unsigned int pred_N, uchar pred_level, unsigned int N, uchar level, unsigned int succ_N, uchar succ_level) {
     float stability =  static_cast<float>(N * std::abs(succ_level - pred_level))/(succ_N - pred_N);
     assert(stability >= 0);
     return stability;
@@ -289,7 +289,7 @@ private:
     float weight_mean_ = 1.;
     float weight_boundingbox_ = 1.e2;
     float weight_mean_val_ = 1.;
-    float weight_interval_ = 1.;
+    float weight_interval_ = 1.e0;
     float weight_N_ = 1.e3;
     float weight_cov_ = 1.e3;
 
@@ -323,9 +323,6 @@ private:
             // compute cost function
             float cost = 0;
 
-            float size[] = {target_stats_.max_point.x - target_stats_.min_point.x,
-                            target_stats_.max_point.y - target_stats_.min_point.y};
-
             cost += .5*weight_mean_ * compute_error_(examinee.mean.x, target_stats_.mean.x);
             cost += .5*weight_mean_ * compute_error_(examinee.mean.y, target_stats_.mean.y);
             cost += .5*weight_boundingbox_* compute_rel_error_(examinee.max_point.x - examinee.min_point.x,
@@ -335,10 +332,12 @@ private:
 
             cost += weight_N_ * compute_rel_error_(examinee.N, target_stats_.N);
             cost += weight_mean_val_ * compute_error_(examinee.mean_val, target_stats_.mean_val);
-            cost += .5*weight_interval_ * compute_error_(examinee.min_val,  target_stats_.min_val );
-            cost += .5*weight_interval_ * compute_error_(examinee.max_val,  target_stats_.max_val );
+            //cost += .5*weight_interval_ * compute_neg_error_(examinee.min_val,  target_stats_.min_val);
+            //cost += .5*weight_interval_ * compute_pos_error_(examinee.max_val,  target_stats_.max_val );
 
-            cost += 1e5 * std::max(dstability1 * dstability2, 0.f);
+            cost += 1e4 * compute_neg_error_(dstability1, 0.);
+            cost += 1e4 * compute_pos_error_(dstability2, 0.);
+
 
             for (auto i : {0, 1})
                 for (auto j : {0, 1})
@@ -371,6 +370,16 @@ private:
 
     float compute_error_(float val, float target) {
         float err = (val - target);
+        return err*err;
+    }
+
+    float compute_pos_error_(float val, float target) {
+        float err = std::max((val - target), 0.f);
+        return err*err;
+    }
+
+    float compute_neg_error_(float val, float target) {
+        float err = std::min((val - target), 0.f);
         return err*err;
     }
 

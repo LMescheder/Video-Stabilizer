@@ -9,7 +9,8 @@ HEADERS += \
 
 SOURCES += \
     main.cpp \
-    MatMser.cpp
+    MatMser.cpp \
+    MatAccessor.cpp
 
 LIBS += -lopencv_core -lopencv_highgui
 LIBS += -lopencv_imgproc -lopencv_imgcodecs

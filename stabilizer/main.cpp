@@ -171,7 +171,7 @@ void test3()
 
 void test4()
 {
-   auto filename = "../../data/path.mp4";
+   auto filename = "../../data/shop.avi";
    cv::VideoCapture cap(filename);
    //cv::VideoCapture cap(0);
 
@@ -180,7 +180,7 @@ void test4()
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(15, 200, 14400, 30.f, .2f, 30.f, 1e3);
+    MatMser mser_detector(15, 200, 14400, 1.f, .1f, 1.f, 5e2);
     cv::Mat frame;
     cv::Mat gray;
     cap >> frame;
