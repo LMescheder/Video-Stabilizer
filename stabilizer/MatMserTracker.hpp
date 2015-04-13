@@ -14,6 +14,10 @@ public:
     MatMserTracker (MatMser mser_detector)
         : mser_detector_(mser_detector) {}
 
+    void reset() {
+        count_ = 0;
+    }
+
     void update (const cv::Mat& image);
 
     const std::vector<ComponentStats>& up_msers () const {
