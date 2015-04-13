@@ -37,8 +37,8 @@ int main(int argc, char** argv) {
     //test2(filename);
     //test3(filename);
     //test4(filename);
-    test5(filename);
-    //test6(filename);
+    //test5(filename);
+    test6(filename);
 }
 
 
@@ -291,7 +291,12 @@ void test6(std::string input)
    int N = cap.get(CV_CAP_PROP_FRAME_COUNT);
    cv::VideoWriter vout("../../output/output.avi",
                            CV_FOURCC('M','J','P','G'),
-                           30,
+                           20,
+                           cv::Size(frame_width,frame_height),
+                           true);
+   cv::VideoWriter voutr("../../output/output_regions.avi",
+                           CV_FOURCC('M','J','P','G'),
+                           20,
                            cv::Size(frame_width,frame_height),
                            true);
    //cv::VideoCapture cap(0);
@@ -321,7 +326,31 @@ void test6(std::string input)
         cv::Mat stabilized;
         cv::warpPerspective(frame, stabilized, H, cv::Size(frame.cols, frame.rows));
 
+        cv::Mat out_frame = frame.clone();
+
+        for (auto& mser : tracker.up_msers()) {
+            if (mser.N > 0) {
+                auto points = MatMser::stats_to_points(mser, gray);
+                std::vector<cv::Point> hull;
+                cv::convexHull(points, hull);
+                cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0), 1.5);
+                cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
+            }
+        }
+
+
+        for (auto& mser : tracker.down_msers()) {
+            if (mser.N > 0) {
+                auto points = MatMser::stats_to_points(mser, gray);
+                std::vector<cv::Point> hull;
+                cv::convexHull(points, hull);
+                cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0), 1.5);
+                cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
+            }
+        }
+
         vout.write(stabilized);
+        voutr.write(out_frame);
 
         auto end = std::chrono::high_resolution_clock::now();
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>
@@ -332,28 +361,7 @@ void test6(std::string input)
 
 
         if (show) {
-            cv::Mat out_frame = frame.clone();
 
-            for (auto& mser : tracker.up_msers()) {
-                if (mser.N > 0) {
-                    auto points = MatMser::stats_to_points(mser, gray);
-                    std::vector<cv::Point> hull;
-                    cv::convexHull(points, hull);
-                    cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0), 1.5);
-                    cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
-                }
-            }
-
-
-            for (auto& mser : tracker.down_msers()) {
-                if (mser.N > 0) {
-                    auto points = MatMser::stats_to_points(mser, gray);
-                    std::vector<cv::Point> hull;
-                    cv::convexHull(points, hull);
-                    cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0), 1.5);
-                    cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
-                }
-            }
 
             cv::imshow("Video", out_frame);
             cv::imshow("Stabilized", stabilized);
@@ -368,6 +376,7 @@ void test6(std::string input)
 
     cap.release();
     vout.release();
+    voutr.release();
     if (show)
         cv::destroyAllWindows();
 }
