@@ -43,6 +43,14 @@ P must provide:
   TODO: better way to return analyzers results?
 */
 
+/** \brief Generic class to parse the component tree of a graph.
+ *
+ *  This class is used to parse to component tree of a graph or an image. In order to do so,
+ *  it is has to be configured by the two template parameters G and A, where G is a GraphAccesssor and A
+ *  an Analyzer. G is thus used to access the graph (e.g. for an image) and A to analyze the evolution and
+ *  merging of the components while the level changes.
+ *
+ */
 template <typename G, typename A>
 // requires GraphAccessor<G>
 //      &&  ComponentAnalyzer<A>
