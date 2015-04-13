@@ -12,7 +12,8 @@ SOURCES += \
     main.cpp \
     MatMser.cpp \
     MatAccessor.cpp \
-    MatMserTracker.cpp
+    MatMserTracker.cpp \
+    MatAnalyzer.cpp
 
 LIBS += -lopencv_core -lopencv_highgui
 LIBS += -lopencv_imgproc -lopencv_imgcodecs
