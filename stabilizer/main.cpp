@@ -16,7 +16,7 @@
 #include "MatAccessor.hpp"
 #include "MatMser.hpp"
 #include "MatMserTracker.hpp"
-
+#include "VideoStabilizer.hpp"
 void test0 (std::string input);
 void test1 (std::string input);
 void test2 (std::string input);
@@ -282,7 +282,7 @@ void test5(std::string input)
 void test6(std::string input)
 {
    bool show = true;
-    MatMser mser_detector(2, 50, 3000, 75.f, .1f, 50.f, 1e2);;
+    MatMser mser_detector(2, 50, 3000, 150.f, .1f, 100.f, 5e1);;
 
    cv::VideoCapture cap(input);
 
@@ -309,37 +309,26 @@ void test6(std::string input)
         cv::namedWindow( "Stabilized", CV_WINDOW_AUTOSIZE );
     }
 
-    MatMserTracker  tracker(mser_detector);
-
     cv::Mat frame;
     cv::Mat gray;
+    if (!cap.read(frame))
+        return;
+
+    MatMserTracker  tracker(mser_detector);
+    VideoStabilizer stabilizer(tracker, frame);
+
     int i = 0;
     while (cap.isOpened()) {
         auto start = std::chrono::high_resolution_clock::now();
         if (!cap.read(frame))
             break;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-        tracker.update(gray);
 
-        cv::Mat H = cv::findHomography(MatMser::extract_means(tracker.msers()),
-                                       MatMser::extract_means(tracker.msers_0()));
-        cv::Mat stabilized;
-        cv::warpPerspective(frame, stabilized, H, cv::Size(frame.cols, frame.rows));
+        cv::Mat stabilized = stabilizer.stabilze_next(frame);
 
         cv::Mat out_frame = frame.clone();
 
-        for (auto& mser : tracker.up_msers()) {
-            if (mser.N > 0) {
-                auto points = MatMser::stats_to_points(mser, gray);
-                std::vector<cv::Point> hull;
-                cv::convexHull(points, hull);
-                cv::polylines(out_frame, hull, true, cv::Scalar(0, 255, 0), 1.5);
-                cv::circle(out_frame, mser.mean, 3, cv::Scalar(255, 255, 0));
-            }
-        }
-
-
-        for (auto& mser : tracker.down_msers()) {
+        for (auto& mser : stabilizer.msers()) {
             if (mser.N > 0) {
                 auto points = MatMser::stats_to_points(mser, gray);
                 std::vector<cv::Point> hull;
@@ -357,7 +346,7 @@ void test6(std::string input)
                             (end - start).count();
 
         ++i;
-        std::cout << i << "/" << N << " done! ( " << time << "ms )\n";
+        std::cout << i << "/" << N << " done! ( " << time << "ms )" << std::endl;
 
 
         if (show) {
