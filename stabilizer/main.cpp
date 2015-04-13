@@ -17,33 +17,33 @@
 #include "MatMser.hpp"
 #include "MatMserTracker.hpp"
 
-void test0 ();
-void test1 ();
-void test2 ();
-void test3 ();
-void test4();
-void test5();
-void test6(std::string filename);
+void test0 (std::string input);
+void test1 (std::string input);
+void test2 (std::string input);
+void test3 (std::string input);
+void test4 (std::string input);
+void test5 (std::string input);
+void test6 (std::string input);
 
 int main(int argc, char** argv) {
     std::string filename;
-    if (argc >= 2)
-        filename = argv[1];
-    else
-        filename = "basket.avi";
-    //test0();
-    //test1();
-    //test2();
-    //test3();
-    //test4();
-    //test5();
-    test6(filename);
+    if (argc < 2) {
+        std::cout << "Usage: stabilizer [filename]\n";
+        return 1;
+    }
+    filename = std::string("../../data/") + argv[1];
+    //test0(filename);
+    //test1(filename);
+    //test2(filename);
+    //test3(filename);
+    //test4(filename);
+    test5(filename);
+    //test6(filename);
 }
 
 
-void test0 () {
-    const char* path = "/home/lars/Education/University/Semester_10_Lausanne/CV_Project/work/build/data/Lena.png";
-    cv::Mat im = cv::imread(path, CV_LOAD_IMAGE_COLOR);
+void test0 (std::string input) {
+    cv::Mat im = cv::imread(input, CV_LOAD_IMAGE_COLOR);
 
     cv::Mat data;
     cv::cvtColor(im, data, CV_BGR2GRAY);
@@ -59,9 +59,8 @@ void test0 () {
 }
 
 
-void test1 () {
-    const char* path = "../../data/Lena.png";
-    cv::Mat im = cv::imread(path, CV_LOAD_IMAGE_COLOR);
+void test1 (std::string input) {
+    cv::Mat im = cv::imread(input, CV_LOAD_IMAGE_COLOR);
 
     cv::Mat data;
     cv::cvtColor(im, data, CV_BGR2GRAY);
@@ -111,10 +110,9 @@ void test1 () {
     cv::waitKey(0);
 }
 
-void test2()
+void test2(std::string input)
 {
-    std::string filename = "../../data/shop.avi";
-    cv::VideoCapture cap(filename);
+    cv::VideoCapture cap(input);
 
     //if(!cap.isOpened())
     //   return -1;
@@ -145,10 +143,9 @@ void test2()
 
 }
 
-void test3()
+void test3(std::string input)
 {
-    std::string filename = "../../data/basket.avi";
-    cv::VideoCapture cap(filename);
+    cv::VideoCapture cap(input);
 
     //if(!cap.isOpened())
     //   return -1;
@@ -180,10 +177,9 @@ void test3()
 
 }
 
-void test4()
+void test4(std::string input)
 {
-   auto filename = "../../data/train2.mp4";
-   cv::VideoCapture cap(filename);
+   cv::VideoCapture cap(input);
    //cv::VideoCapture cap(0);
 
     //if(!cap.isOpened())
@@ -239,17 +235,16 @@ void test4()
 
 }
 
-void test5()
+void test5(std::string input)
 {
-    std::string filename = "../../data/lake.mp4";
-    cv::VideoCapture cap(filename);
+    cv::VideoCapture cap(input);
 
     //if(!cap.isOpened())
     //   return -1;
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(10, 200, 14400, 10.f, .2f);
+    MatMser mser_detector(2, 50, 3000, 75.f, .1f, 50.f, 5e2);;
     cv::Mat frame;
     cap >> frame;
     cv::Mat gray;
@@ -258,11 +253,10 @@ void test5()
     auto msers = mser_detector.detect_msers(gray);
 
     std::vector<cv::Point2f> p0 = mser_detector.extract_means(msers);
-    std::vector<cv::Point2f> p1 = p0;
-    std::vector<float> err(p1.size(), 0.f);
-    std::vector<bool> status(p1.size(), true);
+    std::vector<cv::Point2f> p1, p2;
+    cv::Mat err, status;
 
-    std::vector<cv::Point2f> p2(p1.size());
+    p1 = p0;
 
     while (true) {
         auto oldgray = gray.clone();
@@ -270,7 +264,7 @@ void test5()
         cap >> frame;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        cv::calcOpticalFlowPyrLK(oldgray, gray, p1, p2, status, err);
+        cv::calcOpticalFlowPyrLK(oldgray, gray, p1, p2, status, err, cv::Size(50, 50), 2);
 
         for (auto& point : p2)
             cv::circle(frame, point, 2., cv::Scalar(0, 255, 0));
@@ -285,13 +279,12 @@ void test5()
 
 }
 
-void test6(std::string filename)
+void test6(std::string input)
 {
    bool show = true;
     MatMser mser_detector(2, 50, 3000, 75.f, .1f, 50.f, 1e2);;
 
-   std::string path = "../../data/" + filename;
-   cv::VideoCapture cap(path);
+   cv::VideoCapture cap(input);
 
    int frame_width=   cap.get(CV_CAP_PROP_FRAME_WIDTH);
    int frame_height=   cap.get(CV_CAP_PROP_FRAME_HEIGHT);
