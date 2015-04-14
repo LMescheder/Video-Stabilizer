@@ -46,32 +46,66 @@ std::vector<MatMserTracker::ComponentStats> MatMserTracker::msers_0() const {
 
 void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &msers, std::vector<cv::Point2f> &means, const cv::Mat &new_image) {
 
-    std::vector<cv::Point2i> points;
-    std::vector<cv::Point2i> hull0;
-    std::vector<cv::Point2f> hull0f;
-    std::vector<cv::Point2f> hull1f;
-    cv::Mat err, status;
+    const int max_N = 100;
 
+    std::vector<cv::Point2f> points0;
+    std::vector<cv::Point2f> points1;
+
+    std::vector<int> hull_Ns;
+
+    std::vector<cv::Point2i> mser_points;
+    std::vector<cv::Point2i> hull_points;
+
+    hull_Ns.reserve(msers.size());
+    points0.reserve(max_N * msers.size());
+
+    // compute 10 points of convex hull
     for (auto& mser : msers) {
-        if (mser.N == 0)
-            continue;
-        points = MatMser::stats_to_points(mser, last_image_);
-        cv::convexHull(points, hull0);
+        if (mser.N != 0) {
+            mser_points = MatMser::stats_to_points(mser, last_image_);
+            cv::convexHull(mser_points, hull_points);
+            int stepsize = 0;
+            int number = 0;
+            if (hull_points.size() <= max_N) {
+                stepsize = 1;
+                number = hull_points.size();
+            } else {
+                stepsize = hull_points.size() / max_N;
+                number = 10;
+            }
+            hull_Ns.push_back(number);
 
-        hull0f.reserve(10);
-        int stepsize = hull0.size() <= 10 ? 1 : hull0.size() / 10;
-        for (int i = 0; i < 10; ++i) {
-            auto& p = hull0[i * stepsize];
-            hull0f.emplace_back(p.x, p.y);
+            for (int i = 0; i < number; ++i) {
+                auto& p = hull_points[i * stepsize];
+                points0.emplace_back(p.x, p.y);
+            }
         }
+    }
 
-        cv::calcOpticalFlowPyrLK(last_image_, new_image, hull0f, hull1f, status, err, lk_window_);
-        cv::Matx23f Ab = cv::estimateRigidTransform(hull0f, hull1f, true);
+    // compute optical flow on points
+    assert(points0.size() > 0);
+    cv::Mat err, status;
+    points1.reserve(points0.size());
+    cv::calcOpticalFlowPyrLK(last_image_, new_image, points0, points1, status, err, lk_window_);
+
+    cv::Mat points0_mat(points0);
+    cv::Mat points1_mat(points1);
+
+    assert(points0.size() == points1.size());
+    /*
+    int j1 = 0;
+    int j2 = 0;
+    for (std::size_t i=0; i<msers.size(); ++i) {
+        j1 = j2;
+        j2 += hull_Ns[i];
+        cv::Matx23f Ab = cv::estimateRigidTransform(points0_mat(cv::Range(j1, j2), cv::Range()),
+                                                    points1_mat(cv::Range(j1, j2), cv::Range()),
+                                                    true);
 
         // update mser
+        auto& mser = msers[i];
         mser.mean.x = Ab(0, 0) * mser.mean.x +  Ab(0, 1) * mser.mean.y + Ab(0, 2);
         mser.mean.y = Ab(1, 0) * mser.mean.x +  Ab(1, 1) * mser.mean.y + Ab(1, 2);
     }
-
-
+    */
 }
