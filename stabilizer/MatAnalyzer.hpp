@@ -202,13 +202,13 @@ private:
     float max_error_ = 1.e3;
     float min_stability_ = 0.;
 
-    float weight_mean_ = 1.e4;
-    float weight_boundingbox_ = 5.e1;
-    float weight_mean_val_ = 1.e1;
-    float weight_interval_ = 0.e0;
-    float weight_N_ = 1.e2;
+    float weight_mean_ = 1.e1;
+    float weight_boundingbox_ = 0.e1;
+    float weight_mean_val_ = 1.e0;
+    float weight_interval_ = 1.e0;
+    float weight_N_ = 1.e1;
     float weight_cov_ = 1.e2;
-    float weight_dstability_= 1.e0;
+    float weight_dstability_= 0.e0;
 
     void extend_history_(Component& component);
 

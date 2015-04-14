@@ -109,6 +109,7 @@ private:
     float max_retrieval_error_;
 
     float roi_factor_ = .2;
+    int roi_min_ = 5;
 };
 
 #endif // MATMSER_HPP

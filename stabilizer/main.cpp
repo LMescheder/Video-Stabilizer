@@ -244,7 +244,7 @@ void test5(std::string input)
 
     cv::namedWindow( "Video", CV_WINDOW_AUTOSIZE );
 
-    MatMser mser_detector(2, 50, 3000, 75.f, .1f, 50.f, 5e2);;
+    MatMser mser_detector(2, 50, 3000, 75.f, .1f, 50.f, 1e3);;
     cv::Mat frame;
     cap >> frame;
     cv::Mat gray;
@@ -282,7 +282,7 @@ void test5(std::string input)
 void test6(std::string input)
 {
    bool show = true;
-    MatMser mser_detector(2, 50, 3000, 150.f, .1f, 100.f, 5e1);;
+    MatMser mser_detector(5, 50, 3000, 25.f, .1f, 15.f, 5.e0);;
 
    cv::VideoCapture cap(input);
 

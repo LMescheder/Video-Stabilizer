@@ -36,13 +36,13 @@ MatMser::ComponentStats MatMser::retrieve_mser(const cv::Mat &image, const MatMs
     int dx = static_cast<int> (roi_factor_ * (target_stats.max_point.x - target_stats.min_point.x));
     int dy = static_cast<int> (roi_factor_ * (target_stats.max_point.y - target_stats.min_point.y));
 
-    dx = std::max(10, dx);
-    dy = std::max(10, dy);
+    dx = std::max(roi_min_, dx);
+    dy = std::max(roi_min_, dy);
 
-    cv::Point2i p1{std::max(target_stats.min_point.x - dx, 0),
-                std::max(target_stats.min_point.y - dy, 0)};
-    cv::Point2i p2{std::min(target_stats.max_point.x + dx, image.cols-1),
-                std::min(target_stats.max_point.y + dy, image.rows-1)};
+    cv::Point2i p1{std::min(std::max(target_stats.min_point.x - dx, 0), image.cols-1),
+                   std::min(std::max(target_stats.min_point.y - dy, 0), image.rows-1)};
+    cv::Point2i p2{std::min(std::max(target_stats.max_point.x + dx, 0), image.cols-1),
+                   std::min(std::max(target_stats.max_point.y + dy, 0), image.rows-1)};
 
     cv::Mat ROI = image(cv::Range(p1.y, p2.y+1), cv::Range(p1.x, p2.x+1));
     MatAccessor graph(ROI, p1, reverse);
