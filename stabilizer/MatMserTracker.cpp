@@ -79,33 +79,37 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
                 auto& p = hull_points[i * stepsize];
                 points0.emplace_back(p.x, p.y);
             }
+        } else {
+            hull_Ns.push_back(0);
         }
     }
 
     // compute optical flow on points
-    assert(points0.size() > 0);
+    //assert(points0.size() > 0);
+    if (points0.size() == 0)
+        return;
+
     cv::Mat err, status;
     points1.reserve(points0.size());
     cv::calcOpticalFlowPyrLK(last_image_, new_image, points0, points1, status, err, lk_window_);
 
-    cv::Mat points0_mat(points0);
-    cv::Mat points1_mat(points1);
-
     assert(points0.size() == points1.size());
-    /*
+    assert(msers.size() == hull_Ns.size());
+
     int j1 = 0;
     int j2 = 0;
     for (std::size_t i=0; i<msers.size(); ++i) {
+        int N = hull_Ns[i];
         j1 = j2;
-        j2 += hull_Ns[i];
-        cv::Matx23f Ab = cv::estimateRigidTransform(points0_mat(cv::Range(j1, j2), cv::Range()),
-                                                    points1_mat(cv::Range(j1, j2), cv::Range()),
-                                                    true);
+        j2 += N;
 
+        cv::Point2f t{0.f, 0.f};
+
+        for (int j=j1; j<j2; ++j)
+            t += (points1[j] - points0[j])/N;
         // update mser
         auto& mser = msers[i];
-        mser.mean.x = Ab(0, 0) * mser.mean.x +  Ab(0, 1) * mser.mean.y + Ab(0, 2);
-        mser.mean.y = Ab(1, 0) * mser.mean.x +  Ab(1, 1) * mser.mean.y + Ab(1, 2);
+        mser.mean += t;
     }
-    */
+
 }
