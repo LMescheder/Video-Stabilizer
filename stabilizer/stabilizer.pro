@@ -1,7 +1,7 @@
 TEMPLATE = lib
 CONFIG += staticlib
 CONFIG += c++11
-CONFIG -= qt
+#CONFIG -= qt
 
 HEADERS += \
     ComponentTreeParser.hpp \

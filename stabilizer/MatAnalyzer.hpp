@@ -1,7 +1,7 @@
 #ifndef MATMSERANALYZER_HPP
 #define MATMSERANALYZER_HPP
 
-#include "opencv2/core.hpp"
+#include "opencv2/opencv.hpp"
 #include <cmath>
 #include "MatComponentStats.hpp"
 

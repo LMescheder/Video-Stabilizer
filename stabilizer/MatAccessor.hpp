@@ -1,7 +1,7 @@
 #ifndef MATACCESSOR_HPP
 #define MATACCESSOR_HPP
 
-#include "opencv2/core.hpp"
+#include "opencv2/opencv.hpp"
 #include "boost/optional.hpp"
 #include <array>
 
@@ -37,7 +37,7 @@ public:
     }
 
     void reset() {
-        mask_ = 0;
+        mask_.setTo(0.);
     }
 
     Value inf () const {

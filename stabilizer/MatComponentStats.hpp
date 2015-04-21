@@ -19,9 +19,12 @@ struct MatComponentStats {
     MatComponentStats() = default;
 
     MatComponentStats(cv::Point2i point, uchar value)
-        : N{1}, mean{point}, min_point{point}, max_point{point},
-          min_val{value}, max_val{value}, mean_val{static_cast<float>(value)},
-          source{point} {}
+        : N{1}, min_val{value}, max_val{value}, mean_val{static_cast<float>(value)} {
+        mean = point;
+        min_point = point;
+        max_point = point;
+        source = point;
+    }
 
     void merge(const MatComponentStats& comp1);
 

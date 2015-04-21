@@ -1,7 +1,5 @@
 #include "VideoStabilizer.hpp"
 
-
-
 cv::Mat VideoStabilizer::stabilze_next(cv::Mat next_image) {
     cv::Mat gray;
     cv::cvtColor(next_image, gray, CV_BGR2GRAY);
