@@ -4,6 +4,8 @@ CONFIG += c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
+PRE_TARGETDEPS += $${OUT_PWD}/../stabilizer/libstabilizer.a
+
 SOURCES += main.cpp
 
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../

@@ -108,7 +108,8 @@ std::vector<cv::Point2f> MatMser::extract_means(const std::vector<ComponentStats
     result.reserve(stats.size());
 
     for (auto& s : stats)
-        result.push_back(s.mean);
+        if (s.N > 0)
+            result.push_back(s.mean);
 
     return result;
 }

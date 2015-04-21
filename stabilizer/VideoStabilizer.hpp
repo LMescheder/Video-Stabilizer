@@ -19,25 +19,7 @@ public:
         recompute_msers_(gray);
     }
 
-    cv::Mat stabilze_next(cv::Mat next_image) {
-        cv::Mat gray;
-        cv::cvtColor(next_image, gray, CV_BGR2GRAY);
-
-        tracker_.update(gray);
-        cv::Mat H = cv::findHomography(MatMser::extract_means(tracker_.msers()),
-                                       MatMser::extract_means(tracker_.msers_0()));
-        H = H0_ * H;
-        cv::Mat stabilized;
-        cv::warpPerspective(next_image, stabilized, H, cv::Size(next_image.cols, next_image.rows));
-
-        ++count_;
-        if (count_ % recompute_T_ == 0) {
-           recompute_msers_(gray);
-           H0_ = H.clone();
-        }
-
-        return stabilized;
-    }
+    cv::Mat stabilze_next(cv::Mat next_image);
 
     std::vector<ComponentStats> msers() {
         return tracker_.msers();
@@ -48,14 +30,9 @@ private:
     std::vector<ComponentStats> msers_0_;
     cv::Mat H0_;
     unsigned int count_;
-    unsigned int recompute_T_ = 1000;
+    unsigned int recompute_T_ = 40;
 
-    void recompute_msers_(cv::Mat image) {
-        tracker_.reset();
-        // TODO: merge this into reset
-        tracker_.update(image);
-        msers_0_ = tracker_.msers();
-    }
+    void recompute_msers_(cv::Mat image);
 };
 
 #endif // MATVIDEOSTABILIZER_HPP

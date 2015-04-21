@@ -24,25 +24,12 @@ std::vector<MatMserTracker::ComponentStats> MatMserTracker::msers() const {
     std::vector<ComponentStats> result;
     result.reserve(up_msers_.size() + down_msers_.size());
     for (auto& m : up_msers_)
-        if (m.N > 0)
-            result.push_back(m);
+        result.push_back(m);
     for (auto& m : down_msers_)
-        if (m.N > 0)
-            result.push_back(m);
+        result.push_back(m);
     return result;
 }
 
-std::vector<MatMserTracker::ComponentStats> MatMserTracker::msers_0() const {
-    std::vector<ComponentStats> result;
-    result.reserve(up_msers_0_.size() + down_msers_0_.size());
-    for (std::size_t i = 0; i < up_msers_.size(); ++i)
-        if (up_msers_[i].N > 0)
-            result.push_back(up_msers_0_[i]);
-    for (std::size_t i = 0; i < down_msers_.size(); ++i)
-        if (down_msers_[i].N > 0)
-            result.push_back(down_msers_0_[i]);
-    return result;
-}
 
 void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &msers, const cv::Mat &new_image) {
 
