@@ -1,5 +1,7 @@
-CONFIG+=c++11
-TEMPLATE=app
+TEMPLATE = lib
+CONFIG += staticlib
+CONFIG += c++11
+CONFIG -= qt
 
 HEADERS += \
     ComponentTreeParser.hpp \
@@ -10,7 +12,6 @@ HEADERS += \
     VideoStabilizer.hpp
 
 SOURCES += \
-    main.cpp \
     MatMser.cpp \
     MatAccessor.cpp \
     MatMserTracker.cpp \
