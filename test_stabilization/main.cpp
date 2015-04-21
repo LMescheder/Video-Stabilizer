@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 void run_stabilizer(std::string input, std::string output, std::string output_regions)
 {
    bool show = true;
-    MatMser mser_detector(5, 50, 3000, 25.f, .1f, 15.f, 5.e0);;
+    MatMser mser_detector(5, 50, 3000, 25.f, .1f, 15.f, 3.e-1);;
 
    cv::VideoCapture cap(input);
 

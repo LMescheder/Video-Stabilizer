@@ -3,39 +3,11 @@
 
 #include "opencv2/core.hpp"
 #include <cmath>
+#include "MatComponentStats.hpp"
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------- declarations ---------------------------------------------------
 // ------------------------------------------------------------------------------------------------
-
-struct MatComponentStats {
-    unsigned int N = 0;
-    float stability = 0.;
-    cv::Point2f mean = cv::Point2f(0., 0.);
-    cv::Matx22f cov = cv::Matx22f(0., 0., 0., 0.);
-    cv::Point2i min_point = cv::Point2i(0., 0.);
-    cv::Point2i max_point = cv::Point2i(0., 0.);
-    uchar min_val = 255;
-    uchar max_val = 0;
-    float mean_val = 0;
-    cv::Point2i source = cv::Point2i(0., 0.);
-
-    // remove?
-    MatComponentStats() = default;
-
-    MatComponentStats(cv::Point2i point, uchar value)
-        : N{1}, mean{point}, min_point{point}, max_point{point},
-          min_val{value}, max_val{value}, mean_val{static_cast<float>(value)},
-          source{point} {}
-
-    void merge(const MatComponentStats& comp1);
-
-    void merge(cv::Point2i point, uchar value) {
-        merge(MatComponentStats{point, value});
-    }
-};
-
-
 
 inline float compute_stability(unsigned int pred_N, uchar pred_level, unsigned int N, uchar level, unsigned int succ_N, uchar succ_level) {
     float stability =  static_cast<float>(N * std::abs(succ_level - pred_level))/(succ_N - pred_N);
@@ -202,12 +174,12 @@ private:
     float max_error_ = 1.e3;
     float min_stability_ = 0.;
 
-    float weight_mean_ = 1.e1;
+    float weight_mean_ = 1.e0;
     float weight_boundingbox_ = 0.e1;
     float weight_mean_val_ = 1.e0;
     float weight_interval_ = 1.e0;
-    float weight_N_ = 1.e1;
-    float weight_cov_ = 1.e2;
+    float weight_N_ = 1.e0;
+    float weight_cov_ = 1.e0;
     float weight_dstability_= 0.e0;
 
     void extend_history_(Component& component);

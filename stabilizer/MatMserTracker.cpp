@@ -10,8 +10,8 @@ void MatMserTracker::update(const cv::Mat &image) {
         down_msers_0_ = down_msers_;
 
     } else {
-        track_msers_(up_msers_, up_means_, image);
-        track_msers_(down_msers_, down_means_, image);
+        track_msers_(up_msers_, image);
+        track_msers_(down_msers_, image);
         up_msers_ = mser_detector_.retrieve_msers(image, up_msers_, false);
         down_msers_ = mser_detector_.retrieve_msers(image, down_msers_, true);
     }
@@ -44,7 +44,7 @@ std::vector<MatMserTracker::ComponentStats> MatMserTracker::msers_0() const {
     return result;
 }
 
-void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &msers, std::vector<cv::Point2f> &means, const cv::Mat &new_image) {
+void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &msers, const cv::Mat &new_image) {
 
     const int max_N = 100;
 
@@ -71,7 +71,7 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
                 number = hull_points.size();
             } else {
                 stepsize = hull_points.size() / max_N;
-                number = 10;
+                number = max_N;
             }
             hull_Ns.push_back(number);
 
@@ -96,8 +96,10 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
     assert(points0.size() == points1.size());
     assert(msers.size() == hull_Ns.size());
 
+    // point range corresponding to current mser
     int j1 = 0;
     int j2 = 0;
+
     for (std::size_t i=0; i<msers.size(); ++i) {
         if (hull_Ns[i] == 0)
             continue;
@@ -128,60 +130,14 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
 
 
         // update mser
-
-
         if (A.empty()) {
             mser.N = 0;
             continue;
         }
 
-        cv::Point2f new_mean;
-        cv::Matx22f new_cov;
-        cv::Point2i new_source;
-        cv::Point2i new_min_point;
-        cv::Point2i new_max_point;
-        int new_N;
-
-        new_mean.x = A(0, 0) * mser.mean.x + A(0, 1) * mser.mean.y + A(0, 2);
-        new_mean.y = A(1, 0) * mser.mean.x + A(1, 1) * mser.mean.y + A(1, 2);
-
-        for (int idx1 : {0, 1}) for (int idx2 : {0, 1})
-        for (int idx3 : {0, 1}) for (int idx4 : {0, 1})
-            new_cov(idx1, idx3) += A(idx1, idx2) * A(idx3, idx4) * mser.cov(idx2, idx4);
-
-        new_source.x = static_cast<int>(A(0, 0) * mser.source.x + A(0, 1) * mser.source.y + A(0, 2));
-        new_source.y = static_cast<int>(A(1, 0) * mser.source.x + A(1, 1) * mser.source.y + A(1, 2));
-
-        cv::Point2i new_corner11, new_corner12, new_corner21, new_corner22;
-
-        new_corner11.x = static_cast<int>(A(0, 0) * mser.min_point.x + A(0, 1) * mser.min_point.y + A(0, 2));
-        new_corner11.y = static_cast<int>(A(1, 0) * mser.min_point.x + A(1, 1) * mser.min_point.y + A(1, 2));
-
-        new_corner12.x = static_cast<int>(A(0, 0) * mser.min_point.x + A(0, 1) * mser.max_point.y + A(0, 2));
-        new_corner12.y = static_cast<int>(A(1, 0) * mser.min_point.x + A(1, 1) * mser.max_point.y + A(1, 2));
-
-        new_corner21.x = static_cast<int>(A(0, 0) * mser.max_point.x + A(0, 1) * mser.min_point.y + A(0, 2));
-        new_corner21.y = static_cast<int>(A(1, 0) * mser.max_point.x + A(1, 1) * mser.min_point.y + A(1, 2));
-
-        new_corner22.x = static_cast<int>(A(0, 0) * mser.max_point.x + A(0, 1) * mser.max_point.y + A(0, 2));
-        new_corner22.y = static_cast<int>(A(1, 0) * mser.max_point.x + A(1, 1) * mser.max_point.y + A(1, 2));
-
-        new_min_point.x = std::min({new_corner11.x, new_corner12.x, new_corner21.x, new_corner22.x});
-        new_min_point.y = std::min({new_corner11.y, new_corner12.y, new_corner21.y, new_corner22.y});
-
-        new_max_point.x = std::max({new_corner11.x, new_corner12.x, new_corner21.x, new_corner22.x});
-        new_max_point.y = std::max({new_corner11.y, new_corner12.y, new_corner21.y, new_corner22.y});
-
-        new_N = static_cast<int> ((A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0)) * mser.N);
-
-        mser.mean = new_mean;
-        mser.cov = new_cov;
-        mser.source = new_source;
-        mser.min_point = new_min_point;
-        mser.max_point = new_max_point;
-        mser.N = new_N;
+        mser.transform_affine(A);
     }
-
+    assert(j2 == points0.size());
 
 }
 

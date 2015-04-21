@@ -9,14 +9,16 @@ HEADERS += \
     MatAnalyzer.hpp \
     MatMser.hpp \
     MatMserTracker.hpp \
-    VideoStabilizer.hpp
+    VideoStabilizer.hpp \
+    MatComponentStats.hpp
 
 SOURCES += \
     MatMser.cpp \
     MatAccessor.cpp \
     MatMserTracker.cpp \
     MatAnalyzer.cpp \
-    VideoStabilizer.cpp
+    VideoStabilizer.cpp \
+    MatComponentStats.cpp
 
 LIBS += -lopencv_core -lopencv_highgui
 LIBS += -lopencv_imgproc -lopencv_imgcodecs

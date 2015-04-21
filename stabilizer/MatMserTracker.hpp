@@ -66,8 +66,7 @@ private:
 
 
 
-    void track_msers_(std::vector<ComponentStats>& msers, std::vector<cv::Point2f>& means,
-                      const cv::Mat& new_image);
+    void track_msers_(std::vector<ComponentStats>& msers, const cv::Mat& new_image);
 };
 
 #endif // MATMSERTRACKER_HPP
