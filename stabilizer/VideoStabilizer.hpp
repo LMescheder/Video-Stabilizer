@@ -30,9 +30,11 @@ private:
     std::vector<ComponentStats> msers_0_;
     cv::Mat H0_;
     unsigned int count_;
-    unsigned int recompute_T_ = 1000;
+    unsigned int recompute_T_ = 20;
 
     void recompute_msers_(cv::Mat image);
+
+    void extract_points_(std::vector<cv::Point2f>& points, const ComponentStats& comp );
 };
 
 #endif // MATVIDEOSTABILIZER_HPP
