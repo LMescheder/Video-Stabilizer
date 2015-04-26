@@ -13,6 +13,14 @@
 // TODO: do more computations in advance (e.g. next index computations)
 // TODO: create a reset function to reuse the objects allocations
 // TODO: create constructor, getter and setter for member variables
+
+/** \brief Implementation of GraphAccessor concept to access an opencv Mat object.
+ *
+ * This class can be used to parametrize the ComponentTreeParser class to access
+ * a gray level image given as an opencv Mat object. It assumes, that the image has one
+ * channel and its datatype is uchar.
+ *
+ */
 class MatAccessor
 {
 public:
@@ -88,6 +96,10 @@ private:
 // TODO: store priority queue contiguously (more efficient?)
 // TODO: better way to pop?
 
+/** \brief A priority queue to efficiently get the next pixel with the lowest
+ *         gray value.
+ *
+ */
 class MatAccessor::PriorityQueue {
 public:
     PriorityQueue (bool inv=false)
