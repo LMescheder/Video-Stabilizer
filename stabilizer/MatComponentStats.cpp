@@ -1,5 +1,30 @@
 #include "MatComponentStats.hpp"
 
+void MatComponentStats::merge(const MatComponentStats &comp1) {
+    auto& comp2 = *this;
+    auto p = float(comp1.N) / float(comp1.N + comp2.N);
+    auto q = float(comp2.N) / float(comp1.N + comp2.N);
+
+    cv::Vec2f dmean = comp2.mean - comp1.mean;
+    for (auto i : {0, 1})
+        for (auto j : {0, 1})
+            comp2.cov(i, j) = p * comp1.cov(i, j) + q * comp2.cov(i, j) + p*q*dmean(i) * dmean(j);
+
+    comp2.N = comp1.N + comp2.N;
+    comp2.mean = p * comp1.mean + q * comp2.mean;
+
+    comp2.min_point.x = std::min(comp1.min_point.x, comp2.min_point.x);
+    comp2.min_point.y = std::min(comp1.min_point.y, comp2.min_point.y);
+    comp2.max_point.x = std::max(comp1.max_point.x, comp2.max_point.x);
+    comp2.max_point.y = std::max(comp1.max_point.y, comp2.max_point.y);
+
+    comp2.min_val = std::min(comp1.min_val, comp2.min_val);
+    comp2.max_val = std::max(comp1.max_val, comp2.max_val);
+    comp2.mean_val = p * comp1.mean_val + q * comp2.mean_val;
+    assert(min_point.x - 1e4 < mean.x && mean.x < max_point.x + 1e4);
+    assert(min_point.y - 1e4 < mean.y && mean.y < max_point.y + 1e4);
+}
+
 
 void MatComponentStats::transform_affine(const cv::Matx23f& A) {
     cv::Point2f new_mean;
