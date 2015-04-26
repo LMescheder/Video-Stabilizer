@@ -30,7 +30,7 @@ private:
     std::vector<ComponentStats> msers_0_;
     cv::Mat H0_;
     unsigned int count_;
-    unsigned int recompute_T_ = 40;
+    unsigned int recompute_T_ = 1000;
 
     void recompute_msers_(cv::Mat image);
 };
