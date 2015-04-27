@@ -17,7 +17,24 @@ cv::Mat VideoStabilizer::stabilze_next(cv::Mat next_image) {
             extract_points_(points0, msers_0_[i]);
         }
 
-    cv::Mat H = cv::findHomography(points, points0);
+    cv::Mat H, A;
+
+    switch (mode_) {
+    case homography :
+        H = cv::findHomography(points, points0);
+        break;
+    case affine :
+        A = cv::estimateRigidTransform(points, points0, true);
+        H = cv::Mat::eye(3, 3, CV_64F);
+        A.copyTo(H(cv::Range(0, 2), cv::Range(0, 3)));
+        break;
+    case rigid :
+        A = cv::estimateRigidTransform(points, points0, false);
+        H = cv::Mat::eye(3, 3, CV_64F);
+        A.copyTo(H(cv::Range(0, 2), cv::Range(0, 3)));
+        break;
+    }
+
 
     H = H0_ * H;
     cv::Mat stabilized;
@@ -75,3 +92,4 @@ void VideoStabilizer::extract_points_(std::vector<cv::Point2f> &points, const Vi
     points.push_back(comp.mean - eps * d1);
     points.push_back(comp.mean - eps * d2);
 }
+

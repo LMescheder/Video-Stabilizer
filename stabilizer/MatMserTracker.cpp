@@ -37,6 +37,7 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
 
     std::vector<cv::Point2f> points0;
     std::vector<cv::Point2f> points1;
+    std::vector<bool> status;
 
     std::vector<int> hull_Ns;
 
@@ -76,9 +77,7 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
     if (points0.size() == 0)
         return;
 
-    cv::Mat err, status;
-    points1.reserve(points0.size());
-    cv::calcOpticalFlowPyrLK(last_image_, new_image, points0, points1, status, err, lk_window_, 3);
+    std::tie(points1, status) = checked_optical_flow(new_image, points0);
 
     assert(points0.size() == points1.size());
     assert(msers.size() == hull_Ns.size());
@@ -101,7 +100,7 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
         mser_points1.reserve(hull_Ns[i]);
 
         for (int j=j1; j<j2; ++j) {
-            if (status.at<bool>(j)) {
+            if (status[j]) {
                 mser_points0.push_back(points0[j]);
                 mser_points1.push_back(points1[j]);
             }
@@ -126,6 +125,25 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
     }
     assert(j2 == points0.size());
 
+}
+
+std::tuple<std::vector<cv::Point2f>, std::vector<bool> > MatMserTracker::checked_optical_flow(const cv::Mat& image, const std::vector<cv::Point2f>& points, float eps) {
+    cv::Mat err;
+    cv::Mat status1, status2;
+    std::vector<cv::Point2f> points1, points2;
+    std::vector<bool> status;
+    points1.reserve(points.size());
+    points2.reserve(points.size());
+    status.resize(points.size(), true);
+
+    cv::calcOpticalFlowPyrLK(last_image_, image, points, points1, status1, err, lk_window_, 3);
+    cv::calcOpticalFlowPyrLK(image, last_image_, points1, points2, status2, err, lk_window_, 3);
+
+    for (std::size_t i=0; i<points.size(); ++i) {
+        status[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(points[i] - points2[i]) < eps );
+    }
+
+    return std::make_tuple(points1, status);
 }
 
 
