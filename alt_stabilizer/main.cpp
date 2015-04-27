@@ -6,22 +6,31 @@
 
 #include "stabilizer.hpp"
 
-void run_stabilizer (const std::string& filename);
+void run_stabilizer(const std::string &input, const std::string &output);
 void visualize (cv::Mat image, const std::vector<cv::Point2f>& points, const std::vector<cv::Point2f>& points0);
 
 int main (int argc, char** argv) {
-    if (argc < 2) {
-        std::cout << "Usage: stabilizer [filename]" << std::endl;
+    if (argc < 3) {
+        std::cout << "Usage: stabilizer [input] [output]" << std::endl;
         return 0;
     }
 
-    std::string filename = argv[1];
+    std::string input = argv[1];
+    std::string output = argv[2];
 
-    run_stabilizer(filename);
+    run_stabilizer(input, output);
 }
 
-void run_stabilizer(const std::string &filename) {
-    cv::VideoCapture video_in (filename);
+void run_stabilizer(const std::string &input, const std::string &output) {
+    cv::VideoCapture video_in (input);
+    int frame_width = video_in.get(CV_CAP_PROP_FRAME_WIDTH);
+    int frame_height = video_in.get(CV_CAP_PROP_FRAME_HEIGHT);
+
+    cv::VideoWriter video_out(output,
+                            CV_FOURCC('M','J','P','G'),
+                            20,
+                            cv::Size(frame_width, frame_height),
+                            true);
 
     if (!video_in.isOpened()) {
         std::cout << "Could not open video!" << std::endl;
@@ -41,6 +50,8 @@ void run_stabilizer(const std::string &filename) {
 
         cv::imshow("Normal", frame);
         cv::imshow("Stabilized", stabilized_frame);
+
+        video_out.write(stabilized_frame);
 
         if (cv::waitKey(1) >= 0)
             break;

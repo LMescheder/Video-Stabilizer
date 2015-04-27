@@ -30,6 +30,8 @@ private:
     std::vector<cv::Point2f> points_;
     cv::Mat status_;
     cv::Mat error_;
+
+    std::tuple<std::vector<cv::Point2f>, std::vector<bool> > checked_optical_flow_(const cv::Mat& frame_gray, const std::vector<cv::Point2f>& points, float eps);
 };
 
 #endif // STABILIZER_HPP

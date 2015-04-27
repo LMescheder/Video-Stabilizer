@@ -13,16 +13,16 @@ cv::Mat Stabilizer::stabilize_next(const cv::Mat& frame) {
     cv::cvtColor(frame, frame_gray, CV_BGR2GRAY);
 
     std::vector<cv::Point2f> new_points;
-    new_points.reserve(points_.size());
+    std::vector<bool> status;
 
-    cv::calcOpticalFlowPyrLK(last_frame_gray_, frame_gray, points_, new_points, status_, error_);
+    std::tie(new_points, status) = checked_optical_flow_(frame_gray, points_, 1.);
 
     std::vector<cv::Point2f> points0;
 
     points0.reserve(new_points.size());
     points_.clear();
     for (std::size_t i=0; i<new_points.size(); ++i)
-        if (status_.at<bool>(i)) {
+        if (status[i]) {
             points0.push_back(points0_[i]);
             points_.push_back(new_points[i]);
          }
@@ -36,4 +36,23 @@ cv::Mat Stabilizer::stabilize_next(const cv::Mat& frame) {
     last_frame_gray_ = frame_gray;
 
     return stabilized_frame;
+}
+
+std::tuple<std::vector<cv::Point2f>, std::vector<bool> > Stabilizer::checked_optical_flow_(const cv::Mat& frame_gray, const std::vector<cv::Point2f>& points, float eps) {
+    cv::Mat err;
+    cv::Mat status1, status2;
+    std::vector<cv::Point2f> points1, points2;
+    std::vector<bool> status;
+    points1.reserve(points.size());
+    points2.reserve(points.size());
+    status.resize(points.size(), true);
+
+    cv::calcOpticalFlowPyrLK(last_frame_gray_, frame_gray, points, points1, status1, err);
+    cv::calcOpticalFlowPyrLK(frame_gray, last_frame_gray_, points1, points2, status2, err);
+
+    for (std::size_t i=0; i<points.size(); ++i) {
+        status[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(points[i] - points2[i]) < eps );
+    }
+
+    return std::make_tuple(points1, status);
 }
