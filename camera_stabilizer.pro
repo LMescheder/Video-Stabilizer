@@ -1,7 +1,7 @@
 TEMPLATE=subdirs
 
 SUBDIRS+=\
-    test_stabilization
-SUBDIRS+=stabilizer
+    stabilizer test_stabilization  \
+    alt_stabilizer
 
 test_stabilization.depends=stabilizer
