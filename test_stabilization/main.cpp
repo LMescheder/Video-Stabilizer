@@ -14,6 +14,7 @@ void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& mse
 void visualize_regions_hulls (cv::Mat& image, const std::vector<MatComponentStats>& msers, const cv::Mat& gray);
 void visualize_regions_cov (cv::Mat& image, const std::vector<MatComponentStats>& msers);
 void visualize_regions_box (cv::Mat& image, const std::vector<MatComponentStats>& msers);
+void visualize_stabilization_points (cv::Mat&  image, const VideoStabilizer& stabilizer);
 
 int main(int argc, char** argv) {
     if (argc < 4) {
@@ -78,6 +79,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
 
         auto msers = stabilizer.msers();
         visualize_points(out_frame, msers);
+        visualize_stabilization_points(out_frame, stabilizer);
         visualize_regions_hulls(out_frame, msers, gray);
         //visualize_regions_box(out_frame, msers);
         //visualize_regions_cov(out_frame, msers);
@@ -125,6 +127,11 @@ void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& mse
         }
 }
 
+void visualize_stabilization_points (cv::Mat&  image, const VideoStabilizer& stabilizer) {
+    for (auto point : stabilizer.points())
+        cv::circle(image, point, 3, cv::Scalar(255, 0, 255));
+}
+
 void visualize_regions_hulls (cv::Mat& image, const std::vector<MatComponentStats>& msers, const cv::Mat& gray){
     for (auto& mser : msers)
         if (mser.N > 0) {
@@ -163,4 +170,5 @@ void visualize_regions_box (cv::Mat& image, const std::vector<MatComponentStats>
         if (mser.N > 0)
             cv::rectangle(image, mser.min_point, mser.max_point, cv::Scalar(0, 165, 255), 1.5);
 }
+
 

@@ -30,15 +30,22 @@ public:
         return tracker_.msers();
     }
 
+    const std::vector<cv::Point2f>& points() const {
+        return points_;
+    }
+
+
 private:
     MatMserTracker tracker_;
     std::vector<ComponentStats> msers_0_;
     cv::Mat H0_;
     unsigned int count_;
-    unsigned int recompute_T_ = 10;
+    unsigned int recompute_T_ = 50;
 
     void recompute_msers_(cv::Mat image);
     void extract_points_(std::vector<cv::Point2f>& points, const ComponentStats& comp );
+
+    std::vector<cv::Point2f> points_, points0_;
 
     Mode mode_ = homography;
 };

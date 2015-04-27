@@ -6,30 +6,29 @@ cv::Mat VideoStabilizer::stabilze_next(cv::Mat next_image) {
 
     tracker_.update(gray);
 
-    std::vector<cv::Point2f> points, points0;\
     auto msers = tracker_.msers();
     assert(msers.size() == msers_0_.size());
-    points.reserve(5*msers.size());
-    points0.reserve(5*msers.size());
+    points_.clear();
+    points0_.clear();
     for (std::size_t i=0; i<msers.size(); ++i)
         if (msers[i].N > 0) {
-            extract_points_(points, msers[i]);
-            extract_points_(points0, msers_0_[i]);
+            extract_points_(points_, msers[i]);
+            extract_points_(points0_, msers_0_[i]);
         }
 
     cv::Mat H, A;
 
     switch (mode_) {
     case homography :
-        H = cv::findHomography(points, points0);
+        H = cv::findHomography(points_, points0_);
         break;
     case affine :
-        A = cv::estimateRigidTransform(points, points0, true);
+        A = cv::estimateRigidTransform(points_, points0_, true);
         H = cv::Mat::eye(3, 3, CV_64F);
         A.copyTo(H(cv::Range(0, 2), cv::Range(0, 3)));
         break;
     case rigid :
-        A = cv::estimateRigidTransform(points, points0, false);
+        A = cv::estimateRigidTransform(points_, points0_, false);
         H = cv::Mat::eye(3, 3, CV_64F);
         A.copyTo(H(cv::Range(0, 2), cv::Range(0, 3)));
         break;
@@ -54,6 +53,8 @@ void VideoStabilizer::recompute_msers_(cv::Mat image) {
     // TODO: merge this into reset
     tracker_.update(image);
     msers_0_ = tracker_.msers();
+    points_.reserve(msers_0_.size());
+    points0_.reserve(msers_0_.size());
 }
 
 void VideoStabilizer::extract_points_(std::vector<cv::Point2f> &points, const VideoStabilizer::ComponentStats &comp) {
@@ -71,7 +72,7 @@ void VideoStabilizer::extract_points_(std::vector<cv::Point2f> &points, const Vi
     cv::Matx22f R;
     cv::Vec2f orient(std::cos(comp.angle), std::sin(comp.angle));;
     cv::Vec2f r = D.inv() * orient;
-    r = r/std::sqrt(r(0)*r(0) + r(1)*r(1));
+    r = r/cv::norm(r);
                              ;
     R(0, 0) = r(0);
     R(1, 0) = r(1);
@@ -85,7 +86,7 @@ void VideoStabilizer::extract_points_(std::vector<cv::Point2f> &points, const Vi
     cv::Point2f d1(N(0, 0), N(1, 0));
     cv::Point2f d2(N(0, 1), N(1, 1));
 
-    float eps = .1f;
+    float eps = 1.f;
     points.push_back(comp.mean);
     points.push_back(comp.mean + eps * d1);
     points.push_back(comp.mean + eps * d2);
