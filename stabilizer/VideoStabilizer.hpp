@@ -34,6 +34,9 @@ public:
         return points_;
     }
 
+    const std::vector<cv::Point2f>& points0() const {
+        return points0_;
+    }
 
 private:
     MatMserTracker tracker_;

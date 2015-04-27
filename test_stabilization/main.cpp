@@ -11,10 +11,11 @@
 void run_stabilizer (std::string input, std::string output, std::string output_regions);
 
 void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers, bool orientation=true);
+void visualize_stabilization_points (cv::Mat&  image, const VideoStabilizer& stabilizer, bool lines=true);
 void visualize_regions_hulls (cv::Mat& image, const std::vector<MatComponentStats>& msers, const cv::Mat& gray);
 void visualize_regions_cov (cv::Mat& image, const std::vector<MatComponentStats>& msers);
 void visualize_regions_box (cv::Mat& image, const std::vector<MatComponentStats>& msers);
-void visualize_stabilization_points (cv::Mat&  image, const VideoStabilizer& stabilizer);
+
 
 int main(int argc, char** argv) {
     if (argc < 4) {
@@ -127,9 +128,14 @@ void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& mse
         }
 }
 
-void visualize_stabilization_points (cv::Mat&  image, const VideoStabilizer& stabilizer) {
-    for (auto point : stabilizer.points())
+void visualize_stabilization_points (cv::Mat&  image, const VideoStabilizer& stabilizer, bool lines) {
+    for (std::size_t i=0; i<stabilizer.points().size(); ++i) {
+        cv::Point2f point = stabilizer.points()[i];
+        cv::Point2f point0 =  stabilizer.points0()[i];
         cv::circle(image, point, 3, cv::Scalar(255, 0, 255));
+        if (lines)
+            cv::line(image, point, point0, cv::Scalar(255, 0, 255), 1.);
+    }
 }
 
 void visualize_regions_hulls (cv::Mat& image, const std::vector<MatComponentStats>& msers, const cv::Mat& gray){
