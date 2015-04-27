@@ -14,6 +14,7 @@ struct MatComponentStats {
     uchar max_val = 0;
     float mean_val = 0;
     cv::Point2i source = cv::Point2i(0., 0.);
+    float angle = 0.;
 
     // remove?
     MatComponentStats() = default;

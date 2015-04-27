@@ -129,6 +129,7 @@ void MatFindMserAnalyzer::check_component_(MatFindMserAnalyzer::Component &comp)
         if ((cost < max_error_) && (current_optimal_ < 0 || cost < current_optimal_)
                 && examinee.stability >= min_stability_) {
             result_ = examinee;
+            result_.angle = target_stats_.angle;
             current_optimal_ = cost;
         }
     }

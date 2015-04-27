@@ -34,6 +34,8 @@ void MatComponentStats::transform_affine(const cv::Matx23f& A) {
     cv::Point2i new_max_point;
     int new_N;
 
+    float new_angle;
+
     new_mean.x = A(0, 0) * mean.x + A(0, 1) * mean.y + A(0, 2);
     new_mean.y = A(1, 0) * mean.x + A(1, 1) * mean.y + A(1, 2);
 
@@ -64,12 +66,15 @@ void MatComponentStats::transform_affine(const cv::Matx23f& A) {
     new_max_point.x = std::max({new_corner11.x, new_corner12.x, new_corner21.x, new_corner22.x});
     new_max_point.y = std::max({new_corner11.y, new_corner12.y, new_corner21.y, new_corner22.y});
 
-    new_N = static_cast<int> ((A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0)) * N);
+    new_N = static_cast<int> (std::abs(A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0)) * N);
 
+    new_angle = std::atan2(A(1, 0)*std::cos(angle) + A(1, 1)*std::sin(angle),
+                           A(0, 0)*std::cos(angle) + A(0, 1)*std::sin(angle));
     mean = new_mean;
     cov = new_cov;
     source = new_source;
     min_point = new_min_point;
     max_point = new_max_point;
     N = new_N;
+    angle = new_angle;
 }

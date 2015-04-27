@@ -67,6 +67,8 @@ private:
 
 
     void track_msers_(std::vector<ComponentStats>& msers, const cv::Mat& new_image);
+    std::tuple<std::vector<cv::Point2f>, std::vector<bool>> checked_optical_flow(const cv::Mat& image, const std::vector<cv::Point2f>& points, float eps=1.);
+
 };
 
 #endif // MATMSERTRACKER_HPP

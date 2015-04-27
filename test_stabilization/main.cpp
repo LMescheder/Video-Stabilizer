@@ -10,7 +10,7 @@
 
 void run_stabilizer (std::string input, std::string output, std::string output_regions);
 
-void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers);
+void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers, bool orientation=true);
 void visualize_regions_hulls (cv::Mat& image, const std::vector<MatComponentStats>& msers, const cv::Mat& gray);
 void visualize_regions_cov (cv::Mat& image, const std::vector<MatComponentStats>& msers);
 void visualize_regions_box (cv::Mat& image, const std::vector<MatComponentStats>& msers);
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 void run_stabilizer(std::string input, std::string output, std::string output_regions)
 {
    bool show = true;
-    MatMser mser_detector(5, 50, 3000, 25.f, .1f, 15.f, 3.e-1);;
+    MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-1);;
 
    cv::VideoCapture cap(input);
 
@@ -114,10 +114,15 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
         cv::destroyAllWindows();
 }
 
-void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers) {
+void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers, bool orientation) {
     for (auto& mser : msers)
-        if (mser.N > 0)
+        if (mser.N > 0) {
             cv::circle(image, mser.mean, 3, cv::Scalar(255, 255, 0));
+            if (orientation) {
+                cv::Point2f dir(std::cos(mser.angle), std::sin(mser.angle));
+                cv::line(image, mser.mean, mser.mean + 10 * dir, cv::Scalar(255, 255, 0), 1.);
+            }
+        }
 }
 
 void visualize_regions_hulls (cv::Mat& image, const std::vector<MatComponentStats>& msers, const cv::Mat& gray){
