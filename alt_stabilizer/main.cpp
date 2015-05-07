@@ -7,7 +7,7 @@
 #include "stabilizer.hpp"
 
 void run_stabilizer(const std::string &input, const std::string &output);
-void visualize (cv::Mat image, const std::vector<cv::Point2f>& points, const std::vector<cv::Point2f>& points0);
+void visualize (cv::Mat image, const Stabilizer& stabilizer);
 
 int main (int argc, char** argv) {
     if (argc < 3) {
@@ -46,7 +46,7 @@ void run_stabilizer(const std::string &input, const std::string &output) {
         cv::Mat stabilized_frame = stabilizer.stabilize_next(frame);
 
 
-        visualize(frame, stabilizer.points(), stabilizer.points0());
+        visualize(frame, stabilizer);
 
         cv::imshow("Normal", frame);
         cv::imshow("Stabilized", stabilized_frame);
@@ -58,11 +58,19 @@ void run_stabilizer(const std::string &input, const std::string &output) {
     }
 }
 
-void visualize (cv::Mat image, const std::vector<cv::Point2f>& points, const std::vector<cv::Point2f>& points0) {
-    assert(points.size() == points0.size());
+void visualize (cv::Mat image, const Stabilizer& stabilizer) {
+    assert(stabilizer.points().size() == stabilizer.points0().size());
 
-    for (std::size_t i=0; i<points.size(); ++i) {
-            cv::circle(image, points[i], 3, cv::Scalar(0, 255, 0));
-            cv::line(image, points[i], points0[i], cv::Scalar(0, 255, 0));
+    for (std::size_t i=0; i<stabilizer.points().size(); ++i) {
+            cv::Scalar color;
+            if (stabilizer.trust()[i] < .5)
+                color = cv::Scalar(0, 0, 255);
+            else if (stabilizer.status()[i])
+                color = cv::Scalar(0, 255, 0);
+            else
+                color = cv::Scalar(0, 255, 255);
+
+            cv::circle(image, stabilizer.points()[i], 3, color);
+            cv::line(image, stabilizer.points()[i], stabilizer.points0()[i], color);
     }
 }

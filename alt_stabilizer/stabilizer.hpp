@@ -18,20 +18,29 @@ public:
         return points_;
     }
 
-    const cv::Mat& status() const {
+    const std::vector<bool>& status() const {
         return status_;
+    }
+
+    const std::vector<float>& trust() const {
+        return trust_;
     }
 
 private:
     cv::Mat frame_gray_0_;
     cv::Mat last_frame_gray_;
 
+    cv::Mat H_;
+
     std::vector<cv::Point2f> points0_;
     std::vector<cv::Point2f> points_;
-    cv::Mat status_;
+    std::vector<bool> status_;
     cv::Mat error_;
 
-    std::tuple<std::vector<cv::Point2f>, std::vector<bool> > checked_optical_flow_(const cv::Mat& frame_gray, const std::vector<cv::Point2f>& points, float eps);
+    unsigned long count_ = 1;
+    std::vector<float> trust_;
+
+    std::vector<cv::Point2f> checked_optical_flow_(const cv::Mat& frame_gray, float eps);
 };
 
 #endif // STABILIZER_HPP
