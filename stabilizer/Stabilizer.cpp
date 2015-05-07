@@ -15,3 +15,24 @@ cv::Mat Stabilizer::stabilize_next(const cv::Mat& next_frame) {
 
     return stabilized_frame;
 }
+
+cv::Mat Stabilizer::find_homography_(const cv::vector<cv::Point2f>& points0, const cv::vector<cv::Point2f>& points1) {
+    cv::Mat H, A;
+
+    switch (mode_) {
+    case homography :
+        H = cv::findHomography(points0, points1);
+        break;
+    case affine :
+        A = cv::estimateRigidTransform(points0, points1, true);
+        H = cv::Mat::eye(3, 3, CV_64F);
+        A.copyTo(H(cv::Range(0, 2), cv::Range(0, 3)));
+        break;
+    case rigid :
+        A = cv::estimateRigidTransform(points0, points1, false);
+        H = cv::Mat::eye(3, 3, CV_64F);
+        A.copyTo(H(cv::Range(0, 2), cv::Range(0, 3)));
+        break;
+    }
+    return H;
+}

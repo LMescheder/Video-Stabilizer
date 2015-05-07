@@ -22,24 +22,7 @@ cv::Mat MserStabilizer::get_next_homography_(const cv::Mat& H_gray) {
             extract_points_(points0_, down_msers_0_[i]);
         }
 
-    cv::Mat H, A;
-
-    switch (mode_) {
-    case homography :
-        H = cv::findHomography(points_, points0_);
-        break;
-    case affine :
-        A = cv::estimateRigidTransform(points_, points0_, true);
-        H = cv::Mat::eye(3, 3, CV_64F);
-        A.copyTo(H(cv::Range(0, 2), cv::Range(0, 3)));
-        break;
-    case rigid :
-        A = cv::estimateRigidTransform(points_, points0_, false);
-        H = cv::Mat::eye(3, 3, CV_64F);
-        A.copyTo(H(cv::Range(0, 2), cv::Range(0, 3)));
-        break;
-    }
-    return H;
+    return find_homography_(points_, points0_);
 }
 
 void MserStabilizer::recompute_msers_(cv::Mat image) {

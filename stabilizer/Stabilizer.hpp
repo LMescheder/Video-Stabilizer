@@ -37,6 +37,8 @@ public:
 
 protected:
     virtual cv::Mat get_next_homography_(const cv::Mat& next_image) = 0;
+    virtual cv::Mat find_homography_(const cv::vector<cv::Point2f>& points0, const cv::vector<cv::Point2f>& points1);
+
     cv::Mat H_;
     cv::Mat frame_gray_0_;
     Mode mode_ = homography;

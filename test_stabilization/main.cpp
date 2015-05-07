@@ -3,9 +3,12 @@
 #include <iostream>
 #include <chrono>
 #include <vector>
+#include <memory>
 
 #include "mser_tools/MatMser.hpp"
+#include "stabilizer/Stabilizer.hpp"
 #include "stabilizer/MserStabilizer.hpp"
+#include "stabilizer/PointStabilizer.hpp"
 
 void run_stabilizer (std::string input, std::string output, std::string output_regions);
 
@@ -63,7 +66,8 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
     if (!cap.read(frame))
         return;
 
-    MserStabilizer stabilizer(mser_detector, frame);
+    //std::unique_ptr<Stabilizer> stabilizer  (new MserStabilizer(mser_detector, frame));
+    std::unique_ptr<Stabilizer> stabilizer  (new PointStabilizer(frame, Stabilizer::affine));
 
     int i = 0;
     while (cap.isOpened()) {
@@ -72,11 +76,11 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
             break;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        cv::Mat stabilized = stabilizer.stabilize_next(frame);
+        cv::Mat stabilized = stabilizer->stabilize_next(frame);
 
         cv::Mat out_frame = frame.clone();
 
-        auto msers = stabilizer.msers();
+        //auto msers = stabilizer.msers();
         //visualize_points(out_frame, msers);
         //visualize_stabilization_points(out_frame, stabilizer);
         //visualize_regions_hulls(out_frame, msers, gray);
