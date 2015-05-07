@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
 void run_stabilizer(std::string input, std::string output, std::string output_regions)
 {
    bool show = true;
-    MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-1);;
+    MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e0);;
 
    cv::VideoCapture cap(input);
 
@@ -64,8 +64,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
     if (!cap.read(frame))
         return;
 
-    MatMserTracker  tracker(mser_detector);
-    VideoStabilizer stabilizer(tracker, frame);
+    VideoStabilizer stabilizer(mser_detector, frame);
 
     int i = 0;
     while (cap.isOpened()) {
@@ -79,9 +78,9 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
         cv::Mat out_frame = frame.clone();
 
         auto msers = stabilizer.msers();
-        visualize_points(out_frame, msers);
-        visualize_stabilization_points(out_frame, stabilizer);
-        visualize_regions_hulls(out_frame, msers, gray);
+        //visualize_points(out_frame, msers);
+        //visualize_stabilization_points(out_frame, stabilizer);
+        //visualize_regions_hulls(out_frame, msers, gray);
         //visualize_regions_box(out_frame, msers);
         //visualize_regions_cov(out_frame, msers);
 

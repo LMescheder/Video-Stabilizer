@@ -2,22 +2,20 @@
 
 
 
-void MatMserTracker::update(const cv::Mat &image) {
-    if (count_ == 0) {
-        up_msers_ = mser_detector_.detect_msers(image, MatMser::upwards);
-        up_msers_0_ = up_msers_;
-        down_msers_ = mser_detector_.detect_msers(image, MatMser::downwards);
-        down_msers_0_ = down_msers_;
+std::vector<MatMserTracker::ComponentStats>
+    MatMserTracker::track (const cv::Mat& old_image, const cv::Mat& new_image, const std::vector<ComponentStats>& msers, bool reverse) {
 
-    } else {
-        track_msers_(up_msers_, image);
-        track_msers_(down_msers_, image);
-        up_msers_ = mser_detector_.retrieve_msers(image, up_msers_, false);
-        down_msers_ = mser_detector_.retrieve_msers(image, down_msers_, true);
-    }
+//     if (count_ == 0) {
 
-    ++count_;
-    last_image_ = image.clone();
+
+//    } else {
+        std::vector<ComponentStats> new_msers = msers;
+        track_msers_(old_image, new_image, new_msers);
+        return mser_detector_.retrieve_msers(new_image, new_msers, reverse);
+//    }
+
+    //++count_;
+    //last_image_ = image.clone();
 }
 
 std::vector<MatMserTracker::ComponentStats> MatMserTracker::msers() const {
@@ -31,7 +29,7 @@ std::vector<MatMserTracker::ComponentStats> MatMserTracker::msers() const {
 }
 
 
-void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &msers, const cv::Mat &new_image) {
+void MatMserTracker::track_msers_(const cv::Mat &old_image, const cv::Mat &new_image, std::vector<MatMserTracker::ComponentStats> &msers) {
 
     const int max_N = 100;
 
@@ -50,7 +48,7 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
     // compute 10 points of convex hull
     for (auto& mser : msers) {
         if (mser.N != 0) {
-            mser_points = MatMser::stats_to_points(mser, last_image_);
+            mser_points = MatMser::stats_to_points(mser, old_image);
             cv::convexHull(mser_points, hull_points);
             int stepsize = 0;
             int number = 0;
@@ -77,7 +75,7 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
     if (points0.size() == 0)
         return;
 
-    std::tie(points1, status) = checked_optical_flow(new_image, points0);
+    std::tie(points1, status) = checked_optical_flow(old_image, new_image, points0);
 
     assert(points0.size() == points1.size());
     assert(msers.size() == hull_Ns.size());
@@ -124,10 +122,9 @@ void MatMserTracker::track_msers_(std::vector<MatMserTracker::ComponentStats> &m
         mser.transform_affine(A);
     }
     assert(j2 == points0.size());
-
 }
 
-std::tuple<std::vector<cv::Point2f>, std::vector<bool> > MatMserTracker::checked_optical_flow(const cv::Mat& image, const std::vector<cv::Point2f>& points, float eps) {
+std::tuple<std::vector<cv::Point2f>, std::vector<bool> > MatMserTracker::checked_optical_flow(const cv::Mat& old_image, const cv::Mat& new_image, const std::vector<cv::Point2f>& points, float eps) {
     cv::Mat err;
     cv::Mat status1, status2;
     std::vector<cv::Point2f> points1, points2;
@@ -136,8 +133,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<bool> > MatMserTracker::checked
     points2.reserve(points.size());
     status.resize(points.size(), true);
 
-    cv::calcOpticalFlowPyrLK(last_image_, image, points, points1, status1, err, lk_window_, 3);
-    cv::calcOpticalFlowPyrLK(image, last_image_, points1, points2, status2, err, lk_window_, 3);
+    cv::calcOpticalFlowPyrLK(old_image, new_image, points, points1, status1, err, lk_window_, 3);
+    cv::calcOpticalFlowPyrLK(new_image, old_image, points1, points2, status2, err, lk_window_, 3);
 
     for (std::size_t i=0; i<points.size(); ++i) {
         status[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(points[i] - points2[i]) < eps );

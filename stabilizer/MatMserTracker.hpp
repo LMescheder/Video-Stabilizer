@@ -15,10 +15,18 @@ public:
         : mser_detector_(mser_detector) {}
 
     void reset() {
-        count_ = 0;
+
     }
 
-    void update (const cv::Mat& image);
+    /**
+     * @brief Tracks msers.
+     * @param old_image
+     * @param new_image
+     * @param Msers to be tracked.
+     * @return The tracked msers and information if the region could be found.
+     */
+
+    std::vector<MatMserTracker::ComponentStats> track (const cv::Mat& old_image, const cv::Mat& new_image, const std::vector<ComponentStats>& msers, bool reverse=false);
 
     const std::vector<ComponentStats>& up_msers () const {
         return up_msers_;
@@ -30,15 +38,6 @@ public:
 
     std::vector<ComponentStats> msers () const;
 
-    const std::vector<ComponentStats>& up_msers_0 () const {
-        return up_msers_0_;
-    }
-
-    const std::vector<ComponentStats>& down_msers_0 () const {
-        return down_msers_0_;
-    }
-
-    std::vector<ComponentStats> msers_0 () const;
 
     const std::vector<cv::Point2f>& up_means () const {
         return up_means_;
@@ -50,13 +49,10 @@ public:
 private:
 
     MatMser mser_detector_;
-    int count_ = 0;
+
     std::vector<ComponentStats> up_msers_;
     std::vector<ComponentStats> down_msers_;
-    cv::Mat last_image_;
 
-    std::vector<ComponentStats> up_msers_0_;
-    std::vector<ComponentStats> down_msers_0_;
 
     cv::Size lk_window_ = cv::Size(40, 40);
 
@@ -66,8 +62,8 @@ private:
 
 
 
-    void track_msers_(std::vector<ComponentStats>& msers, const cv::Mat& new_image);
-    std::tuple<std::vector<cv::Point2f>, std::vector<bool>> checked_optical_flow(const cv::Mat& image, const std::vector<cv::Point2f>& points, float eps=1.);
+    void track_msers_(const cv::Mat& old_image, const cv::Mat& new_image, std::vector<ComponentStats>& msers);
+    std::tuple<std::vector<cv::Point2f>, std::vector<bool>> checked_optical_flow(const cv::Mat& old_image, const cv::Mat& new_image, const std::vector<cv::Point2f>& points, float eps=1.);
 
 };
 

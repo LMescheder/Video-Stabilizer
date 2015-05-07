@@ -16,8 +16,8 @@ public:
         rigid
     };
 
-    VideoStabilizer(MatMserTracker tracker, cv::Mat image0)
-        : tracker_{tracker}, H0_(cv::Mat::eye(3, 3, CV_64FC1)), count_{0} {
+    VideoStabilizer(MatMser mser_detector, cv::Mat image0)
+        : detector_{mser_detector}, tracker_{mser_detector}, H_(cv::Mat::eye(3, 3, CV_64FC1)), count_{0} {
         cv::Mat gray;
         cv::cvtColor(image0, gray, CV_BGR2GRAY);
 
@@ -40,8 +40,12 @@ public:
 
 private:
     MatMserTracker tracker_;
-    std::vector<ComponentStats> msers_0_;
-    cv::Mat H0_;
+    MatMser detector_;
+    cv::Mat gray0_;
+
+    std::vector<ComponentStats> up_msers_0_;
+    std::vector<ComponentStats> down_msers_0_;
+    cv::Mat H_;
     unsigned int count_;
     unsigned int recompute_T_ = 50;
 

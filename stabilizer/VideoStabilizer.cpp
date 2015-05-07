@@ -1,19 +1,30 @@
 #include "VideoStabilizer.hpp"
 
 cv::Mat VideoStabilizer::stabilze_next(cv::Mat next_image) {
-    cv::Mat gray;
+    cv::Mat gray, H_gray;
     cv::cvtColor(next_image, gray, CV_BGR2GRAY);
 
-    tracker_.update(gray);
+    cv::warpPerspective(gray, H_gray, H_, cv::Size(gray.cols, gray.rows));
 
-    auto msers = tracker_.msers();
-    assert(msers.size() == msers_0_.size());
+    std::vector<ComponentStats> up_msers, down_msers;
+
+   up_msers = tracker_.track(gray0_, H_gray, up_msers_0_);
+   down_msers = tracker_.track(gray0_, H_gray, down_msers_0_, true);
+
+
     points_.clear();
     points0_.clear();
-    for (std::size_t i=0; i<msers.size(); ++i)
-        if (msers[i].N > 0) {
-            extract_points_(points_, msers[i]);
-            extract_points_(points0_, msers_0_[i]);
+    // TODO: add trust checking
+    for (std::size_t i=0; i<up_msers_0_.size(); ++i)
+        if (up_msers[i].N > 0) {
+            extract_points_(points_, up_msers[i]);
+            extract_points_(points0_, up_msers_0_[i]);
+        }
+
+    for (std::size_t i=0; i<down_msers_0_.size(); ++i)
+        if (down_msers[i].N > 0) {
+            extract_points_(points_, down_msers[i]);
+            extract_points_(points0_, down_msers_0_[i]);
         }
 
     cv::Mat H, A;
@@ -35,26 +46,32 @@ cv::Mat VideoStabilizer::stabilze_next(cv::Mat next_image) {
     }
 
 
-    H = H0_ * H;
+    H_ = H * H_;
     cv::Mat stabilized;
-    cv::warpPerspective(next_image, stabilized, H, cv::Size(next_image.cols, next_image.rows));
+    cv::warpPerspective(next_image, stabilized, H_, cv::Size(next_image.cols, next_image.rows));
 
     ++count_;
+    /*
     if (count_ % recompute_T_ == 0) {
         recompute_msers_(gray);
         H0_ = H.clone();
     }
+    */
+
 
     return stabilized;
 }
 
 void VideoStabilizer::recompute_msers_(cv::Mat image) {
-    tracker_.reset();
+    //tracker_.reset();
     // TODO: merge this into reset
-    tracker_.update(image);
-    msers_0_ = tracker_.msers();
-    points_.reserve(msers_0_.size());
-    points0_.reserve(msers_0_.size());
+    gray0_ = image;
+    up_msers_0_ = detector_.detect_msers(image, MatMser::upwards);
+    down_msers_0_ = detector_.detect_msers(image, MatMser::downwards);
+
+//    msers_0_ = tracker_.msers();
+//    points_.reserve(msers_0_.size());
+//    points0_.reserve(msers_0_.size());
 }
 
 void VideoStabilizer::extract_points_(std::vector<cv::Point2f> &points, const VideoStabilizer::ComponentStats &comp) {
