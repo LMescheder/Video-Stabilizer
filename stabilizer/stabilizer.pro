@@ -4,10 +4,14 @@ CONFIG += c++11
 #CONFIG -= qt
 
 HEADERS += \
-    MserStabilizer.hpp
+    MserStabilizer.hpp \
+    PointStabilizer.hpp \
+    Stabilizer.hpp
 
 SOURCES += \
-    MserStabilizer.cpp
+    MserStabilizer.cpp \
+    PointStabilizer.cpp \
+    Stabilizer.cpp
 
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../
 

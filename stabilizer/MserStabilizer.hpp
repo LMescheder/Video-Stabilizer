@@ -2,29 +2,19 @@
 #define MATMserStabilizer_HPP
 
 #include "mser_tools/MatMserTracker.hpp"
+#include "Stabilizer.hpp"
 #include "opencv2/opencv.hpp"
 #include <vector>
 
-class MserStabilizer
-{
+class MserStabilizer : public Stabilizer {
 public:
     using ComponentStats = MatMserTracker::ComponentStats;
 
-    enum Mode {
-        homography,
-        affine,
-        rigid
-    };
-
-    MserStabilizer(MatMser mser_detector, cv::Mat image0)
-        : detector_{mser_detector}, tracker_{mser_detector}, H_(cv::Mat::eye(3, 3, CV_64FC1)), count_{0} {
-        cv::Mat gray;
-        cv::cvtColor(image0, gray, CV_BGR2GRAY);
-
-        recompute_msers_(gray);
+    MserStabilizer(MatMser mser_detector, cv::Mat template_frame, Mode mode=homography)
+        : Stabilizer(template_frame, mode),
+          detector_{mser_detector}, tracker_{mser_detector}, count_{0} {
+        recompute_msers_(frame_gray_0_);
     }
-
-    cv::Mat stabilze_next(cv::Mat next_image);
 
     std::vector<ComponentStats> msers() {
         return tracker_.msers();
@@ -41,14 +31,14 @@ public:
 private:
     MatMserTracker tracker_;
     MatMser detector_;
-    cv::Mat gray0_;
+    //cv::Mat frame_gray_0_;
 
     std::vector<ComponentStats> up_msers_0_;
     std::vector<ComponentStats> down_msers_0_;
-    cv::Mat H_;
     unsigned int count_;
     unsigned int recompute_T_ = 50;
 
+    cv::Mat get_next_homography_(const cv::Mat& next_image);
     void recompute_msers_(cv::Mat image);
     void extract_points_(std::vector<cv::Point2f>& points, const ComponentStats& comp );
 

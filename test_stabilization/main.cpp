@@ -72,7 +72,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
             break;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        cv::Mat stabilized = stabilizer.stabilze_next(frame);
+        cv::Mat stabilized = stabilizer.stabilize_next(frame);
 
         cv::Mat out_frame = frame.clone();
 

@@ -1,15 +1,10 @@
 #include "MserStabilizer.hpp"
 
-cv::Mat MserStabilizer::stabilze_next(cv::Mat next_image) {
-    cv::Mat gray, H_gray;
-    cv::cvtColor(next_image, gray, CV_BGR2GRAY);
+cv::Mat MserStabilizer::get_next_homography_(const cv::Mat& H_gray) {
+   std::vector<ComponentStats> up_msers, down_msers;
 
-    cv::warpPerspective(gray, H_gray, H_, cv::Size(gray.cols, gray.rows));
-
-    std::vector<ComponentStats> up_msers, down_msers;
-
-   up_msers = tracker_.track(gray0_, H_gray, up_msers_0_);
-   down_msers = tracker_.track(gray0_, H_gray, down_msers_0_, true);
+   up_msers = tracker_.track(frame_gray_0_, H_gray, up_msers_0_);
+   down_msers = tracker_.track(frame_gray_0_, H_gray, down_msers_0_, true);
 
 
     points_.clear();
@@ -44,28 +39,13 @@ cv::Mat MserStabilizer::stabilze_next(cv::Mat next_image) {
         A.copyTo(H(cv::Range(0, 2), cv::Range(0, 3)));
         break;
     }
-
-
-    H_ = H * H_;
-    cv::Mat stabilized;
-    cv::warpPerspective(next_image, stabilized, H_, cv::Size(next_image.cols, next_image.rows));
-
-    ++count_;
-    /*
-    if (count_ % recompute_T_ == 0) {
-        recompute_msers_(gray);
-        H0_ = H.clone();
-    }
-    */
-
-
-    return stabilized;
+    return H;
 }
 
 void MserStabilizer::recompute_msers_(cv::Mat image) {
     //tracker_.reset();
     // TODO: merge this into reset
-    gray0_ = image;
+    frame_gray_0_ = image;
     up_msers_0_ = detector_.detect_msers(image, MatMser::upwards);
     down_msers_0_ = detector_.detect_msers(image, MatMser::downwards);
 
