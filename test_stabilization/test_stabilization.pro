@@ -10,6 +10,7 @@ SOURCES += main.cpp
 
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../
 LIBS += -L$${OUT_PWD}/../stabilizer/ -lstabilizer
+LIBS += -L$${OUT_PWD}/../mser_tools/ -lmser_tools
 
 LIBS += -lopencv_core -lopencv_highgui
 LIBS += -lopencv_imgproc

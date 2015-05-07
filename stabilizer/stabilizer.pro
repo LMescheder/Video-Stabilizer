@@ -4,21 +4,14 @@ CONFIG += c++11
 #CONFIG -= qt
 
 HEADERS += \
-    ComponentTreeParser.hpp \
-    MatAccessor.hpp \
-    MatAnalyzer.hpp \
-    MatMser.hpp \
-    MatMserTracker.hpp \
     VideoStabilizer.hpp \
-    MatComponentStats.hpp
 
 SOURCES += \
-    MatMser.cpp \
-    MatAccessor.cpp \
-    MatMserTracker.cpp \
-    MatAnalyzer.cpp \
     VideoStabilizer.cpp \
-    MatComponentStats.cpp
+
+INCLUDEPATH += $${_PRO_FILE_PWD_}/../
+
+LIBS += -L$${OUT_PWD}/../mser_tools/ -lmser_tools
 
 LIBS += -lopencv_core -lopencv_highgui
 LIBS += -lopencv_imgproc -lopencv_imgcodecs

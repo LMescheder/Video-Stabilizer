@@ -1,7 +1,7 @@
 #ifndef MATVIDEOSTABILIZER_HPP
 #define MATVIDEOSTABILIZER_HPP
 
-#include "MatMserTracker.hpp"
+#include "mser_tools/MatMserTracker.hpp"
 #include "opencv2/opencv.hpp"
 #include <vector>
 

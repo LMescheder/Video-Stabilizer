@@ -4,8 +4,7 @@
 #include <chrono>
 #include <vector>
 
-#include "stabilizer/MatMser.hpp"
-#include "stabilizer/MatMserTracker.hpp"
+#include "mser_tools/MatMser.hpp"
 #include "stabilizer/VideoStabilizer.hpp"
 
 void run_stabilizer (std::string input, std::string output, std::string output_regions);
