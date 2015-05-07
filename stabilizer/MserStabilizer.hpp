@@ -1,11 +1,11 @@
-#ifndef MATVIDEOSTABILIZER_HPP
-#define MATVIDEOSTABILIZER_HPP
+#ifndef MATMserStabilizer_HPP
+#define MATMserStabilizer_HPP
 
 #include "mser_tools/MatMserTracker.hpp"
 #include "opencv2/opencv.hpp"
 #include <vector>
 
-class VideoStabilizer
+class MserStabilizer
 {
 public:
     using ComponentStats = MatMserTracker::ComponentStats;
@@ -16,7 +16,7 @@ public:
         rigid
     };
 
-    VideoStabilizer(MatMser mser_detector, cv::Mat image0)
+    MserStabilizer(MatMser mser_detector, cv::Mat image0)
         : detector_{mser_detector}, tracker_{mser_detector}, H_(cv::Mat::eye(3, 3, CV_64FC1)), count_{0} {
         cv::Mat gray;
         cv::cvtColor(image0, gray, CV_BGR2GRAY);
@@ -57,4 +57,4 @@ private:
     Mode mode_ = homography;
 };
 
-#endif // MATVIDEOSTABILIZER_HPP
+#endif // MATMserStabilizer_HPP

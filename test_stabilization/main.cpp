@@ -5,12 +5,12 @@
 #include <vector>
 
 #include "mser_tools/MatMser.hpp"
-#include "stabilizer/VideoStabilizer.hpp"
+#include "stabilizer/MserStabilizer.hpp"
 
 void run_stabilizer (std::string input, std::string output, std::string output_regions);
 
 void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers, bool orientation=true);
-void visualize_stabilization_points (cv::Mat&  image, const VideoStabilizer& stabilizer, bool lines=true);
+void visualize_stabilization_points (cv::Mat&  image, const MserStabilizer& stabilizer, bool lines=true);
 void visualize_regions_hulls (cv::Mat& image, const std::vector<MatComponentStats>& msers, const cv::Mat& gray);
 void visualize_regions_cov (cv::Mat& image, const std::vector<MatComponentStats>& msers);
 void visualize_regions_box (cv::Mat& image, const std::vector<MatComponentStats>& msers);
@@ -63,7 +63,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
     if (!cap.read(frame))
         return;
 
-    VideoStabilizer stabilizer(mser_detector, frame);
+    MserStabilizer stabilizer(mser_detector, frame);
 
     int i = 0;
     while (cap.isOpened()) {
@@ -126,7 +126,7 @@ void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& mse
         }
 }
 
-void visualize_stabilization_points (cv::Mat&  image, const VideoStabilizer& stabilizer, bool lines) {
+void visualize_stabilization_points (cv::Mat&  image, const MserStabilizer& stabilizer, bool lines) {
     for (std::size_t i=0; i<stabilizer.points().size(); ++i) {
         cv::Point2f point = stabilizer.points()[i];
         cv::Point2f point0 =  stabilizer.points0()[i];

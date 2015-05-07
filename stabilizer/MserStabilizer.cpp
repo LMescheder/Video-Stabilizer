@@ -1,6 +1,6 @@
-#include "VideoStabilizer.hpp"
+#include "MserStabilizer.hpp"
 
-cv::Mat VideoStabilizer::stabilze_next(cv::Mat next_image) {
+cv::Mat MserStabilizer::stabilze_next(cv::Mat next_image) {
     cv::Mat gray, H_gray;
     cv::cvtColor(next_image, gray, CV_BGR2GRAY);
 
@@ -62,7 +62,7 @@ cv::Mat VideoStabilizer::stabilze_next(cv::Mat next_image) {
     return stabilized;
 }
 
-void VideoStabilizer::recompute_msers_(cv::Mat image) {
+void MserStabilizer::recompute_msers_(cv::Mat image) {
     //tracker_.reset();
     // TODO: merge this into reset
     gray0_ = image;
@@ -74,7 +74,7 @@ void VideoStabilizer::recompute_msers_(cv::Mat image) {
 //    points0_.reserve(msers_0_.size());
 }
 
-void VideoStabilizer::extract_points_(std::vector<cv::Point2f> &points, const VideoStabilizer::ComponentStats &comp) {
+void MserStabilizer::extract_points_(std::vector<cv::Point2f> &points, const MserStabilizer::ComponentStats &comp) {
 
     // affinitely invariant coordinate system
 

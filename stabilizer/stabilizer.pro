@@ -4,10 +4,10 @@ CONFIG += c++11
 #CONFIG -= qt
 
 HEADERS += \
-    VideoStabilizer.hpp \
+    MserStabilizer.hpp
 
 SOURCES += \
-    VideoStabilizer.cpp \
+    MserStabilizer.cpp
 
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../
 
