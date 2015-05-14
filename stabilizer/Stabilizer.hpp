@@ -18,7 +18,7 @@ public:
         rigid
     };
 
-    Stabilizer (const cv::Mat& frame_0, Mode mode )
+    Stabilizer (const cv::Mat& frame_0, Mode mode)
         : mode_{mode} {
         H_ = cv::Mat::eye(3, 3, CV_64FC1);
         cv::cvtColor(frame_0, frame_gray_0_, CV_BGR2GRAY);
@@ -26,13 +26,16 @@ public:
 
     virtual cv::Mat stabilize_next(const cv::Mat& next_frame);
 
-
-    Mode mode() const {
+    virtual Mode mode() const {
         return mode_;
     }
 
-    void set_mode(const Mode &mode) {
+    virtual void set_mode(const Mode &mode) {
         mode_ = mode;
+    }
+
+    virtual cv::Mat visualization() const {
+        return visualization_;
     }
 
 protected:
@@ -41,7 +44,9 @@ protected:
 
     cv::Mat H_;
     cv::Mat frame_gray_0_;
+    cv::Mat visualization_;
     Mode mode_ = homography;
+
 };
 
 #endif // STABILIZER_HPP

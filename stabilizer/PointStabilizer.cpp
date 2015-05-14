@@ -29,6 +29,23 @@ cv::Mat PointStabilizer::get_next_homography_(const cv::Mat &next_image)
             good_new_points.push_back(new_points[i]);
          }
 
+    // visualization
+    std::vector<cv::Point2f> new_points_vis;
+    cv::transform(new_points, new_points_vis, H_);
+    for (std::size_t i=0; i<points0_.size(); ++i) {
+        cv::Scalar color;
+        if (trust_[i] < .5)
+            color = cv::Scalar(0, 0, 255);
+        else if (status_[i])
+            color = cv::Scalar(0, 255, 0);
+        else
+            color = cv::Scalar(0, 255, 255);
+
+        cv::circle(visualization_, new_points_vis[i], 2, color);
+        cv::line(visualization_,  points0_[i],  new_points_vis[i], color);
+    }
+
+
     return find_homography_(good_new_points, good_points0);
 }
 

@@ -78,7 +78,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
 
         cv::Mat stabilized = stabilizer->stabilize_next(frame);
 
-        cv::Mat out_frame = frame.clone();
+        cv::Mat out_frame = stabilizer->visualization();
 
         //auto msers = stabilizer.msers();
         //visualize_points(out_frame, msers);
@@ -86,6 +86,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
         //visualize_regions_hulls(out_frame, msers, gray);
         //visualize_regions_box(out_frame, msers);
         //visualize_regions_cov(out_frame, msers);
+
 
         vout.write(stabilized);
         voutr.write(out_frame);

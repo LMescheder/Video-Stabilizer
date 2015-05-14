@@ -4,6 +4,8 @@ cv::Mat Stabilizer::stabilize_next(const cv::Mat& next_frame) {
     cv::Mat frame_gray, H_frame_gray;
     cv::cvtColor(next_frame, frame_gray, CV_BGR2GRAY);
 
+    visualization_ = next_frame.clone();
+
     cv::warpPerspective(frame_gray, H_frame_gray, H_, cv::Size(frame_gray.cols, frame_gray.rows));
 
     cv::Mat dH = get_next_homography_(H_frame_gray);
