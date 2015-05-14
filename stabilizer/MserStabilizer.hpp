@@ -39,6 +39,8 @@ private:
     unsigned int recompute_T_ = 50;
 
     cv::Mat get_next_homography_(const cv::Mat& next_image);
+    void create_visualization_();
+
     void recompute_msers_(cv::Mat image);
     void extract_points_(std::vector<cv::Point2f>& points, const ComponentStats& comp );
 

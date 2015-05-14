@@ -25,6 +25,11 @@ cv::Mat MserStabilizer::get_next_homography_(const cv::Mat& H_gray) {
     return find_homography_(points_, points0_);
 }
 
+void MserStabilizer::create_visualization_()
+{
+
+}
+
 void MserStabilizer::recompute_msers_(cv::Mat image) {
     //tracker_.reset();
     // TODO: merge this into reset

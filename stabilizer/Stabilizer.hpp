@@ -41,11 +41,13 @@ public:
 protected:
     virtual cv::Mat get_next_homography_(const cv::Mat& next_image) = 0;
     virtual cv::Mat find_homography_(const cv::vector<cv::Point2f>& points0, const cv::vector<cv::Point2f>& points1);
+    virtual void create_visualization_() = 0;
 
     cv::Mat H_;
     cv::Mat frame_gray_0_;
     cv::Mat visualization_;
     Mode mode_ = homography;
+    bool visualize = true;
 
 };
 

@@ -39,6 +39,7 @@ private:
 
     std::vector<cv::Point2f> checked_optical_flow_(const cv::Mat& frame_gray, float eps);
     cv::Mat get_next_homography_(const cv::Mat& next_image);
+    void create_visualization_();
 };
 
 #endif // PointStabilizer_HPP
