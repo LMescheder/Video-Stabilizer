@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 void run_stabilizer(std::string input, std::string output, std::string output_regions)
 {
    bool show = true;
-    MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e0);;
+   MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e0);;
 
    cv::VideoCapture cap(input);
 
@@ -67,7 +67,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
         return;
 
     //std::unique_ptr<Stabilizer> stabilizer  (new MserStabilizer(mser_detector, frame));
-    std::unique_ptr<Stabilizer> stabilizer  (new PointStabilizer(frame, Stabilizer::affine));
+    std::unique_ptr<Stabilizer> stabilizer  (new PointStabilizer(frame, Stabilizer::homography));
 
     int i = 0;
     while (cap.isOpened()) {

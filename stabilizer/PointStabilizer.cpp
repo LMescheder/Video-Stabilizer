@@ -49,7 +49,6 @@ void PointStabilizer::create_visualization_() {
     }
 }
 
-
 std::vector<cv::Point2f> PointStabilizer::checked_optical_flow_(const cv::Mat& frame_gray, float eps) {
     cv::Mat err;
     cv::Mat status1, status2;
