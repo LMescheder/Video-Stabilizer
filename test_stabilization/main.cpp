@@ -9,6 +9,7 @@
 #include "stabilizer/Stabilizer.hpp"
 #include "stabilizer/MserStabilizer.hpp"
 #include "stabilizer/PointStabilizer.hpp"
+#include "stabilizer/utilities.hpp"
 
 void run_stabilizer (std::string input, std::string output, std::string output_regions);
 
@@ -67,7 +68,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
         return;
 
     //std::unique_ptr<Stabilizer> stabilizer  (new MserStabilizer(mser_detector, frame));
-    std::unique_ptr<Stabilizer> stabilizer  (new PointStabilizer(frame, Stabilizer::homography));
+    std::unique_ptr<Stabilizer> stabilizer  (new PointStabilizer(frame, WarpingGroup::homography));
 
     int i = 0;
     while (cap.isOpened()) {

@@ -1,8 +1,34 @@
 #include "PointStabilizer.hpp"
 
 
-PointStabilizer::PointStabilizer(const cv::Mat& frame0, Mode mode)
-    : Stabilizer(frame0, mode){
+cv::Mat PointStabilizer::stabilize_next(const cv::Mat& next_frame) {
+    cv::Mat frame_gray, H_frame_gray;
+    cv::cvtColor(next_frame, frame_gray, CV_BGR2GRAY);
+
+
+    cv::warpPerspective(frame_gray, H_frame_gray, H_, cv::Size(frame_gray.cols, frame_gray.rows));
+
+    cv::Mat dH = get_next_homography_(H_frame_gray);
+
+    visualization_ = next_frame.clone();
+
+    H_ = dH * H_;
+
+    create_visualization_();
+
+    cv::Mat stabilized_frame;
+    cv::warpPerspective(next_frame, stabilized_frame, H_, cv::Size(next_frame.cols, next_frame.rows));
+
+    return stabilized_frame;
+}
+
+cv::Mat PointStabilizer::visualization() const {
+    return visualization_;
+}
+
+
+
+PointStabilizer::PointStabilizer(const cv::Mat& frame0, WarpingGroup mode) {
     cv::cvtColor(frame0, frame_gray_0_, CV_BGR2GRAY);
     cv::goodFeaturesToTrack(frame_gray_0_, points0_, 1000, .01, 8);
     points_ = points0_;
@@ -29,7 +55,7 @@ cv::Mat PointStabilizer::get_next_homography_(const cv::Mat &next_image)
             good_new_points.push_back(new_points[i]);
          }
 
-    return find_homography_(good_new_points, good_points0);
+    return find_homography(good_new_points, good_points0, mode_);
 }
 
 void PointStabilizer::create_visualization_() {

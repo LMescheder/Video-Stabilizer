@@ -10,11 +10,10 @@ class MserStabilizer : public Stabilizer {
 public:
     using ComponentStats = MatMserTracker::ComponentStats;
 
-    MserStabilizer(MatMser mser_detector, cv::Mat template_frame, Mode mode=homography)
-        : Stabilizer(template_frame, mode),
-          detector_{mser_detector}, tracker_{mser_detector}, count_{0} {
-        recompute_msers_(frame_gray_0_);
-    }
+    MserStabilizer(MatMser mser_detector, cv::Mat template_frame, WarpingGroup mode=WarpingGroup::homography);
+
+    virtual cv::Mat stabilize_next(const cv::Mat& next_frame);
+    virtual cv::Mat visualization() const;
 
     std::vector<ComponentStats> msers() {
         return tracker_.msers();
@@ -33,6 +32,11 @@ private:
     MatMser detector_;
     //cv::Mat frame_gray_0_;
 
+    cv::Mat H_;
+    cv::Mat frame_gray_0_;
+    cv::Mat visualization_;
+    WarpingGroup mode_ = WarpingGroup::homography;
+
     std::vector<ComponentStats> up_msers_0_;
     std::vector<ComponentStats> down_msers_0_;
     unsigned int count_;
@@ -46,7 +50,6 @@ private:
 
     std::vector<cv::Point2f> points_, points0_;
 
-    Mode mode_ = homography;
 };
 
 #endif // MATMserStabilizer_HPP

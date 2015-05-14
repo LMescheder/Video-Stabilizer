@@ -7,7 +7,10 @@
 
 class PointStabilizer : public Stabilizer{
 public:
-    PointStabilizer(const cv::Mat& frame0, Mode mode=homography);
+    PointStabilizer(const cv::Mat& frame0, WarpingGroup mode=WarpingGroup::homography);
+
+    virtual cv::Mat stabilize_next(const cv::Mat& next_frame);
+    virtual cv::Mat visualization() const;
 
     const std::vector<cv::Point2f>& points0() const {
         return points0_;
@@ -27,6 +30,11 @@ public:
 
 private:
     cv::Mat last_frame_gray_;
+
+    cv::Mat H_;
+    cv::Mat frame_gray_0_;
+    cv::Mat visualization_;
+    WarpingGroup mode_ = WarpingGroup::homography;
 
 
     std::vector<cv::Point2f> points0_;
