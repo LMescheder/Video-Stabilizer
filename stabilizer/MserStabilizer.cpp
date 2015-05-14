@@ -9,15 +9,14 @@ MserStabilizer::MserStabilizer(MatMser mser_detector, cv::Mat frame_0, WarpingGr
 }
 
 cv::Mat MserStabilizer::stabilize_next(const cv::Mat& next_frame) {
-    cv::Mat frame_gray, H_frame_gray;
-    cv::cvtColor(next_frame, frame_gray, CV_BGR2GRAY);
+    frame = next_frame.clone();
 
+    cv::cvtColor(next_frame, frame_gray_, CV_BGR2GRAY);
 
-    cv::warpPerspective(frame_gray, H_frame_gray, H_, cv::Size(frame_gray.cols, frame_gray.rows));
+    cv::warpPerspective(frame_gray_, H_frame_gray_, H_, cv::Size(frame_gray_.cols, frame_gray_.rows));
 
-    cv::Mat dH = get_next_homography_(H_frame_gray);
+    cv::Mat dH = get_next_homography_(H_frame_gray_);
 
-    visualization_ = next_frame.clone();
     create_visualization_();
 
     H_ = dH * H_;
@@ -35,33 +34,28 @@ cv::Mat MserStabilizer::visualization() const {
 
 
 cv::Mat MserStabilizer::get_next_homography_(const cv::Mat& H_gray) {
-    std::vector<ComponentStats> up_msers, down_msers;
-
-   up_msers = tracker_.track(frame_gray_0_, H_gray, up_msers_0_);
-   down_msers = tracker_.track(frame_gray_0_, H_gray, down_msers_0_, true);
+   up_msers_ = tracker_.track(frame_gray_0_, H_gray, up_msers_0_);
+   down_msers_ = tracker_.track(frame_gray_0_, H_gray, down_msers_0_, true);
 
 
     points_.clear();
     points0_.clear();
     // TODO: add trust checking
     for (std::size_t i=0; i<up_msers_0_.size(); ++i)
-        if (up_msers[i].N > 0) {
-            extract_points_(points_, up_msers[i]);
+        if (up_msers_[i].N > 0) {
+            extract_points_(points_, up_msers_[i]);
             extract_points_(points0_, up_msers_0_[i]);
         }
 
     for (std::size_t i=0; i<down_msers_0_.size(); ++i)
-        if (down_msers[i].N > 0) {
-            extract_points_(points_, down_msers[i]);
+        if (down_msers_[i].N > 0) {
+            extract_points_(points_, down_msers_[i]);
             extract_points_(points0_, down_msers_0_[i]);
         }
 
     return find_homography(points_, points0_, mode_);
 }
 
-void MserStabilizer::create_visualization_() {
-
-}
 
 void MserStabilizer::recompute_msers_(cv::Mat image) {
     //tracker_.reset();
@@ -111,4 +105,89 @@ void MserStabilizer::extract_points_(std::vector<cv::Point2f> &points, const Mse
     points.push_back(comp.mean - eps * d1);
     points.push_back(comp.mean - eps * d2);
 }
+
+void MserStabilizer::create_visualization_() {
+    cv::Mat H_vis;
+    cv::warpPerspective(frame, H_vis, H_, cv::Size(frame.cols, frame.rows));
+
+    visualize_points(H_vis, up_msers_, true);
+    visualize_points(H_vis, down_msers_, false);
+    visualize_regions_hulls_(H_vis, up_msers_);
+    visualize_regions_hulls_(H_vis, down_msers_);
+
+    //visualize_stabilization_points(H_vis, up_msers_, up_msers_0_, true);
+    //visualize_stabilization_points(H_vis, down_msers_, down_msers_0_, false);
+
+    cv::warpPerspective(H_vis, visualization_, H_.inv(), cv::Size(frame.cols, frame.rows));
+
+
+}
+\
+
+
+void MserStabilizer::visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers, bool orientation) {
+    for (auto& mser : msers)
+        if (mser.N > 0) {
+            cv::circle(image, mser.mean, 3, cv::Scalar(255, 255, 0));
+            if (orientation) {
+                cv::Point2f dir(std::cos(mser.angle), std::sin(mser.angle));
+                cv::line(image, mser.mean, mser.mean + 10 * dir, cv::Scalar(255, 255, 0), 1.);
+            }
+        }
+}
+
+
+void MserStabilizer::visualize_stabilization_points (cv::Mat&  image, const std::vector<MatComponentStats>& msers, const std::vector<MatComponentStats>& msers0, bool lines) {
+    assert(msers.size() == msers0.size());
+    for (std::size_t i=0; i<msers0.size(); ++i) {
+        cv::Point2f point = msers[i].mean;
+        cv::Point2f point0 =  msers0[i].mean;
+        cv::circle(image, point, 3, cv::Scalar(255, 0, 255));
+        if (lines)
+            cv::line(image, point, point0, cv::Scalar(255, 0, 255), 1.);
+    }
+}
+
+
+void MserStabilizer::visualize_regions_hulls_ (cv::Mat& image, const std::vector<MatComponentStats>& msers){
+    for (auto& mser : msers)
+        if (mser.N > 0) {
+            auto points = MatMser::stats_to_points(mser, H_frame_gray_);
+            std::vector<cv::Point> hull;
+            cv::convexHull(points, hull);
+            cv::polylines(image, hull, true, cv::Scalar(0, 255, 0), 1.5);
+        }
+}
+
+/*
+void visualize_regions_cov (cv::Mat& image, const std::vector<MatComponentStats>& msers){
+    for (auto& mser : msers)
+        if (mser.N > 0) {
+            // compute eigenvalue and eigenvectors
+            cv::Mat eigenvals, eigenvecs;
+            cv::eigen(mser.cov, true, eigenvals, eigenvecs);
+
+            // get angle of first eigenvector
+            float angle = atan2(eigenvecs.at<float>(0,1), eigenvecs.at<float>(0,0));
+
+            // convert angle to degrees
+            angle = 180*angle/3.14159265359;
+
+            // calculate axis length
+            float axis1_length = 2*sqrt(eigenvals.at<float>(0));
+            float axis2_length = 2*sqrt(eigenvals.at<float>(1));
+
+            // draw ellipse
+            cv::ellipse(image, mser.mean, cv::Size(axis1_length, axis2_length), angle, 0, 360, cv::Scalar(255, 0, 255), 1.5);
+
+        }
+}
+
+void visualize_regions_box (cv::Mat& image, const std::vector<MatComponentStats>& msers){
+    for (auto& mser : msers)
+        if (mser.N > 0)
+            cv::rectangle(image, mser.min_point, mser.max_point, cv::Scalar(0, 165, 255), 1.5);
+}
+
+*/
 
