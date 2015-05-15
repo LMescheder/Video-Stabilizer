@@ -5,6 +5,9 @@
 #include "opencv2/opencv.hpp"
 #include "Stabilizer.hpp"
 
+/**
+ * @brief The PointStabilizer class implements a basic video stabilizer based on key point tracking.
+ */
 class PointStabilizer : public Stabilizer{
 public:
     PointStabilizer(const cv::Mat& frame0, WarpingGroup mode=WarpingGroup::homography);

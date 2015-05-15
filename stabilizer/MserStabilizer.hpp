@@ -21,10 +21,24 @@ public:
         visualize_stab_points = 1 << 4
     };
 
+    /**
+     * @brief Constructor of the MserStabilizer class.
+     * @param mser_detector     A MatMser object used for detection and tracking of the msers.
+     * @param frame_0           Template frame or first frame of the video sequence to compare against.
+     * @param warping           What kind of underlying warping should be used for the stabilization.
+     * @param warping_back      Should we first warp the current frame with the previous homography and directly
+     *                          compare against the first frame/the template frame?
+     * @param vis_flags         What aspects of the msers are going to be visualized.
+     */
     MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
                    WarpingGroup warping=WarpingGroup::homography, bool warping_back=true,
                    VisualizationFlags vis_flags=static_cast<VisualizationFlags> (visualize_hulls | visualize_means));
 
+    /**
+     * @brief Implementation of stabilize_next method of the abstract Stabilizer class
+     * @param next_frame        The next colored frame to stabilize.
+     * @return                  The stabilized frame.
+     */
     virtual cv::Mat stabilize_next(const cv::Mat& next_frame);
     virtual cv::Mat visualization() const;
 
