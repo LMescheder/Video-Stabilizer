@@ -21,7 +21,8 @@ public:
         visualize_stab_points = 1 << 4
     };
 
-    MserStabilizer(MatMser mser_detector, cv::Mat frame_0, WarpingGroup warping=WarpingGroup::homography,
+    MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
+                   WarpingGroup warping=WarpingGroup::homography, bool warping_back=true,
                    VisualizationFlags vis_flags=static_cast<VisualizationFlags> (visualize_hulls | visualize_means));
 
     virtual cv::Mat stabilize_next(const cv::Mat& next_frame);
@@ -49,6 +50,7 @@ private:
     WarpingGroup warping_ = WarpingGroup::homography;
     bool visualize_ = true;
     VisualizationFlags visualization_flags_;
+    bool warping_back_;
 
     MatMserTracker tracker_;
     MatMser detector_;

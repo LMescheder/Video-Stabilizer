@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
 void run_stabilizer(std::string input, std::string output, std::string output_regions)
 {
    bool show = true;
-   MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-2);;
+   MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-1);;
 
    cv::VideoCapture cap(input);
 
@@ -62,7 +62,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
 
     std::unique_ptr<Stabilizer> stabilizer;
     stabilizer.reset(new MserStabilizer(mser_detector, frame,
-                                        WarpingGroup::homography,
+                                        WarpingGroup::homography, false,
                                         MserStabilizer::visualize_means | MserStabilizer::visualize_hulls));
 
     //std::unique_ptr<Stabilizer> stabilizer  (new PointStabilizer(frame, WarpingGroup::homography));
