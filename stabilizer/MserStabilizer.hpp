@@ -6,6 +6,9 @@
 #include "opencv2/opencv.hpp"
 #include <vector>
 
+/**
+ * @brief The MserStabilizer implements a basic video stabilizer based on mser tracking
+ */
 class MserStabilizer : public Stabilizer {
 public:
     using ComponentStats = MatMserTracker::ComponentStats;
@@ -18,7 +21,7 @@ public:
         visualize_stab_points = 1 << 4
     };
 
-    MserStabilizer(MatMser mser_detector, cv::Mat frame_0, WarpingGroup mode=WarpingGroup::homography,
+    MserStabilizer(MatMser mser_detector, cv::Mat frame_0, WarpingGroup warping=WarpingGroup::homography,
                    VisualizationFlags vis_flags=static_cast<VisualizationFlags> (visualize_hulls | visualize_means));
 
     virtual cv::Mat stabilize_next(const cv::Mat& next_frame);
@@ -43,7 +46,7 @@ public:
     }
 
 private:
-    WarpingGroup mode_ = WarpingGroup::homography;
+    WarpingGroup warping_ = WarpingGroup::homography;
     bool visualize_ = true;
     VisualizationFlags visualization_flags_;
 
