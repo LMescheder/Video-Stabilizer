@@ -7,12 +7,7 @@
 
 // declarations
 
-// TODO: optimize by using pointers instead of pointers for indexes
-// TODO: create function for a size hint (for optimizations in parser and analyzer)
-// TODO: use more efficient way to store the mask
-// TODO: do more computations in advance (e.g. next index computations)
-// TODO: create a reset function to reuse the objects allocations
-// TODO: create constructor, getter and setter for member variables
+
 
 /** \brief Implementation of GraphAccessor concept to access an opencv Mat object.
  *
@@ -20,6 +15,12 @@
  * a gray level image given as an opencv Mat object. It assumes, that the image has one
  * channel and its datatype is uchar.
  *
+ * \todo optimize by using pointers instead of pointers for indexes
+ * \todo create function for a size hint (for optimizations in parser and analyzer)
+ * \todo use more efficient way to store the mask
+ * \todo do more computations in advance (e.g. next index computations)
+ * \todo create a reset function to reuse the objects allocations
+ * \todo create constructor, getter and setter for member variables
  */
 class MatAccessor
 {
@@ -93,12 +94,12 @@ private:
 
 };
 
-// TODO: store priority queue contiguously (more efficient?)
-// TODO: better way to pop?
+
 
 /** \brief A priority queue to efficiently get the next pixel with the lowest
  *         gray value.
- *
+ *  \todo store priority queue contiguously (more efficient?)
+*   \todo better way to pop?
  */
 class MatAccessor::PriorityQueue {
 public:

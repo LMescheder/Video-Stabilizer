@@ -6,6 +6,9 @@
 
 #include "MatMser.hpp"
 
+/**
+ * @brief Class to track a mser.
+ */
 class MatMserTracker
 {
 public:
@@ -20,12 +23,11 @@ public:
 
     /**
      * @brief Tracks msers.
-     * @param old_image
-     * @param new_image
-     * @param Msers to be tracked.
+     * @param old_image               The last image from where the msers should be tracked.
+     * @param new_image               The new image to which the msers should be tracked.
+     * @param msers                   The msers to be tracked.
      * @return The tracked msers and information if the region could be found.
      */
-
     std::vector<MatMserTracker::ComponentStats> track (const cv::Mat& old_image, const cv::Mat& new_image, const std::vector<ComponentStats>& msers, bool reverse=false);
 
     const std::vector<ComponentStats>& up_msers () const {

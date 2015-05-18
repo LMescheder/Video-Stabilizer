@@ -11,7 +11,7 @@
 #include "stabilizer/PointStabilizer.hpp"
 #include "stabilizer/utilities.hpp"
 
-void run_stabilizer (std::string input, std::string output, std::string output_regions, bool show=true);
+int run_stabilizer (std::string input, std::string output, std::string output_regions, bool show=true);
 
 /**
  * Expected arguments:
@@ -28,17 +28,17 @@ int main(int argc, char** argv) {
     std::string input = argv[1];
     std::string output = argv[2];
     std::string output_regions = argv[3];
-    run_stabilizer(input, output, output_regions);
+    return run_stabilizer(input, output, output_regions);
 }
 
-void run_stabilizer(std::string input, std::string output, std::string output_regions, bool show)
+int run_stabilizer(std::string input, std::string output, std::string output_regions, bool show)
 {
    MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-1);
 
    cv::VideoCapture cap(input);
 
    if(!cap.isOpened()) {
-      std::err << "Could not open input video!" << std::endl;
+      std::cerr << "Could not open input video!" << std::endl;
       return -1;
   }
    /// Get video parameters
@@ -71,7 +71,7 @@ void run_stabilizer(std::string input, std::string output, std::string output_re
     cv::Mat frame;
     cv::Mat gray;
     if (!cap.read(frame))
-        return;
+        return -1;
 
     /// Select stabilizer
     std::unique_ptr<Stabilizer> stabilizer;

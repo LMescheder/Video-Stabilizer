@@ -9,6 +9,16 @@
 // ------------------------------- declarations ---------------------------------------------------
 // ------------------------------------------------------------------------------------------------
 
+/**
+ * @brief Compute the stability of the given component.
+ * @param pred_N      The size of the preceding component.
+ * @param pred_level  The level of the preceding component.
+ * @param N           The size of the current component.
+ * @param level       The level of the current component.
+ * @param succ_N      The size of the following component.
+ * @param succ_level  The level of the following component.
+ * @return The stability of the current component.
+ */
 inline float compute_stability(unsigned int pred_N, uchar pred_level, unsigned int N, uchar level, unsigned int succ_N, uchar succ_level) {
     float stability =  static_cast<float>(N * std::abs(succ_level - pred_level))/(succ_N - pred_N);
     assert(stability >= 0);
@@ -16,13 +26,12 @@ inline float compute_stability(unsigned int pred_N, uchar pred_level, unsigned i
 }
 
 
-/* TODO: Put Mser extraction into derived class
- * TODO: Create derived class for tracking
- * TODO: Optimize history (less reallocation) by creating a (#minima * history_length) array
- * Uses CRTP, so that no runtime cost is inflicted.
- * This class is thus purely abstract. It is neccessary to implement the check_component_ member
- * function in a derived class.
-*/
+/**
+ * @brief The MatMserAnalyzer class implements an ComponentTreeAnalyzer to parametrize the ComponentTreeParser class
+ *        to find msers.
+ *
+ * \todo Optimize history (less reallocation) by creating a (#minima * history_length) array
+ */
 
 class MatMserAnalyzer {
 public:
@@ -102,11 +111,10 @@ private:
 
 };
 
-/* FindMserAnalyzer
- *
- *
+/**
+ * @brief The MatMserAnalyzer class implements an ComponentTreeAnalyzer to parametrize the ComponentTreeParser class
+ *        to retrieve msers.
  */
-
 
 class MatFindMserAnalyzer {
 public:

@@ -9,40 +9,6 @@
 
 // declarations
 
-/*
-G must provide:
-  NodeIndex
-  Node
-  Value // must be totally ordered by <
-  Data
-
-  static const Value inf
-
-  G(const Data&)
-  NodeIndex get_source()
-
-  Value value (NodeIndex node);
-  Node node (NodeIndex node);
-  boost::optional<NodeIndex> get_next_neighbor (NodeIndex node);
-
-A must provide:
-  ComponentIndex
-  Result
-
-  void add_node(G::Node, G::Value)
-  ComponentIndex add_component(G::Value)
-
-  ComponentIndex merge_components(ComponentIndex comp1, ComponentIndex comp2) \\ 1st into 2nd
-
-P must provide:
-  void push(NodeIndex)
-  boost::optional<NodeIndex> pop()
-
-  TODO: put current levels in analyzer instead of parser
-  TODO: use size hints from accessor to preallocate component stack
-  TODO: better way to return analyzers results?
-*/
-
 /** \brief Generic class to parse the component tree of a graph.
  *
  *  This class is used to parse to component tree of a graph or an image. In order to do so,
@@ -50,7 +16,10 @@ P must provide:
  *  an ComponentTreeAnalyzer. G is thus used to access the graph (e.g. for an image) and A to analyze the evolution and
  *  merging of the components while the level changes.
  *
- *  \todo Add description of ComponentTreeAnalyzer annd GraphAccessor concepts
+ *  The GraphAccessor should provide the same interface as MatAccessor and the ComponentTreeAnalyzer should provide
+ *  the same interface as MatMserAnalyzer.
+ *
+ *  \todo Add better descriptions of ComponentTreeAnalyzer annd GraphAccessor concepts
  */
 template <typename G, typename A>
 // requires GraphAccessor<G>
@@ -71,6 +40,16 @@ class ComponentTreeParser {
 
     ComponentTreeParser() = default;
 
+    /**
+     * @brief Call the ComponentTreeParser to do the actual parse.
+     *
+     * Using this overload the GraphAccessor and the ComponentTreeAnalyzer objects are automatically constructed.
+     *
+     * @param data       The data to be parsed. It is given as a parameter to the GraphAccessor object.
+     * @param inverted   If we should go from high values to low values instead of going from low values to
+     *                   high values.
+     * @return Returns the result of the ComponentTreeAnalyzer.
+     */
     Result operator() (const Data& data, bool inverted=false) {
         auto graph = GraphAccessor(data, inverted);
         auto analyzer = Analyzer{};
@@ -78,6 +57,17 @@ class ComponentTreeParser {
         return parse_(graph, analyzer, boundary_nodes);
     }
 
+    /**
+     * @brief Call the ComponentTreeParser to do the actual parse.
+     *
+     * Using this overload the GraphAccessor object is automatically constructed.
+
+     * @param data       The data to be parsed. It is given as a parameter to the GraphAccessor object.
+     * @param analyzer   The ComponentTreeAnalyzer to be used.
+     * @param inverted   If we should go from high values to low values instead of going from low values to
+     *                   high values.
+     * @return Returns the result of the ComponentTreeAnalyzer.
+     */
     Result operator() (const Data& data, Analyzer& analyzer, bool inverted=false) {
         auto graph = GraphAccessor(data, inverted);
         analyzer.reset();
@@ -85,6 +75,15 @@ class ComponentTreeParser {
         return parse_(graph, analyzer, boundary_nodes);
     }
 
+    /**
+    * @brief Call the ComponentTreeParser to do the actual parse.
+    *
+    * @param graph      The GraphAccessor to be used.
+    * @param analyzer   The ComponentTreeAnalyzer to be used.
+    * @param inverted   If we should go from high values to low values instead of going from low values to
+    *                   high values.
+    * @return Returns the result of the ComponentTreeAnalyzer.
+    */
     Result operator() (GraphAccessor& graph, Analyzer& analyzer, bool inverted=false) {
         graph.reset();
         analyzer.reset();
@@ -92,6 +91,14 @@ class ComponentTreeParser {
         return parse_(graph, analyzer, boundary_nodes);
     }
 
+    /**
+    * @brief Call the ComponentTreeParser to do the actual parse.
+    *
+    * @param graph            The GraphAccessor to be used.
+    * @param analyzer         The ComponentTreeAnalyzer to be used.
+    * @param boundary_nodes   The priority queue to be used. It should determine the correct parsing direction.
+    * @return Returns the result of the ComponentTreeAnalyzer.
+    */
     Result operator() (GraphAccessor& graph, Analyzer& analyzer, PriorityQueue& boundary_nodes) {
         graph.reset();
         analyzer.reset();
@@ -99,10 +106,10 @@ class ComponentTreeParser {
         return parse_(graph, analyzer, boundary_nodes);
     }
 
-
-    // implementation
     private:
-
+    /**
+     * @brief The ComponentStack implements the component stack and communicates with the ComponentTreeAnalyzer
+     */
     struct ComponentStack {
         public:
         ComponentStack (const GraphAccessor& graph, Analyzer& analyzer)
@@ -136,43 +143,39 @@ class ComponentTreeParser {
         }
     };
 
-
-    // actual algorithm
+    /**
+     * @brief Implementation of the actual parse.
+     * @param graph             The GraphAccessor to be used.
+     * @param analyzer          The ComponentTreeAnalyzer to be used.
+     * @param boundary_nodes    The priority queue to be used.
+     * @return The result of the ComponentTreeAnalyzer.
+     */
     Result parse_(GraphAccessor& graph, Analyzer& analyzer, PriorityQueue& boundary_nodes);
 
 
 };
 
-// definitions
+/// Implementations
 
 template <typename G, typename A>
 typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
     typename ComponentTreeParser<G,A>::GraphAccessor& graph,
     typename ComponentTreeParser<G,A>::Analyzer& analyzer,
     typename ComponentTreeParser<G,A>::PriorityQueue& boundary_nodes) {
-    // data structures
 
+    /// Initialization
     auto component_stack = ComponentStack{graph, analyzer};
-    //auto boundary_nodes = std::priority_queue<NodeIndex, std::vector<NodeIndex>, NodePriorityLess>{NodePriorityLess{graph}};
-
-    // initialize
     auto current_node = graph.get_source();
     bool flowingdown_phase = true;
-    //auto current_node = graph.get_source();
 
-    // we are done, when there is no boundary node left
+    /// Parse
+    // We are done, when there is no boundary node left.
     while (true) {
-        // get next node
-        /*
-        std::cout << "Current node: " << current_node
-                  << " Value = " << static_cast<int>(graph.value(current_node)) << std::endl;
-        */
-
-        // explore neighborhood of current node
-        // the accessor has to make sure, that we access every node only once
+        // Explore neighborhood of current node.
+        // The accessor has to make sure, that we access every node only once.
         while (auto neighbor_or_none = graph.get_next_neighbor(current_node)) {
             auto neighbor_node = *neighbor_or_none;
-            // flow (further) down?
+            // Flow (further) down?
             if (graph.less(graph.value(neighbor_node), graph.value(current_node))) {
                 flowingdown_phase = true;
                 boundary_nodes.push(current_node, graph.value(current_node));
@@ -182,9 +185,9 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
             }
         }
 
-        // all neighbors already added
+        // All neighbors already added.
 
-        // new minimum found?
+        // New minimum found?
         if (flowingdown_phase) {
             component_stack.push_component(current_node, graph.value(current_node));
             flowingdown_phase = false;
@@ -194,12 +197,12 @@ typename ComponentTreeParser<G,A>::Result ComponentTreeParser<G,A>::parse_(
 
         auto current_node_or_none = boundary_nodes.pop();
 
-        // are we done?
+        // Are we done?
         if (!current_node_or_none)
             break;
 
         current_node = *current_node_or_none;
-        // process component stack
+        // Process component stack
         component_stack.raise_level(graph.value(current_node));
     }
 

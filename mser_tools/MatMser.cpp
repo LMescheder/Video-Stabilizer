@@ -24,8 +24,8 @@ std::vector<ComponentStats> MatMser::detect_msers(const cv::Mat &image, int dir)
     return result;
 }
 
-std::vector<std::vector<cv::Point2i> > MatMser::detect_msers_points(const cv::Mat &image) {
-    return mult_stats_to_points(detect_msers(image), image);
+std::vector<std::vector<cv::Point2i> > MatMser::detect_msers_points(const cv::Mat &image, int dir) {
+    return mult_stats_to_points(detect_msers(image, dir), image);
 }
 
 // mser retrieval
