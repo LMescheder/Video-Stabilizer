@@ -86,11 +86,11 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
     /// Select stabilizer
     std::unique_ptr<Stabilizer> stabilizer;
 
-    //stabilizer.reset(new MserStabilizer(mser_detector, frame0,
-    //                                    WarpingGroup::homography, false,
-    //                                    MserStabilizer::visualize_means | MserStabilizer::visualize_hulls));
+    stabilizer.reset(new MserStabilizer(mser_detector, frame0,
+                                        WarpingGroup::homography, false,
+                                        MserStabilizer::visualize_means | MserStabilizer::visualize_hulls));
 
-    stabilizer.reset(new PointStabilizer(frame0, WarpingGroup::homography));
+    //stabilizer.reset(new PointStabilizer(frame0, WarpingGroup::homography));
 
 
     /// Initialize AccuracyEvaluator
@@ -137,6 +137,16 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
     }
 
     std::cout << "Accuracy (unstabilized): \n";
+    std::cout << "  Minimum mssim = " << accuracy_unstabilized.mssim_stats().min << "\n";
+    std::cout << "  Average mssim = " << accuracy_unstabilized.mssim_stats().average << "\n";
+    std::cout << "  Maximum mssim = " << accuracy_unstabilized.mssim_stats().max << "\n\n";
+
+    std::cout << "Accuracy (stabilized): \n";
+    std::cout << "  Minimum mssim = " << accuracy_stabilized.mssim_stats().min << "\n";
+    std::cout << "  Average mssim = " << accuracy_stabilized.mssim_stats().average << "\n";
+    std::cout << "  Maximum mssim = " << accuracy_stabilized.mssim_stats().max << "\n\n";
+
+    std::cout << "Accuracy (unstabilized): \n";
     std::cout << "  Minimum psnr = " << accuracy_unstabilized.psnr_stats().min << "\n";
     std::cout << "  Average psnr = " << accuracy_unstabilized.psnr_stats().average << "\n";
     std::cout << "  Maximum psnr = " << accuracy_unstabilized.psnr_stats().max << "\n\n";
@@ -144,7 +154,7 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
     std::cout << "Accuracy (stabilized): \n";
     std::cout << "  Minimum psnr = " << accuracy_stabilized.psnr_stats().min << "\n";
     std::cout << "  Average psnr = " << accuracy_stabilized.psnr_stats().average << "\n";
-    std::cout << "  Maximum psnr = " << accuracy_stabilized.psnr_stats().max << "\n";
+    std::cout << "  Maximum psnr = " << accuracy_stabilized.psnr_stats().max << "\n\n";
 
     /// Release resources
     cap.release();

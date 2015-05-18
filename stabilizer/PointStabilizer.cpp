@@ -30,7 +30,7 @@ cv::Mat PointStabilizer::visualization() const {
 
 PointStabilizer::PointStabilizer(const cv::Mat& frame0, WarpingGroup mode) {
     cv::cvtColor(frame0, frame_gray_0_, CV_BGR2GRAY);
-    cv::goodFeaturesToTrack(frame_gray_0_, points0_, 1000, .01, 8);
+    cv::goodFeaturesToTrack(frame_gray_0_, points0_, 10000, .001, 8);
     points_ = points0_;
     status_.resize(points0_.size());
     trust_.resize(points0_.size(), .5);
