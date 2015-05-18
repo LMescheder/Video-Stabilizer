@@ -13,7 +13,13 @@
 
 #include "AccuracyEvaluator.h"
 
-int run_stabilizer (std::string input, std::string output, std::string output_regions, bool show=true);
+enum class StabilizerType {
+    POINT,
+    MSER
+};
+
+int run_stabilizer (std::string input, std::string output, std::string output_regions,
+                    StabilizerType type, bool show=true);
 
 /**
  * Expected arguments:
@@ -30,10 +36,10 @@ int main(int argc, char** argv) {
     std::string input = argv[1];
     std::string output = argv[2];
     std::string output_regions = argv[3];
-    return run_stabilizer(input, output, output_regions);
+    return run_stabilizer(input, output, output_regions, StabilizerType::POINT);
 }
 
-int run_stabilizer(std::string input, std::string output, std::string output_regions, bool show)
+int run_stabilizer(std::string input, std::string output, std::string output_regions, StabilizerType type, bool show)
 {
    MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-1);
 
@@ -86,12 +92,14 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
     /// Select stabilizer
     std::unique_ptr<Stabilizer> stabilizer;
 
-    stabilizer.reset(new MserStabilizer(mser_detector, frame0,
-                                        WarpingGroup::homography, false,
-                                        MserStabilizer::visualize_means | MserStabilizer::visualize_hulls));
-
-    //stabilizer.reset(new PointStabilizer(frame0, WarpingGroup::homography));
-
+    if (type == StabilizerType::MSER)
+        stabilizer.reset(new MserStabilizer(mser_detector, frame0,
+                                            WarpingGroup::homography, false,
+                                            MserStabilizer::visualize_means | MserStabilizer::visualize_hulls));
+    else if (type == StabilizerType::POINT)
+        stabilizer.reset(new PointStabilizer(frame0, WarpingGroup::homography, false));
+    else
+        throw std::logic_error("Stabilizer type not supported!");
 
     /// Initialize AccuracyEvaluator
     AccuracyEvaluator accuracy_unstabilized (frame0);
