@@ -13,7 +13,7 @@
  *
  *  This class is used to parse to component tree of a graph or an image. In order to do so,
  *  it is has to be configured by the two template parameters G and A, where G is a GraphAccesssor and A
- *  an ComponentTreeAnalyzer. G is thus used to access the graph (e.g. for an image) and A to analyze the evolution and
+ *  a ComponentTreeAnalyzer. G is thus used to access the graph (e.g. for an image) and A to analyze the evolution and
  *  merging of the components while the level changes.
  *
  *  The GraphAccessor should provide the same interface as MatAccessor and the ComponentTreeAnalyzer should provide

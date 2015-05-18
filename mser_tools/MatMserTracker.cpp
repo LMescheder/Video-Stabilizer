@@ -4,33 +4,14 @@
 
 std::vector<MatMserTracker::ComponentStats>
     MatMserTracker::track (const cv::Mat& old_image, const cv::Mat& new_image, const std::vector<ComponentStats>& msers, bool reverse) {
-
-//     if (count_ == 0) {
-
-
-//    } else {
         std::vector<ComponentStats> new_msers = msers;
+        // First estimate position of msers using optical flow.
         track_msers_(old_image, new_image, new_msers);
+        // Now retrieve them.
         return mser_detector_.retrieve_msers(new_image, new_msers, reverse);
-//    }
-
-    //++count_;
-    //last_image_ = image.clone();
 }
-
-std::vector<MatMserTracker::ComponentStats> MatMserTracker::msers() const {
-    std::vector<ComponentStats> result;
-    result.reserve(up_msers_.size() + down_msers_.size());
-    for (auto& m : up_msers_)
-        result.push_back(m);
-    for (auto& m : down_msers_)
-        result.push_back(m);
-    return result;
-}
-
 
 void MatMserTracker::track_msers_(const cv::Mat &old_image, const cv::Mat &new_image, std::vector<MatMserTracker::ComponentStats> &msers) {
-
     const int max_N = 100;
 
     std::vector<cv::Point2f> points0;

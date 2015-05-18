@@ -15,7 +15,7 @@
  * a gray level image given as an opencv Mat object. It assumes, that the image has one
  * channel and its datatype is uchar.
  *
- * \todo optimize by using pointers instead of pointers for indexes
+ * \todo optimize by using pointers instead of points for indexes
  * \todo create function for a size hint (for optimizations in parser and analyzer)
  * \todo use more efficient way to store the mask
  * \todo do more computations in advance (e.g. next index computations)
