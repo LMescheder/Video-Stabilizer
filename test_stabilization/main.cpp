@@ -11,6 +11,8 @@
 #include "stabilizer/PointStabilizer.h"
 #include "stabilizer/utilities.h"
 
+#include "AccuracyEvaluator.h"
+
 int run_stabilizer (std::string input, std::string output, std::string output_regions, bool show=true);
 
 /**
@@ -46,6 +48,14 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
    int frame_height = cap.get(CV_CAP_PROP_FRAME_HEIGHT);
    int N = cap.get(CV_CAP_PROP_FRAME_COUNT);
 
+   /*
+   std::cout << "Frame width: " << frame_width << "\n";
+   std::cout << "Frame height = " << frame_width << "\n";
+   std::cout << "N = " << frame_width << "\n";
+   std::cout << "-- Press Enter to continue -- " << std::endl;
+   std::getchar();
+   */
+
    /// Create output video writers
    cv::VideoWriter vout(output,
                            CV_FOURCC('M','J','P','G'),
@@ -68,19 +78,24 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
     }
 
     /// Read first frame
-    cv::Mat frame;
+    cv::Mat frame, frame0;
     cv::Mat gray;
-    if (!cap.read(frame))
+    if (!cap.read(frame0))
         return -1;
 
     /// Select stabilizer
     std::unique_ptr<Stabilizer> stabilizer;
 
-    stabilizer.reset(new MserStabilizer(mser_detector, frame,
-                                        WarpingGroup::homography, false,
-                                        MserStabilizer::visualize_means | MserStabilizer::visualize_hulls));
+    //stabilizer.reset(new MserStabilizer(mser_detector, frame0,
+    //                                    WarpingGroup::homography, false,
+    //                                    MserStabilizer::visualize_means | MserStabilizer::visualize_hulls));
 
-    //std::unique_ptr<Stabilizer> stabilizer  (new PointStabilizer(frame, WarpingGroup::homography));
+    stabilizer.reset(new PointStabilizer(frame0, WarpingGroup::homography));
+
+
+    /// Initialize AccuracyEvaluator
+    AccuracyEvaluator accuracy_unstabilized (frame0);
+    AccuracyEvaluator accuracy_stabilized (frame0);
 
 
     /// Do the stabilization
@@ -104,14 +119,15 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
 
         ++i;
         std::cout << i << "/" << N << " done! ( " << time << "ms )" << std::endl;
-
+        accuracy_unstabilized.evaluate_next(frame);
+        accuracy_stabilized.evaluate_next(stabilized);
 
         if (show) {
 
 
             cv::imshow("Video", out_frame);
             cv::imshow("Stabilized", stabilized);
-
+            cv::imshow("diff", stabilized - frame0);
 
             if (cv::waitKey(1) >= 0) {
                 break;
@@ -119,6 +135,16 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
         }
 
     }
+
+    std::cout << "Accuracy (unstabilized): \n";
+    std::cout << "  Minimum psnr = " << accuracy_unstabilized.psnr_stats().min << "\n";
+    std::cout << "  Average psnr = " << accuracy_unstabilized.psnr_stats().average << "\n";
+    std::cout << "  Maximum psnr = " << accuracy_unstabilized.psnr_stats().max << "\n\n";
+
+    std::cout << "Accuracy (stabilized): \n";
+    std::cout << "  Minimum psnr = " << accuracy_stabilized.psnr_stats().min << "\n";
+    std::cout << "  Average psnr = " << accuracy_stabilized.psnr_stats().average << "\n";
+    std::cout << "  Maximum psnr = " << accuracy_stabilized.psnr_stats().max << "\n";
 
     /// Release resources
     cap.release();

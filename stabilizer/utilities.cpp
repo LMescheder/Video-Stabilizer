@@ -8,7 +8,7 @@ cv::Mat find_homography(const cv::vector<cv::Point2f> &points0, const cv::vector
 
     switch (mode) {
     case WarpingGroup::homography :
-        H = cv::findHomography(points0, points1);
+        H = cv::findHomography(points0, points1, CV_RANSAC);
         break;
     case WarpingGroup::affine :
         A = cv::estimateRigidTransform(points0, points1, true);

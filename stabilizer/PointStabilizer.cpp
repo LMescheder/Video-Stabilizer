@@ -42,7 +42,7 @@ cv::Mat PointStabilizer::get_next_homography_(const cv::Mat &next_image)
 {
     std::vector<cv::Point2f> new_points;
 
-    new_points = checked_optical_flow_(next_image, .1);
+    new_points = checked_optical_flow_(next_image, 1.);
 
     std::vector<cv::Point2f> good_points0;
     std::vector<cv::Point2f> good_new_points;
