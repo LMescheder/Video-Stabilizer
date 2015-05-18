@@ -1,4 +1,4 @@
-#include "PointStabilizer.hpp"
+#include "PointStabilizer.h"
 
 
 cv::Mat PointStabilizer::stabilize_next(const cv::Mat& next_frame) {

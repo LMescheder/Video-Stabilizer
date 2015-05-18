@@ -14,12 +14,12 @@ CONFIG += c++11
 
 
 HEADERS += \
-    ComponentTreeParser.hpp \
-    MatAccessor.hpp \
-    MatAnalyzer.hpp \
-    MatMser.hpp \
-    MatMserTracker.hpp \
-    MatComponentStats.hpp
+    ComponentTreeParser.h \
+    MatAccessor.h \
+    MatAnalyzer.h \
+    MatComponentStats.h \
+    MatMser.h \
+    MatMserTracker.h
 
 SOURCES += \
     MatMser.cpp \

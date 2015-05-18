@@ -3,9 +3,9 @@
 
 #include <vector>
 #include "opencv2/opencv.hpp"
-#include "ComponentTreeParser.hpp"
-#include "MatAccessor.hpp"
-#include "MatAnalyzer.hpp"
+#include "ComponentTreeParser.h"
+#include "MatAccessor.h"
+#include "MatAnalyzer.h"
 
 /**
  * @brief Class to extract and retrieve msers from a gray level image.

@@ -3,7 +3,7 @@
 
 #include "opencv2/opencv.hpp"
 #include <cmath>
-#include "MatComponentStats.hpp"
+#include "MatComponentStats.h"
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------- declarations ---------------------------------------------------

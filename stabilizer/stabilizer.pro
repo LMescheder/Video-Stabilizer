@@ -4,10 +4,10 @@ CONFIG += c++11
 #CONFIG -= qt
 
 HEADERS += \
-    MserStabilizer.hpp \
-    PointStabilizer.hpp \
-    Stabilizer.hpp \
-    utilities.hpp
+    MserStabilizer.h \
+    PointStabilizer.h \
+    Stabilizer.h \
+    utilities.h
 
 SOURCES += \
     MserStabilizer.cpp \

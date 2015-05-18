@@ -1,5 +1,5 @@
-#include "MserStabilizer.hpp"
-#include "utilities.hpp"
+#include "MserStabilizer.h"
+#include "utilities.h"
 
 MserStabilizer::MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
                                WarpingGroup warping, bool warping_back,

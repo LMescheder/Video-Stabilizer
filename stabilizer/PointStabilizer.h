@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "opencv2/opencv.hpp"
-#include "Stabilizer.hpp"
+#include "Stabilizer.h"
 
 /**
  * @brief The PointStabilizer class implements a basic video stabilizer based on key point tracking.

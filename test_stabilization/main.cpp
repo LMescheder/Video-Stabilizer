@@ -5,11 +5,11 @@
 #include <vector>
 #include <memory>
 
-#include "mser_tools/MatMser.hpp"
-#include "stabilizer/Stabilizer.hpp"
-#include "stabilizer/MserStabilizer.hpp"
-#include "stabilizer/PointStabilizer.hpp"
-#include "stabilizer/utilities.hpp"
+#include "mser_tools/MatMser.h"
+#include "stabilizer/Stabilizer.h"
+#include "stabilizer/MserStabilizer.h"
+#include "stabilizer/PointStabilizer.h"
+#include "stabilizer/utilities.h"
 
 int run_stabilizer (std::string input, std::string output, std::string output_regions, bool show=true);
 

@@ -1,4 +1,4 @@
-#include "MatAnalyzer.hpp"
+#include "MatAnalyzer.h"
 
 
 void MatMserAnalyzer::merge_component_into(MatMserAnalyzer::Component &comp1, MatMserAnalyzer::Component &comp2) {

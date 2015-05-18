@@ -3,7 +3,7 @@
 
 
 #include "opencv2/opencv.hpp"
-#include "utilities.hpp"
+#include "utilities.h"
 
 /**
  * @brief Interface for video stabilization.

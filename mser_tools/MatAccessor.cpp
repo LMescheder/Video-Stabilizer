@@ -1,4 +1,4 @@
-#include "MatAccessor.hpp"
+#include "MatAccessor.h"
 
 
 boost::optional<MatAccessor::NodeIndex> MatAccessor::get_next_neighbor(MatAccessor::NodeIndex node) {

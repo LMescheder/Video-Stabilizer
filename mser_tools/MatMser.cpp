@@ -1,4 +1,4 @@
-#include "MatMser.hpp"
+#include "MatMser.h"
 
 using ComponentStats = typename MatMser::ComponentStats;
 

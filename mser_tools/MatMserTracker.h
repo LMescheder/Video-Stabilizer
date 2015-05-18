@@ -4,7 +4,7 @@
 #include <vector>
 #include "opencv2/opencv.hpp"
 
-#include "MatMser.hpp"
+#include "MatMser.h"
 
 /**
  * @brief Class to track msers.

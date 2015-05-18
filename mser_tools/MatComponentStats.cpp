@@ -1,4 +1,4 @@
-#include "MatComponentStats.hpp"
+#include "MatComponentStats.h"
 
 void MatComponentStats::merge(const MatComponentStats &comp1) {
     auto& comp2 = *this;

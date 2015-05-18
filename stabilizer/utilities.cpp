@@ -1,6 +1,6 @@
 #include <vector>
 #include "opencv2/opencv.hpp"
-#include "utilities.hpp"
+#include "utilities.h"
 
 cv::Mat find_homography(const cv::vector<cv::Point2f> &points0, const cv::vector<cv::Point2f> &points1, WarpingGroup mode)
 {
