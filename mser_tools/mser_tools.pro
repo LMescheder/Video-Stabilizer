@@ -19,7 +19,8 @@ HEADERS += \
     MatAnalyzer.h \
     MatComponentStats.h \
     MatMser.h \
-    MatMserTracker.h
+    MatMserTracker.h \
+    ComponentTreeParser.hpp
 
 SOURCES += \
     MatMser.cpp \
