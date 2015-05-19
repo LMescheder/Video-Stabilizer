@@ -6,12 +6,10 @@ cv::Mat Stabilizer::stabilize_next(const cv::Mat& next_frame)
 
     // first warp with previous homography to make direct tracking from template possible
     if (mode_ == Mode::WARP_BACK)
-        cv::warpPerspective(frame_gray_, H_frame_gray_, H_, cv::Size(frame_gray_.cols, frame_gray_.rows));
-    else
-        H_frame_gray_ = frame_gray_;
+        cv::warpPerspective(frame_gray_, frame_gray_, H_, cv::Size(frame_gray_.cols, frame_gray_.rows));
 
     // compute the new homography
-    cv::Mat new_H = get_next_homography(H_frame_gray_);
+    cv::Mat new_H = get_next_homography(frame_gray_);
 
     // visualize if required
     if (visualize_) {
@@ -21,8 +19,11 @@ cv::Mat Stabilizer::stabilize_next(const cv::Mat& next_frame)
         visualization_.release();
     }
 
-    // compose new homography with previous one (undoing the initial back warping)
-    H_ = new_H * H_;
+    // compute new homography
+    if (mode_ == Mode::DIRECT)
+        H_ = new_H;
+    else  // mode_ == Mode::TRACK_REF || mode_ == Mode::WARP_BACK
+        H_ = new_H * H_;
 
     // compute and return stabilized frame
     cv::Mat stabilized_frame;
@@ -30,7 +31,7 @@ cv::Mat Stabilizer::stabilize_next(const cv::Mat& next_frame)
 
     // reset reference frame
     if (mode_ == Mode::TRACK_REF) {
-        frame_gray_0_ = frame_gray_.clone();
+        ref_frame_gray_ = frame_gray_.clone();
     }
     return stabilized_frame;
 }

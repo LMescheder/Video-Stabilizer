@@ -9,7 +9,6 @@
 #include "stabilizer/Stabilizer.h"
 #include "stabilizer/MserStabilizer.h"
 #include "stabilizer/PointStabilizer.h"
-#include "stabilizer/utilities.h"
 
 #include "AccuracyEvaluator.h"
 
@@ -18,7 +17,7 @@ enum class StabilizerType {
     MSER
 };
 
-constexpr StabilizerType TYPE = StabilizerType::POINT;
+constexpr StabilizerType TYPE = StabilizerType::MSER;
 constexpr Stabilizer::Mode MODE = Stabilizer::Mode::WARP_BACK;
 constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
 

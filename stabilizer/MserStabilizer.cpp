@@ -1,5 +1,4 @@
 #include "MserStabilizer.h"
-#include "utilities.h"
 
 MserStabilizer::MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
                                Warping warping, Mode mode,
@@ -7,7 +6,7 @@ MserStabilizer::MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
     : Stabilizer(frame_0, warping, mode, true),
       detector_{mser_detector}, tracker_{mser_detector}, count_{0},
       visualization_flags_{visualization_flags} {
-    recompute_msers_(frame_gray_0_);
+    recompute_msers_(ref_frame_gray_);
 }
 
 cv::Mat MserStabilizer::stabilize_next(const cv::Mat& next_frame) {
@@ -37,8 +36,8 @@ std::vector<MserStabilizer::ComponentStats> MserStabilizer::msers() {
 
 cv::Mat MserStabilizer::get_next_homography(const cv::Mat& H_gray) {
    // first track msers from template to the current (back warped) frame
-   up_msers_ = tracker_.track(frame_gray_0_, H_gray, up_msers_0_);
-   down_msers_ = tracker_.track(frame_gray_0_, H_gray, down_msers_0_, true);
+   up_msers_ = tracker_.track(ref_frame_gray_, H_gray, up_msers_0_);
+   down_msers_ = tracker_.track(ref_frame_gray_, H_gray, down_msers_0_, true);
 
 
     // extract points for homography estimation
@@ -65,7 +64,7 @@ cv::Mat MserStabilizer::get_next_homography(const cv::Mat& H_gray) {
 void MserStabilizer::recompute_msers_(cv::Mat image) {
     //tracker_.reset();
     // TODO: merge this into reset
-    frame_gray_0_ = image;
+    ref_frame_gray_ = image;
     up_msers_0_ = detector_.detect_msers(image, MatMser::upwards);
     down_msers_0_ = detector_.detect_msers(image, MatMser::downwards);
 
@@ -115,29 +114,28 @@ void MserStabilizer::extract_points_(std::vector<cv::Point2f> &points, const Mse
 // visualization related stuff
 
 void MserStabilizer::create_visualization() {
-    cv::Mat H_vis;
-    // first warp back to do the visualization
+    const cv::Size frame_size (visualization_.cols, visualization_.rows);
+    // warp visualization back if in WARP_BACK mode to visualize the computed msers
     if (mode_ == Mode::WARP_BACK)
-        cv::warpPerspective(frame, H_vis, H_, cv::Size(frame.cols, frame.rows));
-    else
-        H_vis = frame.clone();
+        cv::warpPerspective(visualization_, visualization_, H_, frame_size);
 
     std::vector<ComponentStats> all_msers = msers();
 
-   // visualize as indicated by the visualization flags
-   if (visualization_flags_ & VIS_HULLS)
-        visualize_regions_hulls_(H_vis, all_msers);
-   if (visualization_flags_ & VIS_MEANS)
-        visualize_points(H_vis, all_msers, true);
-   if (visualization_flags_ & VIS_STABPOINTS)
-        visualize_stabilization_points(H_vis, true);
-   if (visualization_flags_ & VIS_COV)
-        visualize_regions_cov(H_vis, all_msers);
-   if (visualization_flags_ & VIS_BOXES)
-        visualize_regions_box(H_vis, all_msers);
+    // visualize as indicated by the visualization flags
+    if (visualization_flags_ & VIS_HULLS)
+        visualize_regions_hulls_(visualization_, all_msers);
+    if (visualization_flags_ & VIS_MEANS)
+        visualize_points(visualization_, all_msers, true);
+    if (visualization_flags_ & VIS_STABPOINTS)
+        visualize_stabilization_points(visualization_, true);
+    if (visualization_flags_ & VIS_COV)
+        visualize_regions_cov(visualization_, all_msers);
+    if (visualization_flags_ & VIS_BOXES)
+        visualize_regions_box(visualization_, all_msers);
 
-   // undo warping back
-   cv::warpPerspective(H_vis, visualization_, H_.inv(), cv::Size(frame.cols, frame.rows));
+    // undo warping of the visualization
+    if (mode_ == Mode::WARP_BACK)
+       cv::warpPerspective(visualization_, visualization_, H_.inv(), frame_size);
 }
 \
 
@@ -169,7 +167,7 @@ void MserStabilizer::visualize_stabilization_points (cv::Mat&  image, bool lines
 void MserStabilizer::visualize_regions_hulls_ (cv::Mat& image, const std::vector<MatComponentStats>& msers){
     for (auto& mser : msers)
         if (mser.N > 0) {
-            auto points = MatMser::stats_to_points(mser, H_frame_gray_);
+            auto points = MatMser::stats_to_points(mser, frame_gray_);
             std::vector<cv::Point> hull;
             cv::convexHull(points, hull);
             cv::polylines(image, hull, true, cv::Scalar(0, 255, 0), 1.5);

@@ -3,11 +3,11 @@
 
 PointStabilizer::PointStabilizer(const cv::Mat& frame_0, Warping warping, Mode mode)
     : Stabilizer(frame_0, warping, mode, true) {
-    cv::goodFeaturesToTrack(frame_gray_0_, points0_, 1000, .01, 8);
+    cv::goodFeaturesToTrack(ref_frame_gray_, points0_, 1000, .01, 8);
     points_ = points0_;
     status_.resize(points0_.size());
     trust_.resize(points0_.size(), .5);
-    last_frame_gray_ = frame_gray_0_;
+    last_frame_gray_ = ref_frame_gray_;
 }
 
 cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
@@ -54,8 +54,8 @@ std::vector<cv::Point2f> PointStabilizer::checked_optical_flow_(const cv::Mat& f
     points1.reserve(points0_.size());
     points2.reserve(points0_.size());
 
-    cv::calcOpticalFlowPyrLK(frame_gray_0_, frame_gray, points0_, points1, status1, err, cv::Size(21, 21), 3);
-    cv::calcOpticalFlowPyrLK(frame_gray, frame_gray_0_, points1, points2, status2, err, cv::Size(21, 21), 3);
+    cv::calcOpticalFlowPyrLK(ref_frame_gray_, frame_gray, points0_, points1, status1, err, cv::Size(21, 21), 3);
+    cv::calcOpticalFlowPyrLK(frame_gray, ref_frame_gray_, points1, points2, status2, err, cv::Size(21, 21), 3);
 
     for (std::size_t i=0; i<points_.size(); ++i) {
         status_[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(points0_[i] - points2[i]) < eps );
