@@ -14,11 +14,11 @@ public:
     using ComponentStats = MatMserTracker::ComponentStats;
 
     enum VisualizationFlags {
-        visualize_hulls = 1 << 0,
-        visualize_means = 1 << 1,
-        visualize_cov = 1 << 2,
-        visualize_boxes = 1 << 3,
-        visualize_stab_points = 1 << 4
+        VIS_HULLS = 1 << 0,
+        VIS_MEANS = 1 << 1,
+        VIS_COV = 1 << 2,
+        VIS_BOXES = 1 << 3,
+        VIS_STABPOINTS = 1 << 4
     };
 
     /**
@@ -31,8 +31,8 @@ public:
      * @param vis_flags         What aspects of the msers are going to be visualized.
      */
     MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
-                   WarpingGroup warping=WarpingGroup::homography, bool warping_back=true,
-                   VisualizationFlags vis_flags=static_cast<VisualizationFlags> (visualize_hulls | visualize_means));
+                   Warping warping=Warping::HOMOGRAPHY, bool warping_back=true,
+                   int vis_flags= (VIS_HULLS | VIS_MEANS));
 
     /**
      * @brief Implementation of stabilize_next method of the abstract Stabilizer class
@@ -40,7 +40,7 @@ public:
      * @return                  The stabilized frame.
      */
     virtual cv::Mat stabilize_next(const cv::Mat& next_frame);
-    virtual cv::Mat visualization() const;
+
 
     std::vector<ComponentStats> msers();
 
@@ -62,13 +62,10 @@ public:
 
 private:
 
-    VisualizationFlags visualization_flags_;
+    int visualization_flags_;
 
-
-    MatMserTracker tracker_;
     MatMser detector_;
-    //cv::Mat frame_gray_0_;
-
+    MatMserTracker tracker_;
 
     std::vector<ComponentStats> up_msers_0_;
     std::vector<ComponentStats> down_msers_0_;
@@ -95,26 +92,6 @@ private:
     std::vector<cv::Point2f> points_, points0_;
 
 };
-
-
-// definition of the visualization flags
-inline MserStabilizer::VisualizationFlags operator| (MserStabilizer::VisualizationFlags lhs, MserStabilizer::VisualizationFlags rhs) {
-    return (MserStabilizer::VisualizationFlags)(static_cast<int>(lhs) | static_cast<int>(rhs));
-}
-
-inline MserStabilizer::VisualizationFlags& operator|= (MserStabilizer::VisualizationFlags& lhs, MserStabilizer::VisualizationFlags rhs) {
-    lhs = (MserStabilizer::VisualizationFlags)(static_cast<int>(lhs) | static_cast<int>(rhs));
-    return lhs;
-}
-
-inline MserStabilizer::VisualizationFlags operator& (MserStabilizer::VisualizationFlags lhs, MserStabilizer::VisualizationFlags rhs) {
-    return (MserStabilizer::VisualizationFlags)(static_cast<int>(lhs) & static_cast<int>(rhs));
-}
-
-inline MserStabilizer::VisualizationFlags& operator&= (MserStabilizer::VisualizationFlags& lhs, MserStabilizer::VisualizationFlags rhs) {
-    lhs = (MserStabilizer::VisualizationFlags)(static_cast<int>(lhs) & static_cast<int>(rhs));
-    return lhs;
-}
 
 
 #endif // MATMserStabilizer_HPP

@@ -2,8 +2,8 @@
 #include "utilities.h"
 
 MserStabilizer::MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
-                               WarpingGroup warping, bool warping_back,
-                               VisualizationFlags visualization_flags)
+                               Warping warping, bool warping_back,
+                               int visualization_flags)
     : Stabilizer(frame_0, warping, warping_back, true),
       detector_{mser_detector}, tracker_{mser_detector}, count_{0},
       visualization_flags_{visualization_flags} {
@@ -21,9 +21,7 @@ cv::Mat MserStabilizer::stabilize_next(const cv::Mat& next_frame) {
     return stabilized_frame;
 }
 
-cv::Mat MserStabilizer::visualization() const {
-    return visualization_;
-}
+
 
 std::vector<MserStabilizer::ComponentStats> MserStabilizer::msers() {
     // put upwards and downwards msers in a single vector
@@ -35,7 +33,6 @@ std::vector<MserStabilizer::ComponentStats> MserStabilizer::msers() {
         result.push_back(m);
     return result;
 }
-
 
 
 cv::Mat MserStabilizer::get_next_homography(const cv::Mat& H_gray) {
@@ -115,6 +112,8 @@ void MserStabilizer::extract_points_(std::vector<cv::Point2f> &points, const Mse
     points.push_back(comp.mean - eps * d2);
 }
 
+// visualization related stuff
+
 void MserStabilizer::create_visualization(const cv::Mat& frame) {
     cv::Mat H_vis;
     // first warp back to do the visualization
@@ -126,15 +125,15 @@ void MserStabilizer::create_visualization(const cv::Mat& frame) {
     std::vector<ComponentStats> all_msers = msers();
 
    // visualize as indicated by the visualization flags
-   if (visualization_flags_ & visualize_hulls)
+   if (visualization_flags_ & VIS_HULLS)
         visualize_regions_hulls_(H_vis, all_msers);
-   if (visualization_flags_ & visualize_means)
+   if (visualization_flags_ & VIS_MEANS)
         visualize_points(H_vis, all_msers, true);
-   if (visualization_flags_ & visualize_stab_points)
+   if (visualization_flags_ & VIS_STABPOINTS)
         visualize_stabilization_points(H_vis, true);
-   if (visualization_flags_ & visualize_cov)
+   if (visualization_flags_ & VIS_COV)
         visualize_regions_cov(H_vis, all_msers);
-   if (visualization_flags_ & visualize_boxes)
+   if (visualization_flags_ & VIS_BOXES)
         visualize_regions_box(H_vis, all_msers);
 
    // undo warping back

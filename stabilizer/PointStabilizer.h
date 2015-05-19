@@ -10,7 +10,7 @@
  */
 class PointStabilizer : public Stabilizer{
 public:
-    PointStabilizer(const cv::Mat& frame_0, WarpingGroup warping=WarpingGroup::homography, bool warping_back=true);
+    PointStabilizer(const cv::Mat& frame_0, Warping warping=Warping::HOMOGRAPHY, bool warping_back=true);
 
     virtual cv::Mat visualization() const;
 

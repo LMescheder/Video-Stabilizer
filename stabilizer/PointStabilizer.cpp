@@ -7,7 +7,7 @@ cv::Mat PointStabilizer::visualization() const {
 
 
 
-PointStabilizer::PointStabilizer(const cv::Mat& frame_0, WarpingGroup warping, bool warping_back)
+PointStabilizer::PointStabilizer(const cv::Mat& frame_0, Warping warping, bool warping_back)
     : Stabilizer(frame_0, warping, warping_back, true) {
     cv::goodFeaturesToTrack(frame_gray_0_, points0_, 1000, .01, 8);
     points_ = points0_;

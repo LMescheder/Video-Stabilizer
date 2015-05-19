@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     std::string input = argv[1];
     std::string output = argv[2];
     std::string output_regions = argv[3];
-    return run_stabilizer(input, output, output_regions, StabilizerType::POINT);
+    return run_stabilizer(input, output, output_regions, StabilizerType::MSER);
 }
 
 int run_stabilizer(std::string input, std::string output, std::string output_regions, StabilizerType type, bool show)
@@ -94,10 +94,10 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
 
     if (type == StabilizerType::MSER)
         stabilizer.reset(new MserStabilizer(mser_detector, frame0,
-                                            WarpingGroup::homography, false,
-                                            MserStabilizer::visualize_means | MserStabilizer::visualize_hulls));
+                                            Stabilizer::Warping::HOMOGRAPHY, false,
+                                            MserStabilizer::VIS_MEANS | MserStabilizer::VIS_HULLS));
     else if (type == StabilizerType::POINT)
-        stabilizer.reset(new PointStabilizer(frame0, WarpingGroup::homography, false));
+        stabilizer.reset(new PointStabilizer(frame0, Stabilizer::Warping::HOMOGRAPHY, false));
     else
         throw std::logic_error("Stabilizer type not supported!");
 
