@@ -21,16 +21,16 @@ public:
     };
 
     enum class Mode {
-        DIRECT,             // directly compare current frame with reference
-        TRACK_REF,              // always compare with last frame
-        WARP_BACK           // warp current frame back to reference
+        DIRECT,             // directly compare current frame to reference
+        TRACK_REF,          // always compare to previous frame
+        WARP_BACK           // warp current frame back to reference and compare to reference
     };
 
 public:
     Stabilizer (const cv::Mat& frame_0, Warping warping=Warping::HOMOGRAPHY, Mode mode=Mode::DIRECT, bool visualize=true)
         : warping_{warping}, mode_{mode}, visualize_{visualize} {
         H_ = cv::Mat::eye(3, 3, CV_64FC1);
-        cv::cvtColor(frame_0, frame_gray_0_, CV_BGR2GRAY);
+        cv::cvtColor(frame_0, ref_frame_gray_, CV_BGR2GRAY);
     }
 
     /**
@@ -57,15 +57,19 @@ protected:
 
 protected:
     // Parameters
-    Warping warping_ = Warping::HOMOGRAPHY;
-    Mode mode_;
-    bool visualize_ = true;
+    Warping warping_ = Warping::HOMOGRAPHY; // warping group used for stabilization
+    Mode mode_;                             // stabilization mode (see Mode description)
+    bool visualize_ = true;                 // visualize stuff?
 
-    cv::Mat H_;
-    cv::Mat frame_gray_0_;
-    cv::Mat frame;
-    cv::Mat visualization_;
-    cv::Mat frame_gray_, H_frame_gray_;
+    // State
+    cv::Mat H_;                 // the current homography
+
+    cv::Mat ref_frame_gray_;    // current reference frame in gray
+    cv::Mat frame;              // the current frame (warped if mode_==Mode::WARP_BACK)
+    cv::Mat frame_gray_;        // the current frame in gray (warped if mode_==Mode::WARP_BACK)
+    cv::Mat H_frame_gray_;      // delete?
+
+    cv::Mat visualization_;     // visualization of last stabilization
 };
 
 #endif // STABILIZER_HPP
