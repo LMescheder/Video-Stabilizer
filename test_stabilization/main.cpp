@@ -17,8 +17,8 @@ enum class StabilizerType {
     MSER
 };
 
-constexpr StabilizerType TYPE = StabilizerType::MSER;
-constexpr Stabilizer::Mode MODE = Stabilizer::Mode::WARP_BACK;
+constexpr StabilizerType TYPE = StabilizerType::POINT;
+constexpr Stabilizer::Mode MODE = Stabilizer::Mode::TRACK_REF;
 constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
 
 int run_stabilizer (std::string input, std::string output, std::string output_regions,

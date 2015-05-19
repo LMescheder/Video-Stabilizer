@@ -64,9 +64,7 @@ protected:
     cv::Mat H_;                 // the current homography
 
     cv::Mat ref_frame_gray_;    // current reference frame in gray
-    cv::Mat frame;              // the current frame (warped if mode_==Mode::WARP_BACK)
     cv::Mat frame_gray_;        // the current frame in gray (warped if mode_==Mode::WARP_BACK)
-    cv::Mat H_frame_gray_;      // delete?
 
     cv::Mat visualization_;     // visualization of last stabilization
 };
