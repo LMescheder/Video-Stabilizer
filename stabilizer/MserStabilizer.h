@@ -31,7 +31,7 @@ public:
      * @param vis_flags         What aspects of the msers are going to be visualized.
      */
     MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
-                   Warping warping=Warping::HOMOGRAPHY, bool warping_back=true,
+                   Warping warping=Warping::HOMOGRAPHY, Mode mode=Mode::TRACK_REF,
                    int vis_flags= (VIS_HULLS | VIS_MEANS));
 
     /**
@@ -60,10 +60,23 @@ public:
         visualize_ = visualize;
     }
 
+protected:
+    virtual cv::Mat get_next_homography(const cv::Mat& next_image);
+    virtual void create_visualization();
+
 private:
+    void recompute_msers_(cv::Mat image);
+    void extract_points_(std::vector<cv::Point2f>& points, const ComponentStats& comp );
 
+    void visualize_regions_hulls_ (cv::Mat& image, const std::vector<MatComponentStats>& msers);
+    void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers, bool orientation);
+    void visualize_stabilization_points (cv::Mat&  image, bool lines);
+    void visualize_regions_cov (cv::Mat& image, const std::vector<MatComponentStats>& msers);
+    void visualize_regions_box (cv::Mat& image, const std::vector<MatComponentStats>& msers);
+
+private:
     int visualization_flags_;
-
+    std::vector<cv::Point2f> points_, points0_;
     MatMser detector_;
     MatMserTracker tracker_;
 
@@ -73,23 +86,6 @@ private:
 
     unsigned int count_;
     unsigned int recompute_T_ = 50;
-
-protected:
-    virtual cv::Mat get_next_homography(const cv::Mat& next_image);
-    virtual void create_visualization(const cv::Mat& frame);
-
-private:
-
-    void visualize_regions_hulls_ (cv::Mat& image, const std::vector<MatComponentStats>& msers);
-    void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers, bool orientation);
-    void visualize_stabilization_points (cv::Mat&  image, bool lines);
-    void visualize_regions_cov (cv::Mat& image, const std::vector<MatComponentStats>& msers);
-    void visualize_regions_box (cv::Mat& image, const std::vector<MatComponentStats>& msers);
-
-    void recompute_msers_(cv::Mat image);
-    void extract_points_(std::vector<cv::Point2f>& points, const ComponentStats& comp );
-
-    std::vector<cv::Point2f> points_, points0_;
 
 };
 

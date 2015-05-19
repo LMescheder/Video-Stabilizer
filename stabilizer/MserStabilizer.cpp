@@ -2,9 +2,9 @@
 #include "utilities.h"
 
 MserStabilizer::MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
-                               Warping warping, bool warping_back,
+                               Warping warping, Mode mode,
                                int visualization_flags)
-    : Stabilizer(frame_0, warping, warping_back, true),
+    : Stabilizer(frame_0, warping, mode, true),
       detector_{mser_detector}, tracker_{mser_detector}, count_{0},
       visualization_flags_{visualization_flags} {
     recompute_msers_(frame_gray_0_);
@@ -14,7 +14,7 @@ cv::Mat MserStabilizer::stabilize_next(const cv::Mat& next_frame) {
     cv::Mat stabilized_frame = Stabilizer::stabilize_next(next_frame);
 
     // reset msers
-    if (!warping_back_) {
+    if (mode_ == Mode::TRACK_REF) {
         up_msers_0_ = up_msers_;
         down_msers_0_ = down_msers_;
     }
@@ -114,10 +114,10 @@ void MserStabilizer::extract_points_(std::vector<cv::Point2f> &points, const Mse
 
 // visualization related stuff
 
-void MserStabilizer::create_visualization(const cv::Mat& frame) {
+void MserStabilizer::create_visualization() {
     cv::Mat H_vis;
     // first warp back to do the visualization
-    if (warping_back_)
+    if (mode_ == Mode::WARP_BACK)
         cv::warpPerspective(frame, H_vis, H_, cv::Size(frame.cols, frame.rows));
     else
         H_vis = frame.clone();
@@ -188,7 +188,7 @@ void MserStabilizer::visualize_regions_cov (cv::Mat& image, const std::vector<Ma
             float angle = atan2(eigenvecs.at<float>(0,1), eigenvecs.at<float>(0,0));
 
             // convert angle to degrees
-            angle = 180*angle/3.14159265359;
+            angle = 180*angle/M_PI;
 
             // calculate axis length
             float axis1_length = 2*sqrt(eigenvals.at<float>(0));

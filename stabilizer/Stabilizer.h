@@ -20,9 +20,15 @@ public:
         TRANSLATION,        // only translation
     };
 
+    enum class Mode {
+        DIRECT,             // directly compare current frame with reference
+        TRACK_REF,              // always compare with last frame
+        WARP_BACK           // warp current frame back to reference
+    };
+
 public:
-    Stabilizer (const cv::Mat& frame_0, Warping warping=Warping::HOMOGRAPHY, bool warping_back=true, bool visualize=true)
-        : warping_{warping}, warping_back_{warping_back}, visualize_{visualize} {
+    Stabilizer (const cv::Mat& frame_0, Warping warping=Warping::HOMOGRAPHY, Mode mode=Mode::DIRECT, bool visualize=true)
+        : warping_{warping}, mode_{mode}, visualize_{visualize} {
         H_ = cv::Mat::eye(3, 3, CV_64FC1);
         cv::cvtColor(frame_0, frame_gray_0_, CV_BGR2GRAY);
     }
@@ -46,13 +52,13 @@ public:
 
 protected:
     virtual cv::Mat get_next_homography(const cv::Mat& next_frame) = 0;
-    virtual void create_visualization(const cv::Mat& next_frame) = 0;
+    virtual void create_visualization() = 0;
 
 
 protected:
     // Parameters
     Warping warping_ = Warping::HOMOGRAPHY;
-    bool warping_back_;
+    Mode mode_;
     bool visualize_ = true;
 
     cv::Mat H_;

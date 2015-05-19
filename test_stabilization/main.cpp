@@ -18,6 +18,10 @@ enum class StabilizerType {
     MSER
 };
 
+constexpr StabilizerType TYPE = StabilizerType::POINT;
+constexpr Stabilizer::Mode MODE = Stabilizer::Mode::WARP_BACK;
+constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
+
 int run_stabilizer (std::string input, std::string output, std::string output_regions,
                     StabilizerType type, bool show=true);
 
@@ -36,7 +40,7 @@ int main(int argc, char** argv) {
     std::string input = argv[1];
     std::string output = argv[2];
     std::string output_regions = argv[3];
-    return run_stabilizer(input, output, output_regions, StabilizerType::MSER);
+    return run_stabilizer(input, output, output_regions, TYPE);
 }
 
 int run_stabilizer(std::string input, std::string output, std::string output_regions, StabilizerType type, bool show)
@@ -94,10 +98,10 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
 
     if (type == StabilizerType::MSER)
         stabilizer.reset(new MserStabilizer(mser_detector, frame0,
-                                            Stabilizer::Warping::HOMOGRAPHY, false,
+                                            WARPING, MODE,
                                             MserStabilizer::VIS_MEANS | MserStabilizer::VIS_HULLS));
     else if (type == StabilizerType::POINT)
-        stabilizer.reset(new PointStabilizer(frame0, Stabilizer::Warping::HOMOGRAPHY, false));
+        stabilizer.reset(new PointStabilizer(frame0, WARPING, MODE));
     else
         throw std::logic_error("Stabilizer type not supported!");
 

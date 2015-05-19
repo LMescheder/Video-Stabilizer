@@ -1,14 +1,8 @@
 #include "PointStabilizer.h"
 
 
-cv::Mat PointStabilizer::visualization() const {
-    return visualization_;
-}
-
-
-
-PointStabilizer::PointStabilizer(const cv::Mat& frame_0, Warping warping, bool warping_back)
-    : Stabilizer(frame_0, warping, warping_back, true) {
+PointStabilizer::PointStabilizer(const cv::Mat& frame_0, Warping warping, Mode mode)
+    : Stabilizer(frame_0, warping, mode, true) {
     cv::goodFeaturesToTrack(frame_gray_0_, points0_, 1000, .01, 8);
     points_ = points0_;
     status_.resize(points0_.size());
@@ -36,8 +30,7 @@ cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
     return find_homography(good_new_points, good_points0, warping_);
 }
 
-void PointStabilizer::create_visualization(const cv::Mat& next_frame ) {
-    visualization_ = next_frame.clone();
+void PointStabilizer::create_visualization() {
     std::vector<cv::Point2f> new_points_vis;
     cv::perspectiveTransform(points0_, new_points_vis, H_.inv());
     for (std::size_t i=0; i<points0_.size(); ++i) {
