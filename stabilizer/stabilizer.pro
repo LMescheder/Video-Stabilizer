@@ -12,7 +12,8 @@ HEADERS += \
 SOURCES += \
     MserStabilizer.cpp \
     PointStabilizer.cpp \
-    utilities.cpp
+    utilities.cpp \
+    Stabilizer.cpp
 
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../
 

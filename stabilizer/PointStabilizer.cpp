@@ -1,59 +1,22 @@
 #include "PointStabilizer.h"
 
 
-cv::Mat PointStabilizer::stabilize_next(const cv::Mat& next_frame) {
-    cv::Mat frame_gray, H_frame_gray;
-    cv::cvtColor(next_frame, frame_gray, CV_BGR2GRAY);
-
-    // first warp with previous homography to make direct tracking from template possible
-    if (warping_back_)
-        cv::warpPerspective(frame_gray, H_frame_gray, H_, cv::Size(frame_gray.cols, frame_gray.rows));
-    else
-        H_frame_gray = frame_gray;
-
-    // compute the new homography
-    cv::Mat new_H = get_next_homography_(H_frame_gray);
-
-    // visualize if required
-    if (visualize_)
-        create_visualization_(next_frame);
-    else
-        visualization_.release();
-
-
-    // compose new homography with previous one (undoing the initial back warping)
-    //H_ = new_H * H_;
-    H_ = new_H;
-
-    // compute and return stabilized frame
-    cv::Mat stabilized_frame;
-    cv::warpPerspective(next_frame, stabilized_frame, H_, cv::Size(next_frame.cols, next_frame.rows));
-
-    // reset reference frame
-    if (!warping_back_) {
-        //frame_gray_0_ = frame_gray.clone();
-    }
-    return stabilized_frame;
-}
-
 cv::Mat PointStabilizer::visualization() const {
     return visualization_;
 }
 
 
 
-PointStabilizer::PointStabilizer(const cv::Mat& frame0, WarpingGroup mode, bool warping_back)
-    : mode_{mode}, warping_back_{warping_back} {
-    cv::cvtColor(frame0, frame_gray_0_, CV_BGR2GRAY);
+PointStabilizer::PointStabilizer(const cv::Mat& frame_0, WarpingGroup warping, bool warping_back)
+    : Stabilizer(frame_0, warping, warping_back, true) {
     cv::goodFeaturesToTrack(frame_gray_0_, points0_, 1000, .01, 8);
     points_ = points0_;
     status_.resize(points0_.size());
     trust_.resize(points0_.size(), .5);
     last_frame_gray_ = frame_gray_0_;
-    H_ = cv::Mat::eye(3, 3, CV_64F);
 }
 
-cv::Mat PointStabilizer::get_next_homography_(const cv::Mat &next_image)
+cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
 {
     std::vector<cv::Point2f> new_points;
 
@@ -70,10 +33,10 @@ cv::Mat PointStabilizer::get_next_homography_(const cv::Mat &next_image)
             good_new_points.push_back(new_points[i]);
          }
 
-    return find_homography(good_new_points, good_points0, mode_);
+    return find_homography(good_new_points, good_points0, warping_);
 }
 
-void PointStabilizer::create_visualization_(const cv::Mat& next_frame ) {
+void PointStabilizer::create_visualization(const cv::Mat& next_frame ) {
     visualization_ = next_frame.clone();
     std::vector<cv::Point2f> new_points_vis;
     cv::perspectiveTransform(points0_, new_points_vis, H_.inv());

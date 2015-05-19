@@ -61,20 +61,13 @@ public:
     }
 
 private:
-    WarpingGroup warping_ = WarpingGroup::homography;
-    bool visualize_ = true;
+
     VisualizationFlags visualization_flags_;
-    bool warping_back_;
+
 
     MatMserTracker tracker_;
     MatMser detector_;
     //cv::Mat frame_gray_0_;
-
-    cv::Mat H_;
-    cv::Mat frame_gray_0_;
-    cv::Mat frame;
-    cv::Mat visualization_;
-    cv::Mat frame_gray_, H_frame_gray_;
 
 
     std::vector<ComponentStats> up_msers_0_;
@@ -84,8 +77,11 @@ private:
     unsigned int count_;
     unsigned int recompute_T_ = 50;
 
-    cv::Mat get_next_homography_(const cv::Mat& next_image);
-    void create_visualization_(const cv::Mat& frame);
+protected:
+    virtual cv::Mat get_next_homography(const cv::Mat& next_image);
+    virtual void create_visualization(const cv::Mat& frame);
+
+private:
 
     void visualize_regions_hulls_ (cv::Mat& image, const std::vector<MatComponentStats>& msers);
     void visualize_points (cv::Mat& image, const std::vector<MatComponentStats>& msers, bool orientation);
@@ -119,5 +115,6 @@ inline MserStabilizer::VisualizationFlags& operator&= (MserStabilizer::Visualiza
     lhs = (MserStabilizer::VisualizationFlags)(static_cast<int>(lhs) & static_cast<int>(rhs));
     return lhs;
 }
+
 
 #endif // MATMserStabilizer_HPP
