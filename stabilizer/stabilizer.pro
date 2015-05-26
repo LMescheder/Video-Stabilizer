@@ -6,12 +6,16 @@ CONFIG += c++11
 HEADERS += \
     MserStabilizer.h \
     PointStabilizer.h \
-    Stabilizer.h
+    Stabilizer.h \
+    PatchStabilizer.h \
+    PixelStabilizer.h
 
 SOURCES += \
     MserStabilizer.cpp \
     PointStabilizer.cpp \
-    Stabilizer.cpp
+    Stabilizer.cpp \
+    PatchStabilizer.cpp \
+    PixelStabilizer.cpp
 
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../
 
