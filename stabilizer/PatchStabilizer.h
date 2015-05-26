@@ -5,8 +5,6 @@
 
 class PatchStabilizer : Stabilizer
 {
-public:
-  PatchStabilizer();
 };
 
 #endif // PATCHSTABILIZER_H

@@ -7,7 +7,7 @@
 class PixelStabilizer : public Stabilizer
 {
 public:
-  PixelStabilizer(const cv::Mat &frame_0, Warping warping, Mode mode);
+  PixelStabilizer(const cv::Mat &frame_0, Warping warping);
 
 
 protected:
@@ -15,11 +15,14 @@ protected:
   virtual void create_visualization();
 
  private:
-  cv::Mat A_, b_;
+  using Vec8f = cv::Vec<float, 8>;
+  using Matx88f = cv::Matx<float, 8, 8>;
+
+  Matx88f Ainv_;
+  cv::Mat_<Vec8f> Ji_;
 
 private:
-  cv::Mat get_b (cv::Mat frame);
-  cv::Mat get_A (cv::Mat frame);
+  void init (const cv::Mat& frame);
 };
 
 #endif // PIXELSTABILIZER_H

@@ -9,15 +9,17 @@
 #include "stabilizer/Stabilizer.h"
 #include "stabilizer/MserStabilizer.h"
 #include "stabilizer/PointStabilizer.h"
+#include "stabilizer/PixelStabilizer.h"
 
 #include "AccuracyEvaluator.h"
 
 enum class StabilizerType {
     POINT,
-    MSER
+    MSER,
+    PIXEL
 };
 
-constexpr StabilizerType TYPE = StabilizerType::POINT;
+constexpr StabilizerType TYPE = StabilizerType::PIXEL;
 constexpr Stabilizer::Mode MODE = Stabilizer::Mode::WARP_BACK;
 constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
 
@@ -101,6 +103,8 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
                                             MserStabilizer::VIS_MEANS | MserStabilizer::VIS_HULLS));
     else if (type == StabilizerType::POINT)
         stabilizer.reset(new PointStabilizer(frame0, WARPING, MODE));
+    else if (type == StabilizerType::PIXEL)
+        stabilizer.reset(new PixelStabilizer(frame0, WARPING));
     else
         throw std::logic_error("Stabilizer type not supported!");
 
