@@ -9,17 +9,12 @@
  * @brief The PointStabilizer class implements a basic video stabilizer based on key point tracking.
  */
 class PointStabilizer : public Stabilizer{
+
 public:
     PointStabilizer(const cv::Mat& frame_0, Warping warping=Warping::HOMOGRAPHY, Mode mode=Mode::DIRECT);
 
-    /**
-     * @brief Implementation of stabilize_next method of the abstract Stabilizer class
-     * @param next_frame        The next colored frame to stabilize.
-     * @return                  The stabilized frame.
-     */
-    virtual cv::Mat stabilize_next(const cv::Mat& next_frame);
-
 protected:
+    virtual void track_ref();
     virtual cv::Mat get_next_homography (const cv::Mat& next_image);
     virtual void create_visualization ();
 
@@ -29,6 +24,9 @@ private:
 private:
     // Parameters
     double max_flow_err = 1e-1;
+    int features_maxN_ = 2000;
+    double features_quality_ = 1e-2;
+    int features_mindist_ = 4;
 
     // Status
     cv::Mat last_frame_gray_;

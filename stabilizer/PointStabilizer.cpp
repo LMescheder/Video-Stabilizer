@@ -3,22 +3,18 @@
 
 PointStabilizer::PointStabilizer(const cv::Mat& frame_0, Warping warping, Mode mode)
     : Stabilizer(frame_0, warping, mode, true) {
-    cv::goodFeaturesToTrack(ref_frame_gray_, points_0_, 1000, .01, 8);
+    cv::goodFeaturesToTrack(ref_frame_gray_, points_0_, features_maxN_, features_quality_, features_mindist_);
     points_ = ref_points_ = points_0_;
     status_.resize(ref_points_.size());
     trust_.resize(ref_points_.size(), .5);
     last_frame_gray_ = ref_frame_gray_;
 }
 
-cv::Mat PointStabilizer::stabilize_next(const cv::Mat& next_frame)
+
+void PointStabilizer::track_ref()
 {
-    cv::Mat stabilized_frame = Stabilizer::stabilize_next(next_frame);
-
-    // reset msers
-    if (mode_ == Mode::TRACK_REF)
-        ref_points_ = points_;
-
-    return stabilized_frame;
+    Stabilizer::track_ref();
+    ref_points_ = points_;
 }
 
 cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
@@ -26,19 +22,19 @@ cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
     points_ = checked_optical_flow_(next_image, max_flow_err);
 
     // select only good points
-    std::vector<cv::Point2f> good_points0;
-    std::vector<cv::Point2f> good_new_points;
+    std::vector<cv::Point2f> good_points_0;
+    std::vector<cv::Point2f> good_points;
 
-    good_points0.reserve(points_.size());
-    good_new_points.reserve(points_.size());
+    good_points_0.reserve(points_.size());
+    good_points.reserve(points_.size());
     for (std::size_t i=0; i<points_.size(); ++i)
         if (status_[i] && trust_[i] >= .5) {
-            good_points0.push_back(ref_points_[i]);
-            good_new_points.push_back(points_[i]);
+            good_points_0.push_back(points_0_[i]);
+            good_points.push_back(points_[i]);
          }
 
     // estimate homography
-    return find_homography(good_new_points, good_points0, warping_);
+    return find_homography(good_points, good_points_0, warping_);
 }
 
 void PointStabilizer::create_visualization() {

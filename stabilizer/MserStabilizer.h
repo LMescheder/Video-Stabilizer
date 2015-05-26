@@ -21,6 +21,7 @@ public:
         VIS_STABPOINTS = 1 << 4
     };
 
+public:
     /**
      * @brief Constructor of the MserStabilizer class.
      * @param mser_detector     A MatMser object used for detection and tracking of the msers.
@@ -33,14 +34,6 @@ public:
     MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
                    Warping warping=Warping::HOMOGRAPHY, Mode mode=Mode::TRACK_REF,
                    int vis_flags= (VIS_HULLS | VIS_MEANS));
-
-    /**
-     * @brief Implementation of stabilize_next method of the abstract Stabilizer class
-     * @param next_frame        The next colored frame to stabilize.
-     * @return                  The stabilized frame.
-     */
-    virtual cv::Mat stabilize_next(const cv::Mat& next_frame);
-
 
     std::vector<ComponentStats> msers();
 
@@ -61,6 +54,8 @@ public:
     }
 
 protected:
+    virtual void track_ref();
+
     virtual cv::Mat get_next_homography(const cv::Mat& next_image);
     virtual void create_visualization();
 
@@ -80,9 +75,9 @@ private:
     MatMser detector_;
     MatMserTracker tracker_;
 
-    std::vector<ComponentStats> up_msers_0_;
-    std::vector<ComponentStats> down_msers_0_;
     std::vector<ComponentStats> up_msers_, down_msers_;
+    std::vector<ComponentStats> ref_up_msers_, ref_down_msers_;
+    std::vector<ComponentStats> up_msers_0_, down_msers_0_;
 
     unsigned int count_;
     unsigned int recompute_T_ = 50;

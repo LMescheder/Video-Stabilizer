@@ -50,8 +50,10 @@ public:
     static cv::Mat find_homography(const cv::vector<cv::Point2f>& points0, const cv::vector<cv::Point2f>& points1, Warping mode=Warping::HOMOGRAPHY);
 
 protected:
+    virtual void track_ref();
     virtual cv::Mat get_next_homography(const cv::Mat& next_frame) = 0;
     virtual void create_visualization() = 0;
+
 
 
 protected:

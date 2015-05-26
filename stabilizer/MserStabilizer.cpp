@@ -9,17 +9,13 @@ MserStabilizer::MserStabilizer(MatMser mser_detector, cv::Mat frame_0,
     recompute_msers_(ref_frame_gray_);
 }
 
-cv::Mat MserStabilizer::stabilize_next(const cv::Mat& next_frame) {
-    cv::Mat stabilized_frame = Stabilizer::stabilize_next(next_frame);
 
-    // reset msers
-    if (mode_ == Mode::TRACK_REF) {
-        up_msers_0_ = up_msers_;
-        down_msers_0_ = down_msers_;
-    }
-    return stabilized_frame;
+void MserStabilizer::track_ref()
+{
+    Stabilizer::track_ref();
+    ref_up_msers_ = up_msers_;
+    ref_down_msers_ = down_msers_;
 }
-
 
 
 std::vector<MserStabilizer::ComponentStats> MserStabilizer::msers() {
@@ -36,8 +32,8 @@ std::vector<MserStabilizer::ComponentStats> MserStabilizer::msers() {
 
 cv::Mat MserStabilizer::get_next_homography(const cv::Mat& H_gray) {
    // first track msers from template to the current (back warped) frame
-   up_msers_ = tracker_.track(ref_frame_gray_, H_gray, up_msers_0_);
-   down_msers_ = tracker_.track(ref_frame_gray_, H_gray, down_msers_0_, true);
+   up_msers_ = tracker_.track(ref_frame_gray_, H_gray, ref_up_msers_);
+   down_msers_ = tracker_.track(ref_frame_gray_, H_gray, ref_down_msers_, true);
 
 
     // extract points for homography estimation
@@ -65,9 +61,10 @@ void MserStabilizer::recompute_msers_(cv::Mat image) {
     //tracker_.reset();
     // TODO: merge this into reset
     ref_frame_gray_ = image;
-    up_msers_0_ = detector_.detect_msers(image, MatMser::upwards);
-    down_msers_0_ = detector_.detect_msers(image, MatMser::downwards);
-
+    ref_up_msers_ = detector_.detect_msers(image, MatMser::upwards);
+    ref_down_msers_ = detector_.detect_msers(image, MatMser::downwards);
+    up_msers_0_ = ref_up_msers_;
+    down_msers_0_ = ref_down_msers_;
 //    msers_0_ = tracker_.msers();
 //    points_.reserve(msers_0_.size());
 //    points0_.reserve(msers_0_.size());

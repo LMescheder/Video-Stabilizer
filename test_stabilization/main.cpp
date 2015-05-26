@@ -18,7 +18,7 @@ enum class StabilizerType {
 };
 
 constexpr StabilizerType TYPE = StabilizerType::POINT;
-constexpr Stabilizer::Mode MODE = Stabilizer::Mode::TRACK_REF;
+constexpr Stabilizer::Mode MODE = Stabilizer::Mode::WARP_BACK;
 constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
 
 int run_stabilizer (std::string input, std::string output, std::string output_regions,
@@ -138,7 +138,7 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
 
             cv::imshow("Video", out_frame);
             cv::imshow("Stabilized", stabilized);
-            cv::imshow("diff", stabilized - frame0);
+            //cv::imshow("diff", stabilized - frame0);
 
             if (cv::waitKey(1) >= 0) {
                 break;
