@@ -27,9 +27,9 @@ public:
 
 public:
     Stabilizer (const cv::Mat& frame_0, Warping warping=Warping::HOMOGRAPHY, Mode mode=Mode::DIRECT, bool visualize=true)
-        : warping_{warping}, mode_{mode}, visualize_{visualize} {
+        : frame_0_{frame_0}, warping_{warping}, mode_{mode}, visualize_{visualize} {
         H_ = cv::Mat::eye(3, 3, CV_64FC1);
-        cv::cvtColor(frame_0, ref_frame_gray_, CV_BGR2GRAY);
+        cv::cvtColor(frame_0_, ref_frame_gray_, CV_BGR2GRAY);
     }
 
     /**
@@ -61,6 +61,7 @@ protected:
     Warping warping_ = Warping::HOMOGRAPHY; // warping group used for stabilization
     Mode mode_;                             // stabilization mode (see Mode description)
     bool visualize_ = true;                 // visualize stuff?
+    const cv::Mat frame_0_;
 
     // State
     cv::Mat H_;                 // the current homography

@@ -24,8 +24,8 @@ protected:
 private:
   void init (const cv::Mat& frame);
 
-  static constexpr float EPS = 1e-2;
-  static constexpr int MAXITER = 50;
+  static constexpr float EPS = 1e-5;
+  static constexpr int MAXITER = 200;
 };
 
 #endif // PIXELSTABILIZER_H

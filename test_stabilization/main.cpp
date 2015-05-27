@@ -21,7 +21,7 @@ enum class StabilizerType {
     PATCH
 };
 
-constexpr StabilizerType TYPE = StabilizerType::PATCH;
+constexpr StabilizerType TYPE = StabilizerType::POINT;
 constexpr Stabilizer::Mode MODE = Stabilizer::Mode::WARP_BACK;
 constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
 
@@ -125,9 +125,14 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
             break;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        cv::Mat stabilized = stabilizer->stabilize_next(frame);
-
+        cv::Mat stabilized = stabilizer->stabilize_next(frame);       
         cv::Mat out_frame = stabilizer->visualization();
+
+        cv::Mat stabilized_vis;
+        cv::Mat stabilized_mask;
+        cv::cvtColor(frame0, stabilized_vis, CV_BGR2GRAY);
+        cv::cvtColor(stabilized, stabilized_mask, CV_BGR2GRAY);
+        stabilized.copyTo(stabilized_vis, stabilized_mask);
 
         vout.write(stabilized);
         voutr.write(out_frame);
@@ -145,7 +150,7 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
 
 
             cv::imshow("Video", out_frame);
-            cv::imshow("Stabilized", stabilized);
+            cv::imshow("Stabilized", stabilized_vis);
             //cv::imshow("diff", stabilized - frame0);
 
             if (cv::waitKey(1) >= 0) {
