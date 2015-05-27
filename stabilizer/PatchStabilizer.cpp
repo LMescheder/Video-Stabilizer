@@ -33,9 +33,9 @@ cv::Mat PatchStabilizer::get_next_homography(const cv::Mat &next_frame)
                 cv::Vec2f bi = 0;
                 int N = 0;
                 for (int i_y = ip_y * patch_height; i_y < (ip_y + 1) * patch_height; ++i_y)
-                    for (int i_x = ip_x * patch_width; i_x < (ip_x + 1) * patch_width; ++i_y)
+                    for (int i_x = ip_x * patch_width; i_x < (ip_x + 1) * patch_width; ++i_x)
                         if (frame.at<uchar>(i_y, i_x) != 0) {
-                            bi += static_cast<float>(error(i_y, i_x)) * gradI0_(i_y, i_x);
+                            bi -= error(i_y, i_x) * gradI0_(i_y, i_x);
                             ++N;
                         }
 
@@ -44,7 +44,7 @@ cv::Mat PatchStabilizer::get_next_homography(const cv::Mat &next_frame)
                 float y = pis_[idx].y;
                 cv::Matx<float, 2, 8> Jx = {x,   y,   1.f, 0.f, 0.f, 0.f, -x*x, -x*y,
                                             0.f, 0.f, 0.f, x,   y,   1.f, -x*y, -y*y};
-                b += weight * Jx.t() * bi;
+                b += Jx.t() * bi;
                 A += weight * Jx.t() * Ais_[idx] * Jx;
             }
         }
@@ -77,7 +77,6 @@ void PatchStabilizer::init(const cv::Mat& frame)
 
     int patch_width = width / N_PATCHES_X;
     int patch_height = height / N_PATCHES_Y;
-    float one_over_patch_N = 1./(patch_width * patch_height);
 
     // compute derivative of reference image
     cv::Mat frame_blurred, frame_blurred0;
@@ -97,11 +96,14 @@ void PatchStabilizer::init(const cv::Mat& frame)
 
     for (int ip_y = 0; ip_y < N_PATCHES_Y; ++ip_y) {
         for (int ip_x = 0; ip_x < N_PATCHES_X; ++ip_x) {
+
             int idx = ip_y * N_PATCHES_Y + ip_x;
             pis_[idx] = cv::Point2f((ip_x + .5)*patch_width, (ip_y + .5)*patch_height);
+
+            Ais_[idx] = 0;
             for (int i_y = ip_y * patch_height; i_y < (ip_y + 1) * patch_height; ++i_y) {
-                for (int i_x = ip_x * patch_width; i_x < (ip_x + 1) * patch_width; ++i_y) {
-                    Ais_[idx] += one_over_patch_N * gradI0_(i_y, i_x) * gradI0_(i_y, i_x).t();
+                for (int i_x = ip_x * patch_width; i_x < (ip_x + 1) * patch_width; ++i_x) {
+                    Ais_[idx] += gradI0_(i_y, i_x) * gradI0_(i_y, i_x).t();
                 }
             }
         }

@@ -15,9 +15,6 @@ cv::Mat PixelStabilizer::get_next_homography(const cv::Mat &next_frame)
     Vec8f h = 0;
     cv::Mat frame = next_frame.clone();
 
-    constexpr float EPS = 1e-2;
-    constexpr int MAXITER = 50;
-
     for (int i = 0; i < MAXITER; ++i) {
         cv::Mat error = frame - ref_frame_gray_;
         Vec8f b = 0;

@@ -24,9 +24,9 @@ protected:
 private:
   void init (const cv::Mat& frame);
 
-  static constexpr int N_PATCHES_X = 10;
-  static constexpr int N_PATCHES_Y = 10;
-  static constexpr float EPS = 1e-2;
+  static constexpr int N_PATCHES_X = 100;
+  static constexpr int N_PATCHES_Y = 100;
+  static constexpr float EPS = 1e-3;
   static constexpr int MAXITER = 50;
 
 };
