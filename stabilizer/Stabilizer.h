@@ -27,7 +27,7 @@ public:
 
 public:
     Stabilizer (const cv::Mat& frame_0, Warping warping=Warping::HOMOGRAPHY, Mode mode=Mode::DIRECT, bool visualize=true)
-        : frame_0_{frame_0}, warping_{warping}, mode_{mode}, visualize_{visualize} {
+        : frame_0_{frame_0.clone()}, warping_{warping}, mode_{mode}, visualize_{visualize} {
         H_ = cv::Mat::eye(3, 3, CV_64FC1);
         cv::cvtColor(frame_0_, ref_frame_gray_, CV_BGR2GRAY);
     }

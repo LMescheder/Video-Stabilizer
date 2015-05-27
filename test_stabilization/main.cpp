@@ -128,11 +128,11 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
         cv::Mat stabilized = stabilizer->stabilize_next(frame);       
         cv::Mat out_frame = stabilizer->visualization();
 
-        cv::Mat stabilized_vis;
-        cv::Mat stabilized_mask;
+        cv::Mat stabilized_vis, stabilized_mask;
         cv::cvtColor(frame0, stabilized_vis, CV_BGR2GRAY);
+        cv::cvtColor(stabilized_vis, stabilized_vis, CV_GRAY2BGR);
         cv::cvtColor(stabilized, stabilized_mask, CV_BGR2GRAY);
-        stabilized.copyTo(stabilized_vis, stabilized_mask);
+        stabilized.copyTo(stabilized_vis, stabilized_mask >= 1e-10);
 
         vout.write(stabilized);
         voutr.write(out_frame);
