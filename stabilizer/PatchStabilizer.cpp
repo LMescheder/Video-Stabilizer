@@ -8,8 +8,41 @@ PatchStabilizer::PatchStabilizer(const cv::Mat& frame_0, Warping warping)
 
 cv::Mat PatchStabilizer::get_next_homography(const cv::Mat &next_frame)
 {
-    size_t width = ref_frame_gray_.cols;
-    size_t height = ref_frame_gray_.rows;
+    std::vector<cv::Mat> next_frame_pyr;
+    next_frame_pyr.reserve(PYRAMID_N);
+    // create pyramid
+    cv::Mat next_frame_down = next_frame.clone();
+
+    for (int i = 0; i < PYRAMID_N; ++i) {
+        if (i != 0)
+            cv::pyrDown(next_frame_down, next_frame_down);
+        next_frame_pyr.push_back(next_frame_down);
+    }
+
+    // estimate homography
+    cv::Mat H = cv::Mat::eye(3, 3, CV_64F);
+
+    for (int i = PYRAMID_N-1; 0 <= i; --i) {
+        if (i !=  PYRAMID_N-1) {
+            H(cv::Range(0, 3), cv::Range(0, 2)) /= 2;
+            int width = next_frame_pyr[i].cols;
+            int height = next_frame_pyr[i].rows;
+            cv::warpPerspective(next_frame_pyr[i], next_frame_pyr[i], H, cv::Size(width, height));
+        }
+        H = get_homography(next_frame_pyr[i], frame0_pyr_[i], gradI0_pyr_[i], Ais_pyr_[i]);
+    }
+
+    return H;
+}
+void PatchStabilizer::create_visualization()
+{
+
+}
+
+cv::Mat PatchStabilizer::get_homography(const cv::Mat& next_frame, const cv::Mat& frame0, const cv::Mat_<cv::Vec2f>& gradI, const std::vector<cv::Matx22f>& Ais)
+{
+    size_t width = frame0.cols;
+    size_t height = frame0.rows;
 
     int patch_width = width / N_PATCHES_X;
     int patch_height = height / N_PATCHES_Y;
@@ -20,7 +53,7 @@ cv::Mat PatchStabilizer::get_next_homography(const cv::Mat &next_frame)
     cv::Mat frame = next_frame.clone();
 
     for (int i = 0; i < MAXITER; ++i) {
-        cv::Mat_<uchar> error = frame - ref_frame_gray_;
+        cv::Mat_<uchar> error = frame - frame0;
         Vec8f b = 0;
         Matx88f A = 0;
 
@@ -35,17 +68,18 @@ cv::Mat PatchStabilizer::get_next_homography(const cv::Mat &next_frame)
                 for (int i_y = ip_y * patch_height; i_y < (ip_y + 1) * patch_height; ++i_y)
                     for (int i_x = ip_x * patch_width; i_x < (ip_x + 1) * patch_width; ++i_x)
                         if (frame.at<uchar>(i_y, i_x) != 0) {
-                            bi -= error(i_y, i_x) * gradI0_(i_y, i_x);
+                            bi -= error(i_y, i_x) * gradI(i_y, i_x);
                             ++N;
                         }
 
                 float weight = N * one_over_patch_N;
-                float x = pis_[idx].x;
-                float y = pis_[idx].y;
+                float x = (ip_x + .5) * patch_width;
+                float y = (ip_y + .5) * patch_height;
+
                 cv::Matx<float, 2, 8> Jx = {x,   y,   1.f, 0.f, 0.f, 0.f, -x*x, -x*y,
                                             0.f, 0.f, 0.f, x,   y,   1.f, -x*y, -y*y};
                 b += Jx.t() * bi;
-                A += weight * Jx.t() * Ais_[idx] * Jx;
+                A += weight * Jx.t() * Ais[idx] * Jx;
             }
         }
 
@@ -63,15 +97,14 @@ cv::Mat PatchStabilizer::get_next_homography(const cv::Mat &next_frame)
     }
 
     return H.inv();
-
-}
-void PatchStabilizer::create_visualization()
-{
-
 }
 
-void PatchStabilizer::init(const cv::Mat& frame)
+std::tuple<cv::Mat, std::vector<cv::Matx22f>> PatchStabilizer::compute_Ais_and_gradI0(const cv::Mat& frame)
 {
+    cv::Mat_<cv::Vec2f> gradI0;
+    std::vector<cv::Matx22f> Ais;
+
+    // some parameters
     int width = frame.cols;
     int height = frame.rows;
 
@@ -88,26 +121,44 @@ void PatchStabilizer::init(const cv::Mat& frame)
     cv::Sobel(frame_blurred, gradI0_channels[1], CV_32F, 0, 1);
 
     // compute gradI0
-    cv::merge(gradI0_channels, 2, gradI0_);
+    cv::merge(gradI0_channels, 2, gradI0);
 
-    // compute Ai and pis
-    Ais_.resize(N_PATCHES_X * N_PATCHES_Y);
-    pis_.resize(N_PATCHES_X * N_PATCHES_Y);
+    // compute Ai
+    Ais.resize(N_PATCHES_X * N_PATCHES_Y);
 
     for (int ip_y = 0; ip_y < N_PATCHES_Y; ++ip_y) {
         for (int ip_x = 0; ip_x < N_PATCHES_X; ++ip_x) {
-
             int idx = ip_y * N_PATCHES_Y + ip_x;
-            pis_[idx] = cv::Point2f((ip_x + .5)*patch_width, (ip_y + .5)*patch_height);
 
-            Ais_[idx] = 0;
+            Ais[idx] = 0;
             for (int i_y = ip_y * patch_height; i_y < (ip_y + 1) * patch_height; ++i_y) {
                 for (int i_x = ip_x * patch_width; i_x < (ip_x + 1) * patch_width; ++i_x) {
-                    Ais_[idx] += gradI0_(i_y, i_x) * gradI0_(i_y, i_x).t();
+                    Ais[idx] += gradI0(i_y, i_x) * gradI0(i_y, i_x).t();
                 }
             }
         }
     }
 
+    return std::make_tuple(gradI0, Ais);
+}
+
+void PatchStabilizer::init(const cv::Mat& frame0)
+{
+    Ais_pyr_.reserve(PYRAMID_N);
+    gradI0_pyr_.reserve(PYRAMID_N);
+    frame0_pyr_.reserve(PYRAMID_N);
+
+    cv::Mat frame0_down = frame0.clone();
+
+    for (int i = 0; i < PYRAMID_N; ++i) {
+        if (i != 0)
+            cv::pyrDown(frame0_down, frame0_down);
+        std::vector<cv::Matx22f> Ais;
+        cv::Mat gradI0;
+        std::tie(gradI0, Ais) = compute_Ais_and_gradI0(frame0_down);
+        gradI0_pyr_.push_back(std::move(gradI0));
+        Ais_pyr_.push_back(Ais);
+        frame0_pyr_.push_back(frame0_down);
+    }
 }
 
