@@ -12,18 +12,26 @@ cv::Mat PixelStabilizer::get_next_homography(const cv::Mat &next_frame)
     size_t height = ref_frame_gray_.rows;
 
     cv::Mat H = cv::Mat::eye(3, 3, CV_64F);
+    Vec8f h = 0;
     cv::Mat frame = next_frame.clone();
 
-    for (int i = 0; i < 40; ++ i) {
+    constexpr float EPS = 1e-2;
+    constexpr int MAXITER = 50;
+
+    for (int i = 0; i < MAXITER; ++i) {
         cv::Mat error = frame - ref_frame_gray_;
         Vec8f b = 0;
 
         // accumulate b
+        int N = 0;
         for (size_t i = 0; i < height; ++i)
-            for (size_t j = 0; j < width; ++j) {
-                b -= static_cast<float>(error.at<uchar>(i, j)) * Ji_.at<Vec8f>(i, j);
-            }
-        Vec8f h = Ainv_ * b;
+            for (size_t j = 0; j < width; ++j)
+                if (frame.at<uchar>(i, j) != 0) {
+                    b -= static_cast<float>(error.at<uchar>(i, j)) * Ji_.at<Vec8f>(i, j);
+                    ++N;
+                }
+        b = 1./N * b;
+        h = Ainv_ * b;
 
         cv::Mat dH = (cv::Mat_<double>(3, 3) << 1 + h(0), h(1), h(2),
                                               h(3), 1 + h(4), h(5),
@@ -31,6 +39,8 @@ cv::Mat PixelStabilizer::get_next_homography(const cv::Mat &next_frame)
 
         H = H * dH;
         cv::warpPerspective(next_frame, frame, H.inv(), cv::Size(width, height));
+        if (cv::norm(h) < EPS)
+            break;
     }
 
     return H.inv();
@@ -67,11 +77,10 @@ void PixelStabilizer::init(const cv::Mat& frame)
             cv::Vec2f gradI (gradIx.at<float>(i, j), gradIy.at<float>(i, j));
 
             A += one_over_N * Jx.t() * gradI * gradI.t() * Jx;
-            Ji_.at<Vec8f>(i, j) =  one_over_N * Jx.t() * gradI;
+            Ji_.at<Vec8f>(i, j) =  Jx.t() * gradI;
         }
     }
 
     Ainv_ = A.inv();
-    std::cout << Ainv_ << std::endl;
 }
 
