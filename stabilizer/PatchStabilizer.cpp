@@ -1,7 +1,7 @@
 #include "PatchStabilizer.h"
 
 PatchStabilizer::PatchStabilizer(const cv::Mat& frame_0, Warping warping)
-    : Stabilizer(frame_0, warping, Mode::WARP_BACK, true)
+    : Stabilizer(frame_0, warping, Mode::DIRECT, true)
 {
     init(ref_frame_gray_);
 }
@@ -16,20 +16,28 @@ cv::Mat PatchStabilizer::get_next_homography(const cv::Mat &next_frame)
     for (int i = 0; i < PYRAMID_N; ++i) {
         if (i != 0)
             cv::pyrDown(next_frame_down, next_frame_down);
-        next_frame_pyr.push_back(next_frame_down);
+        next_frame_pyr.push_back(next_frame_down.clone());
     }
 
     // estimate homography
-    cv::Mat H = cv::Mat::eye(3, 3, CV_64F);
+    cv::Mat H = H_.clone();
+
+    H(cv::Range(2, 3), cv::Range(0, 2)) *= (1 << (PYRAMID_N));
+    H(cv::Range(0, 2), cv::Range(2, 3)) /= (1 << (PYRAMID_N));
 
     for (int i = PYRAMID_N-1; 0 <= i; --i) {
-        if (i !=  PYRAMID_N-1) {
-            H(cv::Range(0, 3), cv::Range(0, 2)) /= 2;
-            int width = next_frame_pyr[i].cols;
-            int height = next_frame_pyr[i].rows;
-            cv::warpPerspective(next_frame_pyr[i], next_frame_pyr[i], H, cv::Size(width, height));
-        }
-        H = get_homography(next_frame_pyr[i], frame0_pyr_[i], gradI0_pyr_[i], Ais_pyr_[i]);
+        // adapt previous H to new scaling
+        H(cv::Range(2, 3), cv::Range(0, 2)) /= 2;
+        H(cv::Range(0, 2), cv::Range(2, 3)) *= 2;
+
+        int width = next_frame_pyr[i].cols;
+        int height = next_frame_pyr[i].rows;
+        cv::warpPerspective(next_frame_pyr[i], next_frame_pyr[i], H, cv::Size(width, height));
+
+        cv::Mat new_H = get_homography(next_frame_pyr[i], frame0_pyr_[i], gradI0_pyr_[i], Ais_pyr_[i]);
+        H = new_H * H;
+        //std::cout << "new_H = " << new_H << std::endl;
+        //std::cout << "H = " << H << std::endl;
     }
 
     return H;
@@ -86,11 +94,11 @@ cv::Mat PatchStabilizer::get_homography(const cv::Mat& next_frame, const cv::Mat
         // solve for h
         cv::solve(A, b, h, cv::DECOMP_CHOLESKY);
 
-        cv::Mat dH = (cv::Mat_<double>(3, 3) << 1 + h(0), h(1), h(2),
+        cv::Mat new_H = (cv::Mat_<double>(3, 3) << 1 + h(0), h(1), h(2),
                                               h(3), 1 + h(4), h(5),
                                               h(6), h(7), 1.f );
 
-        H = H * dH;
+        H = H * new_H;
         cv::warpPerspective(next_frame, frame, H.inv(), cv::Size(width, height));
         if (cv::norm(h) < EPS)
             break;
@@ -156,9 +164,9 @@ void PatchStabilizer::init(const cv::Mat& frame0)
         std::vector<cv::Matx22f> Ais;
         cv::Mat gradI0;
         std::tie(gradI0, Ais) = compute_Ais_and_gradI0(frame0_down);
-        gradI0_pyr_.push_back(std::move(gradI0));
-        Ais_pyr_.push_back(Ais);
-        frame0_pyr_.push_back(frame0_down);
+        gradI0_pyr_.push_back(gradI0.clone());
+        Ais_pyr_.push_back(std::move(Ais));
+        frame0_pyr_.push_back(frame0_down.clone());
     }
 }
 
