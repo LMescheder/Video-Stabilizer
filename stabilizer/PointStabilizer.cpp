@@ -19,7 +19,10 @@ void PointStabilizer::track_ref()
 
 cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
 {
-    points_ = checked_optical_flow_(next_image, max_flow_err);
+    if (good_points_count_ < min_points)
+        points_ = checked_optical_flow_(next_image, max_flow_err_retrieve);
+    else
+        points_ = checked_optical_flow_(next_image, max_flow_err);
 
     // select only good points
     std::vector<cv::Point2f> good_points_0;
@@ -34,7 +37,11 @@ cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
          }
 
     // estimate homography
-    return find_homography(good_points, good_points_0, warping_);
+    good_points_count_ = good_points.size();
+    if (good_points_count_ < min_points)
+        return cv::Mat();
+    else
+      return find_homography(good_points, good_points_0, warping_);
 }
 
 void PointStabilizer::create_visualization() {
@@ -71,8 +78,11 @@ std::vector<cv::Point2f> PointStabilizer::checked_optical_flow_(const cv::Mat& f
     points1.reserve(ref_points_.size());
     points2.reserve(ref_points_.size());
 
-    cv::calcOpticalFlowPyrLK(ref_frame_gray_, frame_gray, ref_points_, points1, status1, err, cv::Size(21, 21), 3);
-    cv::calcOpticalFlowPyrLK(frame_gray, ref_frame_gray_, points1, points2, status2, err, cv::Size(21, 21), 3);
+    // select levels of lukas kanade
+    int lk_levels = (good_points_count_ >= min_points) ? lk_levels_ : lk_levels_retrieve_;
+
+    cv::calcOpticalFlowPyrLK(ref_frame_gray_, frame_gray, ref_points_, points1, status1, err, cv::Size(21, 21), lk_levels);
+    cv::calcOpticalFlowPyrLK(frame_gray, ref_frame_gray_, points1, points2, status2, err, cv::Size(21, 21), lk_levels);
 
     for (std::size_t i=0; i<points_.size(); ++i) {
         status_[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(ref_points_[i] - points2[i]) < eps );

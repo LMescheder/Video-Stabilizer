@@ -47,7 +47,7 @@ public:
         return visualization_;
     }
 
-    static cv::Mat find_homography(const cv::vector<cv::Point2f>& points0, const cv::vector<cv::Point2f>& points1, Warping mode=Warping::HOMOGRAPHY);
+    static cv::Mat find_homography(const cv::vector<cv::Point2f>& points0, const cv::vector<cv::Point2f>& points1, Warping mode=Warping::HOMOGRAPHY, bool use_ransac=false);
 
 protected:
     virtual void track_ref();

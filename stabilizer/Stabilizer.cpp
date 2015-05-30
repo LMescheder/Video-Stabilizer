@@ -20,6 +20,12 @@ cv::Mat Stabilizer::stabilize_next(const cv::Mat& next_frame)
     }
 
     // compute new homography
+    if (new_H.empty()) {
+        H_ = cv::Mat::eye(3, 3, CV_64F);
+        std::cout << "-- stabilization not possible --!." << std::endl;
+        return cv::Mat();
+    }
+
     if (mode_ == Mode::WARP_BACK)
         H_ = new_H * H_;            // undo warping back
     else
@@ -41,13 +47,16 @@ void Stabilizer::track_ref()
     ref_frame_gray_ = frame_gray_.clone();
 }
 
-cv::Mat Stabilizer::find_homography(const cv::vector<cv::Point2f> &points0, const cv::vector<cv::Point2f> &points1, Warping mode)
+cv::Mat Stabilizer::find_homography(const cv::vector<cv::Point2f> &points0, const cv::vector<cv::Point2f> &points1, Warping mode, bool use_ransac)
 {
     cv::Mat H, A;
 
     switch (mode) {
     case Warping::HOMOGRAPHY :
-        H = cv::findHomography(points0, points1);
+        if (use_ransac)
+            H = cv::findHomography(points0, points1, CV_RANSAC);
+        else
+            H = cv::findHomography(points0, points1);
         break;
     case Warping::AFFINE :
         A = cv::estimateRigidTransform(points0, points1, true);

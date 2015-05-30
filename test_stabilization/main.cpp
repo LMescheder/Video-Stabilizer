@@ -131,10 +131,11 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
         cv::Mat stabilized_vis, stabilized_mask;
         cv::cvtColor(frame0, stabilized_vis, CV_BGR2GRAY);
         cv::cvtColor(stabilized_vis, stabilized_vis, CV_GRAY2BGR);
-        cv::cvtColor(stabilized, stabilized_mask, CV_BGR2GRAY);
-        stabilized.copyTo(stabilized_vis, stabilized_mask >= 1e-10);
-
-        vout.write(stabilized);
+        if (!stabilized.empty()) {
+            cv::cvtColor(stabilized, stabilized_mask, CV_BGR2GRAY);
+            stabilized.copyTo(stabilized_vis, stabilized_mask >= 1e-10);
+        }
+        vout.write(stabilized_vis);
         voutr.write(out_frame);
 
         auto end = std::chrono::high_resolution_clock::now();
@@ -143,8 +144,10 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
 
         ++i;
         std::cout << i << "/" << N << " done! ( " << time << "ms )" << std::endl;
-        accuracy_unstabilized.evaluate_next(frame);
-        accuracy_stabilized.evaluate_next(stabilized);
+        if (!stabilized.empty()){
+            accuracy_unstabilized.evaluate_next(frame);
+            accuracy_stabilized.evaluate_next(stabilized);
+        }
 
         if (show) {
 

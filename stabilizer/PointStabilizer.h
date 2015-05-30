@@ -23,10 +23,15 @@ private:
 
 private:
     // Parameters
-    double max_flow_err = 1e-1;
-    int features_maxN_ = 2000;
+    double max_flow_err = 1.e-1;
+    double max_flow_err_retrieve = 2.e-1;
+    int min_points = 100;
+    int lk_levels_ = 2;
+    int lk_levels_retrieve_ = 4;
+
+    int features_maxN_ = 5000;
     double features_quality_ = 1e-2;
-    int features_mindist_ = 4;
+    int features_mindist_ = 5;
 
     // Status
     cv::Mat last_frame_gray_;
@@ -38,7 +43,7 @@ private:
     std::vector<bool> status_;
     cv::Mat error_;
 
-    unsigned long count_ = 1;
+    size_t good_points_count_;
     std::vector<float> trust_;
 
 
