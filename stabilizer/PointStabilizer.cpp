@@ -20,9 +20,9 @@ void PointStabilizer::track_ref()
 cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
 {
     if (good_points_count_ < min_points)
-        points_ = checked_optical_flow_(next_image, max_flow_err_retrieve);
+        points_ = calc_optical_flow_(next_image, max_flow_err_retrieve);
     else
-        points_ = checked_optical_flow_(next_image, max_flow_err);
+        points_ = calc_optical_flow_(next_image, max_flow_err);
 
     // select only good points
     std::vector<cv::Point2f> good_points_0;
@@ -41,7 +41,7 @@ cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
     if (good_points_count_ < min_points)
         return cv::Mat();
     else
-      return find_homography(good_points, good_points_0, warping_);
+      return find_homography(good_points, good_points_0, warping_, use_ransac_);
 }
 
 void PointStabilizer::create_visualization() {
@@ -71,24 +71,34 @@ void PointStabilizer::create_visualization() {
     }
 }
 
-std::vector<cv::Point2f> PointStabilizer::checked_optical_flow_(const cv::Mat& frame_gray, float eps) {
-    cv::Mat err;
-    cv::Mat status1, status2;
-    std::vector<cv::Point2f> points1, points2;
-    points1.reserve(ref_points_.size());
-    points2.reserve(ref_points_.size());
+std::vector<cv::Point2f> PointStabilizer::calc_optical_flow_(const cv::Mat& frame_gray, float eps) {
 
     // select levels of lukas kanade
     int lk_levels = (good_points_count_ >= min_points) ? lk_levels_ : lk_levels_retrieve_;
+    cv::Mat err;
+    std::vector<cv::Point2f> points1;
 
-    cv::calcOpticalFlowPyrLK(ref_frame_gray_, frame_gray, ref_points_, points1, status1, err, cv::Size(21, 21), lk_levels);
-    cv::calcOpticalFlowPyrLK(frame_gray, ref_frame_gray_, points1, points2, status2, err, cv::Size(21, 21), lk_levels);
+    if (use_checked_optical_flow_) {
+        cv::Mat status1, status2;
+        std::vector<cv::Point2f> points2;
+        points1.reserve(ref_points_.size());
+        points2.reserve(ref_points_.size());
 
-    for (std::size_t i=0; i<points_.size(); ++i) {
-        status_[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(ref_points_[i] - points2[i]) < eps );
-        float new_trust = status_[i] ? 1.f : 0.f;
-        //trust_[i] = (count_*trust_[i] + new_trust)/(count_+1);
-        trust_[i] = .95 * trust_[i] + .05 * new_trust;
+
+        cv::calcOpticalFlowPyrLK(ref_frame_gray_, frame_gray, ref_points_, points1, status1, err, cv::Size(21, 21), lk_levels);
+        cv::calcOpticalFlowPyrLK(frame_gray, ref_frame_gray_, points1, points2, status2, err, cv::Size(21, 21), lk_levels);
+
+        for (std::size_t i=0; i<points_.size(); ++i) {
+            status_[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(ref_points_[i] - points2[i]) < eps );
+            float new_trust = status_[i] ? 1.f : 0.f;
+            //trust_[i] = (count_*trust_[i] + new_trust)/(count_+1);
+            trust_[i] = .95 * trust_[i] + .05 * new_trust;
+        }
+    } else {
+        cv::Mat status;
+        cv::calcOpticalFlowPyrLK(ref_frame_gray_, frame_gray, ref_points_, points1, status, err, cv::Size(21, 21), lk_levels);
+        for (std::size_t i=0; i<points_.size(); ++i)
+            status_[i] = status.at<bool>(i);
     }
 
     return points1;

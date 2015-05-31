@@ -21,8 +21,8 @@ enum class StabilizerType {
     PATCH
 };
 
-constexpr StabilizerType TYPE = StabilizerType::PATCH;
-constexpr Stabilizer::Mode MODE = Stabilizer::Mode::TRACK_REF;
+constexpr StabilizerType TYPE = StabilizerType::POINT;
+constexpr Stabilizer::Mode MODE = Stabilizer::Mode::DIRECT;
 constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
 
 int run_stabilizer (std::string input, std::string output, std::string output_regions,

@@ -19,7 +19,7 @@ protected:
     virtual void create_visualization ();
 
 private:
-    std::vector<cv::Point2f> checked_optical_flow_(const cv::Mat& frame_gray, float eps);
+    std::vector<cv::Point2f> calc_optical_flow_(const cv::Mat& frame_gray, float eps);
 
 private:
     // Parameters
@@ -32,6 +32,9 @@ private:
     int features_maxN_ = 5000;
     double features_quality_ = 1e-2;
     int features_mindist_ = 5;
+
+    bool use_checked_optical_flow_ = false;
+    bool use_ransac_ = true;
 
     // Status
     cv::Mat last_frame_gray_;
