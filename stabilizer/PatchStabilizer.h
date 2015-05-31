@@ -29,11 +29,11 @@ private:
 private:
     void init (const cv::Mat& frame);
 
-    static constexpr int N_PATCHES_X = 150;
+    static constexpr int N_PATCHES_X = 200;
     static constexpr int N_PATCHES_Y = 100;
     static constexpr float EPS = 1e-3;
     static constexpr int MAXITER = 50;
-    static constexpr int PYRAMID_N = 3;
+    static constexpr int PYRAMID_N = 1;
 
 
 };

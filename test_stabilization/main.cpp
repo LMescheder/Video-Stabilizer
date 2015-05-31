@@ -21,8 +21,8 @@ enum class StabilizerType {
     PATCH
 };
 
-constexpr StabilizerType TYPE = StabilizerType::POINT;
-constexpr Stabilizer::Mode MODE = Stabilizer::Mode::WARP_BACK;
+constexpr StabilizerType TYPE = StabilizerType::PATCH;
+constexpr Stabilizer::Mode MODE = Stabilizer::Mode::TRACK_REF;
 constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
 
 int run_stabilizer (std::string input, std::string output, std::string output_regions,
@@ -60,6 +60,7 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
    int frame_width = cap.get(CV_CAP_PROP_FRAME_WIDTH);
    int frame_height = cap.get(CV_CAP_PROP_FRAME_HEIGHT);
    int N = cap.get(CV_CAP_PROP_FRAME_COUNT);
+   int fps = cap.get(CV_CAP_PROP_FPS);
 
    /*
    std::cout << "Frame width: " << frame_width << "\n";
@@ -72,12 +73,12 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
    /// Create output video writers
    cv::VideoWriter vout(output,
                            CV_FOURCC('M','J','P','G'),
-                           20,
+                           fps,
                            cv::Size(frame_width,frame_height),
                            true);
    cv::VideoWriter voutr(output_regions,
                            CV_FOURCC('M','J','P','G'),
-                           20,
+                           fps,
                            cv::Size(frame_width,frame_height),
                            true);
 
