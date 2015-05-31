@@ -1,5 +1,11 @@
-#include "MatAccessor.h"
+//=======================================================================
+// Copyright Lars Mescheder 2015.
+// Distributed under the MIT License.
+// (See accompanying file LICENSE or copy at
+//  http://opensource.org/licenses/MIT)
+//=======================================================================
 
+#include "MatAccessor.h"
 
 boost::optional<MatAccessor::NodeIndex> MatAccessor::get_next_neighbor(MatAccessor::NodeIndex node) {
     uchar& mask_value = mask_.at<uchar>(node);

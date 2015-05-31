@@ -1,3 +1,10 @@
+//=======================================================================
+// Copyright Lars Mescheder 2015.
+// Distributed under the MIT License.
+// (See accompanying file LICENSE or copy at
+//  http://opensource.org/licenses/MIT)
+//=======================================================================
+
 // Implementations to ComponentTreeParser.h
 
 template <typename G, typename A>
