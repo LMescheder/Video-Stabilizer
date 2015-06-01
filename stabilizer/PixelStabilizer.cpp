@@ -22,6 +22,7 @@ cv::Mat PixelStabilizer::get_next_homography(const cv::Mat &next_frame)
     Vec8f h = 0;
     cv::Mat frame = next_frame.clone();
 
+
     for (int i = 0; i < MAXITER; ++i) {
         cv::Mat error = frame - ref_frame_gray_;
         Vec8f b = 0;
@@ -30,8 +31,8 @@ cv::Mat PixelStabilizer::get_next_homography(const cv::Mat &next_frame)
         int N = 0;
         for (size_t i = 0; i < height; ++i)
             for (size_t j = 0; j < width; ++j)
-                if (frame.at<uchar>(i, j) != 0) {
-                    b -= static_cast<float>(error.at<uchar>(i, j)) * Ji_.at<Vec8f>(i, j);
+                if (!frame.at<uchar>(i, j) == 0) {
+                    b -= (error.at<uchar>(i, j)) * Ji_.at<Vec8f>(i, j);
                     ++N;
                 }
         b = 1./N * b;

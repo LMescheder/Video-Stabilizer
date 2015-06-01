@@ -10,6 +10,7 @@
 
 #include "opencv2/opencv.hpp"
 #include <limits>
+#include "boost/format.hpp"
 
 class AccuracyEvaluator
 {
@@ -28,6 +29,10 @@ public:
             double alpha = 1. / (N+1);
             average = (1 - alpha) * average + alpha * val;
             ++N;
+        }
+
+        std::string to_text() const {
+            return (boost::format( "%.3f -- %.3f (%.3f)") % min % max % average).str();
         }
     };
 

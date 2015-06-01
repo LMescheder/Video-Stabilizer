@@ -29,8 +29,12 @@ enum class StabilizerType {
 };
 
 constexpr StabilizerType TYPE = StabilizerType::POINT;
-constexpr Stabilizer::Mode MODE = Stabilizer::Mode::DIRECT;
+constexpr Stabilizer::Mode MODE = Stabilizer::Mode::WARP_BACK;
 constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
+// point stabilizer specifics
+constexpr bool use_ransac = false;
+constexpr bool use_checked_flow = true;
+constexpr int lk_levels = 3;
 
 int run_stabilizer (std::string input, std::string output, std::string output_regions,
                     StabilizerType type, bool show=true);
@@ -80,12 +84,12 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
    /// Create output video writers
    cv::VideoWriter vout(output,
                            CV_FOURCC('M','J','P','G'),
-                           fps,
+                           20,
                            cv::Size(frame_width,frame_height),
                            true);
    cv::VideoWriter voutr(output_regions,
                            CV_FOURCC('M','J','P','G'),
-                           fps,
+                           20,
                            cv::Size(frame_width,frame_height),
                            true);
 
@@ -112,7 +116,7 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
                                             WARPING, MODE,
                                             MserStabilizer::VIS_MEANS | MserStabilizer::VIS_HULLS));
     else if (type == StabilizerType::POINT)
-        stabilizer.reset(new PointStabilizer(frame0, WARPING, MODE));
+        stabilizer.reset(new PointStabilizer(frame0, WARPING, MODE, use_checked_flow, use_ransac, lk_levels));
     else if (type == StabilizerType::PIXEL)
         stabilizer.reset(new PixelStabilizer(frame0, WARPING));
     else if (type == StabilizerType::PATCH)
@@ -141,7 +145,7 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
         cv::cvtColor(stabilized_vis, stabilized_vis, CV_GRAY2BGR);
         if (!stabilized.empty()) {
             cv::cvtColor(stabilized, stabilized_mask, CV_BGR2GRAY);
-            stabilized.copyTo(stabilized_vis, stabilized_mask >= 1e-10);
+            stabilized.copyTo(stabilized_vis, stabilized_mask);
         }
         vout.write(stabilized_vis);
         voutr.write(out_frame);
@@ -172,24 +176,15 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
     }
 
     std::cout << "Accuracy (unstabilized): \n";
-    std::cout << "  Minimum mssim = " << accuracy_unstabilized.mssim_stats().min << "\n";
-    std::cout << "  Average mssim = " << accuracy_unstabilized.mssim_stats().average << "\n";
-    std::cout << "  Maximum mssim = " << accuracy_unstabilized.mssim_stats().max << "\n\n";
+    std::cout << "  psnr = " << accuracy_unstabilized.psnr_stats().to_text() << "\n";
+    std::cout << "  mssim = " << accuracy_unstabilized.mssim_stats().to_text() << "\n";
 
     std::cout << "Accuracy (stabilized): \n";
-    std::cout << "  Minimum mssim = " << accuracy_stabilized.mssim_stats().min << "\n";
-    std::cout << "  Average mssim = " << accuracy_stabilized.mssim_stats().average << "\n";
-    std::cout << "  Maximum mssim = " << accuracy_stabilized.mssim_stats().max << "\n\n";
+    std::cout << "  psnr = " << accuracy_stabilized.psnr_stats().to_text() << "\n";
+    std::cout << "  mssim = " << accuracy_stabilized.mssim_stats().to_text() << "\n";
 
-    std::cout << "Accuracy (unstabilized): \n";
-    std::cout << "  Minimum psnr = " << accuracy_unstabilized.psnr_stats().min << "\n";
-    std::cout << "  Average psnr = " << accuracy_unstabilized.psnr_stats().average << "\n";
-    std::cout << "  Maximum psnr = " << accuracy_unstabilized.psnr_stats().max << "\n\n";
 
-    std::cout << "Accuracy (stabilized): \n";
-    std::cout << "  Minimum psnr = " << accuracy_stabilized.psnr_stats().min << "\n";
-    std::cout << "  Average psnr = " << accuracy_stabilized.psnr_stats().average << "\n";
-    std::cout << "  Maximum psnr = " << accuracy_stabilized.psnr_stats().max << "\n\n";
+
 
     /// Release resources
     cap.release();

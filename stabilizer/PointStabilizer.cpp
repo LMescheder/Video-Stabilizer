@@ -8,8 +8,12 @@
 #include "PointStabilizer.h"
 
 
-PointStabilizer::PointStabilizer(const cv::Mat& frame_0, Warping warping, Mode mode)
-    : Stabilizer(frame_0, warping, mode, true) {
+PointStabilizer::PointStabilizer(const cv::Mat& frame_0, Warping warping, Mode mode,
+                                 bool use_checked_flow, bool use_ransac, int lk_levels, int lk_levels_retrieve)
+    : Stabilizer(frame_0, warping, mode, true),
+      use_checked_optical_flow_(use_checked_flow), use_ransac_(use_ransac),
+      lk_levels_(lk_levels), lk_levels_retrieve_(lk_levels_retrieve)
+{
     cv::goodFeaturesToTrack(ref_frame_gray_, points_0_, features_maxN_, features_quality_, features_mindist_);
     points_ = ref_points_ = points_0_;
     status_.resize(ref_points_.size());

@@ -18,7 +18,8 @@
 class PointStabilizer : public Stabilizer{
 
 public:
-    PointStabilizer(const cv::Mat& frame_0, Warping warping=Warping::HOMOGRAPHY, Mode mode=Mode::DIRECT);
+    PointStabilizer(const cv::Mat& frame_0, Warping warping=Warping::HOMOGRAPHY, Mode mode=Mode::DIRECT,
+                    bool use_checked_flow=true, bool use_ransac=false, int lk_levels=2, int lk_levels_retrieve=4);
 
 protected:
     virtual void track_ref();
@@ -36,12 +37,12 @@ private:
     int lk_levels_ = 2;
     int lk_levels_retrieve_ = 4;
 
-    int features_maxN_ = 5000;
+    int features_maxN_ = 2000;
     double features_quality_ = 1e-2;
     int features_mindist_ = 5;
 
-    bool use_checked_optical_flow_ = false;
-    bool use_ransac_ = true;
+    bool use_checked_optical_flow_ = true;
+    bool use_ransac_ = false;
 
     // Status
     cv::Mat last_frame_gray_;
