@@ -7,7 +7,8 @@ CONFIG -= app_bundle
 PRE_TARGETDEPS += $${OUT_PWD}/../stabilizer/libstabilizer.a
 
 SOURCES += main.cpp \
-    AccuracyEvaluator.cpp
+    AccuracyEvaluator.cpp \
+    ConfigFileReader.cpp
 
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../
 LIBS += -L$${OUT_PWD}/../stabilizer/ -lstabilizer
@@ -20,4 +21,5 @@ LIBS += -lopencv_features2d
 LIBS += -lopencv_videostab -lopencv_stitching -lopencv_calib3d
 
 HEADERS += \
-    AccuracyEvaluator.h
+    AccuracyEvaluator.h \
+    ConfigFileReader.h

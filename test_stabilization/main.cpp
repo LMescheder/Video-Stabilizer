@@ -11,6 +11,7 @@
 #include <chrono>
 #include <vector>
 #include <memory>
+#include <boost/assign.hpp>
 
 #include "mser_tools/MatMser.h"
 #include "stabilizer/Stabilizer.h"
@@ -20,44 +21,62 @@
 #include "stabilizer/PatchStabilizer.h"
 
 #include "AccuracyEvaluator.h"
+#include "ConfigFileReader.h"
 
-enum class StabilizerType {
-    POINT,
-    MSER,
-    PIXEL,
-    PATCH
-};
 
-constexpr StabilizerType TYPE = StabilizerType::POINT;
-constexpr Stabilizer::Mode MODE = Stabilizer::Mode::WARP_BACK;
-constexpr Stabilizer::Warping WARPING = Stabilizer::Warping::HOMOGRAPHY;
-// point stabilizer specifics
-constexpr bool use_ransac = false;
-constexpr bool use_checked_flow = true;
-constexpr int lk_levels = 3;
 
-int run_stabilizer (std::string input, std::string output, std::string output_regions,
-                    StabilizerType type, bool show=true);
+// how to map strings in config to properties
+std::map<std::string, Stabilizer::Mode> stabilizer_mode_list = boost::assign::map_list_of
+                            ("direct", Stabilizer::Mode::DIRECT)
+                            ("track_ref", Stabilizer::Mode::TRACK_REF)
+                            ("warp_back", Stabilizer::Mode::WARP_BACK);
+
+std::map<std::string, Stabilizer::Warping> stabilizer_warping_list = boost::assign::map_list_of
+                            ("affine", Stabilizer::Warping::AFFINE)
+                            ("homography",Stabilizer::Warping::HOMOGRAPHY)
+                            ("rigid", Stabilizer::Warping::RIGID)
+                            ("rot_homography", Stabilizer::Warping::ROT_HOMOGRAPHY)
+                            ("translation", Stabilizer::Warping::TRANSLATION);
+
+
+// function declarations
+int run_stabilizer (std::string input, std::string config_file, std::string output, std::string output_vis, std::string output_log, bool show=true);
+
+std::unique_ptr<Stabilizer> get_stabilizer_from_config(const std::string& config_file, const cv::Mat& frame0);
+std::unique_ptr<PointStabilizer> configure_point_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0);
+std::unique_ptr<PixelStabilizer> configure_pixel_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0);
+std::unique_ptr<PatchStabilizer> configure_patch_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0);
+std::unique_ptr<MserStabilizer> configure_mser_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0);
 
 /**
  * Expected arguments:
  *   argv[1] : path to the input video sequence
- *   argv[2] : path to where the stabilized video sequence should be written
- *   argv[3] : path to where the visualization video sequence should be written
+ *   argv[2] : path to config file
+ *   argv[3] : path to output folder
  */
 int main(int argc, char** argv) {
     if (argc < 4) {
-        std::cout << "Usage: stabilizer <path to input video> <path to output video> <path to visualization video>\n";
+        std::cout << "Usage: stabilizer <path to input video> <path to config file> <path to output folder>\n";
         return 1;
     }
 
-    std::string input = argv[1];
-    std::string output = argv[2];
-    std::string output_regions = argv[3];
-    return run_stabilizer(input, output, output_regions, TYPE);
+    // parse input arguments
+    std::string input_file = argv[1];
+    std::string config_file = argv[2];
+    std::string output_folder = argv[3];
+
+    size_t file_root_start = input_file.find_last_of('/');
+    size_t file_root_end = input_file.find_last_of('.');
+    std::string file_root = input_file.substr(file_root_start, file_root_end - file_root_start);
+
+    std::string output_file = output_folder + "/" + file_root + "_stab.avi";
+    std::string output_vis_file = output_folder + "/" + file_root + "_vis.avi";
+    std::string output_log_file = output_folder + "/" + file_root + "_log";
+
+    return run_stabilizer(input_file, config_file, output_file, output_vis_file, output_log_file, true);
 }
 
-int run_stabilizer(std::string input, std::string output, std::string output_regions, StabilizerType type, bool show)
+int run_stabilizer(std::string input, std::string config_file, std::string output, std::string output_vis, std::string output_log, bool show)
 {
    MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-1);
 
@@ -87,7 +106,7 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
                            20,
                            cv::Size(frame_width,frame_height),
                            true);
-   cv::VideoWriter voutr(output_regions,
+   cv::VideoWriter voutr(output_vis,
                            CV_FOURCC('M','J','P','G'),
                            20,
                            cv::Size(frame_width,frame_height),
@@ -109,21 +128,7 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
         return -1;
 
     /// Select stabilizer
-    std::unique_ptr<Stabilizer> stabilizer;
-
-    if (type == StabilizerType::MSER)
-        stabilizer.reset(new MserStabilizer(mser_detector, frame0,
-                                            WARPING, MODE,
-                                            MserStabilizer::VIS_MEANS | MserStabilizer::VIS_HULLS));
-    else if (type == StabilizerType::POINT)
-        stabilizer.reset(new PointStabilizer(frame0, WARPING, MODE));
-
-    else if (type == StabilizerType::PIXEL)
-        stabilizer.reset(new PixelStabilizer(frame0, WARPING));
-    else if (type == StabilizerType::PATCH)
-        stabilizer.reset(new PatchStabilizer(frame0, WARPING));
-    else
-        throw std::logic_error("Stabilizer type not supported!");
+    std::unique_ptr<Stabilizer> stabilizer = get_stabilizer_from_config(config_file, frame0);
 
     /// Initialize AccuracyEvaluator
     AccuracyEvaluator accuracy_unstabilized (frame0);
@@ -196,3 +201,104 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
 }
 
 
+std::unique_ptr<Stabilizer> get_stabilizer_from_config(const std::string& config_file, const cv::Mat& frame0)
+{
+    ConfigFileReader reader(config_file);
+
+    std::string parameter, value;
+
+    if (!reader.get_next(parameter, value) || parameter!="TYPE") {
+        throw std::runtime_error("Configuration file does not contain stabilizer type as the first parameter!");
+    }
+
+    if (value == "point")
+        return configure_point_stabilizer(reader, frame0);
+    else if (value == "pixel")
+        return configure_pixel_stabilizer(reader, frame0);
+    else if (value == "patch")
+        return configure_patch_stabilizer(reader, frame0);
+    else if (value == "mser")
+        return configure_mser_stabilizer(reader, frame0);
+    else
+        throw std::runtime_error("Stabilizer type not supported!");
+
+}
+
+std::unique_ptr<PointStabilizer> configure_point_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0) {
+    std::string parameter, value;
+    Stabilizer::Warping warping;
+    Stabilizer::Mode mode;
+    PointStabilizer::FeatureExtractionParameters feature_params;
+    PointStabilizer::OpticalFlowParameters flow_params;
+    PointStabilizer::OpticalFlowParameters flow_params_retrieve;
+    PointStabilizer::HomographyEstimationParameters homography_params;
+
+    while (reader.get_next(parameter, value)) {
+        if (parameter == "mode")
+            if (stabilizer_mode_list.count(value) == 0)
+                throw std::runtime_error("Invalid parameter value!");
+            else
+                mode = stabilizer_mode_list[value];
+        else if (parameter == "warping")
+            if (stabilizer_warping_list.count(value) == 0)
+                throw std::runtime_error("Invalid parameter value!");
+            else
+                warping = stabilizer_warping_list[value];
+
+        else if (parameter == "feature_params.maxN")
+            feature_params.maxN = std::stoi(value);
+        else if (parameter == "feature_params.quality")
+            feature_params.quality = std::stod(value);
+        else if (parameter == "feature_params.mindist")
+            feature_params.mindist = std::stod(value);
+
+        else if (parameter == "flow_params.lk_levels")
+            flow_params.lk_levels = std::stoi(value);
+        else if (parameter == "flow_params.max_err")
+            flow_params.max_err = std::stod(value);
+        else if (parameter == "flow_params.use_checked_optical_flow")
+            flow_params.use_checked_optical_flow = std::stoi(value);
+
+        else if (parameter == "flow_params_retrieve.lk_levels")
+            flow_params_retrieve.lk_levels = std::stoi(value);
+        else if (parameter == "flow_params_retrieve.max_err")
+            flow_params_retrieve.max_err = std::stod(value);
+        else if (parameter == "flow_params_retrieve.use_checked_optical_flow")
+            flow_params_retrieve.use_checked_optical_flow = std::stoi(value);
+
+        else if (parameter == "homography_params.min_points")
+            homography_params.min_points = std::stoi(value);
+        else if (parameter == "homography_params.use_ransac")
+            homography_params.use_ransac = std::stoi(value);
+        else
+            throw std::runtime_error("Parameter value unknown!");
+    }
+
+    std::unique_ptr<PointStabilizer> stabilizer(new PointStabilizer(frame_0, warping, mode, feature_params, flow_params, flow_params_retrieve, homography_params));
+    return stabilizer;
+}
+
+std::unique_ptr<PixelStabilizer> configure_pixel_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0) {
+    // todo: put this to config
+    Stabilizer::Warping warping = Stabilizer::Warping::HOMOGRAPHY;
+    std::unique_ptr<PixelStabilizer> stabilizer(new PixelStabilizer(frame_0, warping));
+    return stabilizer;
+}
+
+std::unique_ptr<PatchStabilizer> configure_patch_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0) {
+    // todo: put this to config
+    Stabilizer::Warping warping = Stabilizer::Warping::HOMOGRAPHY;
+    std::unique_ptr<PatchStabilizer> stabilizer(new PatchStabilizer(frame_0, warping));
+    return stabilizer;
+}
+
+std::unique_ptr<MserStabilizer> configure_mser_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0) {
+    // todo: put this to config
+    MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-1);
+    Stabilizer::Warping warping = Stabilizer::Warping::HOMOGRAPHY;
+    Stabilizer::Mode mode = Stabilizer::Mode::TRACK_REF;
+    int vis_flags = MserStabilizer::VIS_HULLS | MserStabilizer::VIS_MEANS;
+
+    std::unique_ptr<MserStabilizer> stabilizer(new MserStabilizer(mser_detector, frame_0, warping, mode, vis_flags));
+    return stabilizer;
+}

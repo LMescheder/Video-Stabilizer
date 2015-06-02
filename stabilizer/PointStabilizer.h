@@ -19,12 +19,12 @@ class PointStabilizer : public Stabilizer{
 public:
     struct FeatureExtractionParameters {
         FeatureExtractionParameters() = default;
-        FeatureExtractionParameters(int maxN_p, float quality_p, int mindist_p)
+        FeatureExtractionParameters(int maxN_p, double quality_p, double mindist_p)
             : maxN{maxN_p}, quality{quality_p}, mindist{mindist_p} {}
 
         int maxN = 1000;
-        float quality = 1e-2;
-        int mindist = 5;
+        double quality = 1e-2;
+        double mindist = 5.;
     };
 
     struct OpticalFlowParameters {

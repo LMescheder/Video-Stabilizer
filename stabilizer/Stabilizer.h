@@ -39,6 +39,9 @@ public:
         cv::cvtColor(frame_0_, ref_frame_gray_, CV_BGR2GRAY);
     }
 
+    virtual ~Stabilizer() {
+    }
+
     /**
      * @brief Stabilize next frame. Calls Stabilizer::get_next_homography to get the homography.
      * @param next_frame        The next colored frame to stabilize.
