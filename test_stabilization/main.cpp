@@ -338,7 +338,7 @@ std::unique_ptr<PatchStabilizer> configure_patch_stabilizer(ConfigFileReader& re
             throw std::runtime_error("Parameter value unknown!");
     }
 
-    std::unique_ptr<PatchStabilizer> stabilizer(new PatchStabilizer(frame_0, warping));
+    std::unique_ptr<PatchStabilizer> stabilizer(new PatchStabilizer(frame_0));
     return stabilizer;
 }
 
