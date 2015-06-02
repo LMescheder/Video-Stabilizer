@@ -9,12 +9,15 @@
 
 
 PointStabilizer::PointStabilizer(const cv::Mat& frame_0, Warping warping, Mode mode,
-                                 bool use_checked_flow, bool use_ransac, int lk_levels, int lk_levels_retrieve)
+                                 FeatureExtractionParameters feature_params,
+                                 OpticalFlowParameters flow_params,
+                                 OpticalFlowParameters flow_params_retrieve,
+                                 HomographyEstimationParameters homography_params)
     : Stabilizer(frame_0, warping, mode, true),
-      use_checked_optical_flow_(use_checked_flow), use_ransac_(use_ransac),
-      lk_levels_(lk_levels), lk_levels_retrieve_(lk_levels_retrieve)
+      feature_params_(feature_params), flow_params_(flow_params), flow_params_retrieve_(flow_params_retrieve),
+      homography_params_(homography_params)
 {
-    cv::goodFeaturesToTrack(ref_frame_gray_, points_0_, features_maxN_, features_quality_, features_mindist_);
+    cv::goodFeaturesToTrack(ref_frame_gray_, points_0_, feature_params_.maxN, feature_params_.quality, feature_params_.mindist);
     points_ = ref_points_ = points_0_;
     status_.resize(ref_points_.size());
     trust_.resize(ref_points_.size(), .5);
@@ -30,10 +33,10 @@ void PointStabilizer::track_ref()
 
 cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
 {
-    if (good_points_count_ < min_points)
-        points_ = calc_optical_flow_(next_image, max_flow_err_retrieve);
+    if (good_points_count_ < homography_params_.min_points)
+        points_ = calc_optical_flow_(next_image, flow_params_retrieve_.max_err);
     else
-        points_ = calc_optical_flow_(next_image, max_flow_err);
+        points_ = calc_optical_flow_(next_image, flow_params_.max_err);
 
     // select only good points
     std::vector<cv::Point2f> good_points_0;
@@ -49,10 +52,10 @@ cv::Mat PointStabilizer::get_next_homography(const cv::Mat &next_image)
 
     // estimate homography
     good_points_count_ = good_points.size();
-    if (good_points_count_ < min_points)
+    if (good_points_count_ < homography_params_.min_points)
         return cv::Mat();
     else
-      return find_homography(good_points, good_points_0, warping_, use_ransac_);
+      return find_homography(good_points, good_points_0, warping_, homography_params_.use_ransac);
 }
 
 void PointStabilizer::create_visualization() {
@@ -85,11 +88,11 @@ void PointStabilizer::create_visualization() {
 std::vector<cv::Point2f> PointStabilizer::calc_optical_flow_(const cv::Mat& frame_gray, float eps) {
 
     // select levels of lukas kanade
-    int lk_levels = (good_points_count_ >= min_points) ? lk_levels_ : lk_levels_retrieve_;
+    int lk_levels = (good_points_count_ >= homography_params_.min_points) ? flow_params_.lk_levels : flow_params_retrieve_.lk_levels;
     cv::Mat err;
     std::vector<cv::Point2f> points1;
 
-    if (use_checked_optical_flow_) {
+    if (flow_params_.use_checked_optical_flow) {
         cv::Mat status1, status2;
         std::vector<cv::Point2f> points2;
         points1.reserve(ref_points_.size());

@@ -116,7 +116,8 @@ int run_stabilizer(std::string input, std::string output, std::string output_reg
                                             WARPING, MODE,
                                             MserStabilizer::VIS_MEANS | MserStabilizer::VIS_HULLS));
     else if (type == StabilizerType::POINT)
-        stabilizer.reset(new PointStabilizer(frame0, WARPING, MODE, use_checked_flow, use_ransac, lk_levels));
+        stabilizer.reset(new PointStabilizer(frame0, WARPING, MODE));
+
     else if (type == StabilizerType::PIXEL)
         stabilizer.reset(new PixelStabilizer(frame0, WARPING));
     else if (type == StabilizerType::PATCH)
