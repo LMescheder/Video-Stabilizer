@@ -8,10 +8,13 @@
 #include "opencv2/opencv.hpp"
 
 #include <iostream>
+#include <fstream>
 #include <chrono>
 #include <vector>
 #include <memory>
 #include <boost/assign.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 
 #include "mser_tools/MatMser.h"
 #include "stabilizer/Stabilizer.h"
@@ -61,19 +64,24 @@ int main(int argc, char** argv) {
     }
 
     // parse input arguments
-    std::string input_file = argv[1];
-    std::string config_file = argv[2];
-    std::string output_folder = argv[3];
+    boost::filesystem::path input_file(argv[1]);
+    boost::filesystem::path config_file(argv[2]);
+    boost::filesystem::path output_folder(argv[3]);
 
-    size_t file_root_start = input_file.find_last_of('/');
-    size_t file_root_end = input_file.find_last_of('.');
-    std::string file_root = input_file.substr(file_root_start, file_root_end - file_root_start);
+    std::string file_root = input_file.stem().string();
 
-    std::string output_file = output_folder + "/" + file_root + "_stab.avi";
-    std::string output_vis_file = output_folder + "/" + file_root + "_vis.avi";
-    std::string output_log_file = output_folder + "/" + file_root + "_log";
+    boost::filesystem::path output_file, output_vis_file, output_log_file;
+    for (int i=0; i<100; ++i) {
+        output_file = output_folder / (boost::format("%s_%02d_stab.avi") % file_root % i).str();
+        output_vis_file = output_folder / (boost::format("%s_%02d_vis.avi") % file_root % i).str();
+        output_log_file = output_folder / (boost::format("%s_%02d_log") % file_root % i).str();
+        if (!boost::filesystem::exists(output_file) && !boost::filesystem::exists(output_vis_file) && !boost::filesystem::exists(output_log_file))
+            break;
+        else if (i == 99)
+            throw std::runtime_error("Maximum number of output files exceeded!");
+    }
 
-    return run_stabilizer(input_file, config_file, output_file, output_vis_file, output_log_file, true);
+    return run_stabilizer(input_file.string(), config_file.string(), output_file.string(), output_vis_file.string(), output_log_file.string(), true);
 }
 
 int run_stabilizer(std::string input, std::string config_file, std::string output, std::string output_vis, std::string output_log, bool show)
@@ -123,7 +131,6 @@ int run_stabilizer(std::string input, std::string config_file, std::string outpu
 
     /// Read first frame
     cv::Mat frame, frame0;
-    cv::Mat gray;
     if (!cap.read(frame0))
         return -1;
 
@@ -138,12 +145,13 @@ int run_stabilizer(std::string input, std::string config_file, std::string outpu
     /// Do the stabilization
     int i = 0;
     while (cap.isOpened()) {
-        auto start = std::chrono::high_resolution_clock::now();
         if (!cap.read(frame))
             break;
-        cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        cv::Mat stabilized = stabilizer->stabilize_next(frame);       
+        auto start = std::chrono::high_resolution_clock::now();
+        cv::Mat stabilized = stabilizer->stabilize_next(frame);
+        auto end = std::chrono::high_resolution_clock::now();
+
         cv::Mat out_frame = stabilizer->visualization();
 
         cv::Mat stabilized_vis, stabilized_mask;
@@ -156,7 +164,6 @@ int run_stabilizer(std::string input, std::string config_file, std::string outpu
         vout.write(stabilized_vis);
         voutr.write(out_frame);
 
-        auto end = std::chrono::high_resolution_clock::now();
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>
                             (end - start).count();
 
@@ -181,13 +188,35 @@ int run_stabilizer(std::string input, std::string config_file, std::string outpu
 
     }
 
-    std::cout << "Accuracy (unstabilized): \n";
-    std::cout << "  psnr = " << accuracy_unstabilized.psnr_stats().to_text() << "\n";
-    std::cout << "  mssim = " << accuracy_unstabilized.mssim_stats().to_text() << "\n";
+    // Write stats
+    std::string output_str = (boost::format("Stabilized %d/%d frames\n\n") % (i+1) % N).str()
+                          +  "Accuracy (unstabilized): \n"
+                          +  "  psnr = " + accuracy_unstabilized.psnr_stats().to_text() + "\n"
+                          +  "  mssim = " + accuracy_unstabilized.mssim_stats().to_text() + "\n"
+                          +  "Accuracy (stabilized): \n"
+                          +  "  psnr = " + accuracy_stabilized.psnr_stats().to_text() + "\n"
+                          +  "  mssim = " + accuracy_stabilized.mssim_stats().to_text() + "\n"
+                          +  "\n";
 
-    std::cout << "Accuracy (stabilized): \n";
-    std::cout << "  psnr = " << accuracy_stabilized.psnr_stats().to_text() << "\n";
-    std::cout << "  mssim = " << accuracy_stabilized.mssim_stats().to_text() << "\n";
+    std::cout << output_str;
+
+    std::ofstream logfile_stream;
+    logfile_stream.open(output_log);
+    if (!logfile_stream.is_open())
+        std::cout << "Could not write log file!" << std::endl;
+
+    else {
+        logfile_stream << output_str;
+        logfile_stream << "Configuration:\n";
+        std::ifstream configfile_stream;
+        configfile_stream.open(config_file);
+        if (configfile_stream.is_open())
+            logfile_stream << configfile_stream.rdbuf();
+        else
+            logfile_stream << "-- not available --\n";
+        configfile_stream.close();
+    }
+    logfile_stream.close();
 
 
 
@@ -225,14 +254,14 @@ std::unique_ptr<Stabilizer> get_stabilizer_from_config(const std::string& config
 }
 
 std::unique_ptr<PointStabilizer> configure_point_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0) {
-    std::string parameter, value;
-    Stabilizer::Warping warping;
+    Stabilizer::Warping warping = Stabilizer::Warping::HOMOGRAPHY;
     Stabilizer::Mode mode;
     PointStabilizer::FeatureExtractionParameters feature_params;
     PointStabilizer::OpticalFlowParameters flow_params;
     PointStabilizer::OpticalFlowParameters flow_params_retrieve;
     PointStabilizer::HomographyEstimationParameters homography_params;
 
+    std::string parameter, value;
     while (reader.get_next(parameter, value)) {
         if (parameter == "mode")
             if (stabilizer_mode_list.count(value) == 0)
@@ -279,15 +308,36 @@ std::unique_ptr<PointStabilizer> configure_point_stabilizer(ConfigFileReader& re
 }
 
 std::unique_ptr<PixelStabilizer> configure_pixel_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0) {
-    // todo: put this to config
     Stabilizer::Warping warping = Stabilizer::Warping::HOMOGRAPHY;
+
+    std::string parameter, value;
+    while (reader.get_next(parameter, value)) {
+        if (parameter == "warping")
+            if (stabilizer_warping_list.count(value) == 0)
+                throw std::runtime_error("Invalid parameter value!");
+            else
+                warping = stabilizer_warping_list[value];
+        else
+            throw std::runtime_error("Parameter value unknown!");
+    }
     std::unique_ptr<PixelStabilizer> stabilizer(new PixelStabilizer(frame_0, warping));
     return stabilizer;
 }
 
 std::unique_ptr<PatchStabilizer> configure_patch_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0) {
-    // todo: put this to config
     Stabilizer::Warping warping = Stabilizer::Warping::HOMOGRAPHY;
+
+    std::string parameter, value;
+    while (reader.get_next(parameter, value)) {
+        if (parameter == "warping")
+            if (stabilizer_warping_list.count(value) == 0)
+                throw std::runtime_error("Invalid parameter value!");
+            else
+                warping = stabilizer_warping_list[value];
+        else
+            throw std::runtime_error("Parameter value unknown!");
+    }
+
     std::unique_ptr<PatchStabilizer> stabilizer(new PatchStabilizer(frame_0, warping));
     return stabilizer;
 }
@@ -298,6 +348,22 @@ std::unique_ptr<MserStabilizer> configure_mser_stabilizer(ConfigFileReader& read
     Stabilizer::Warping warping = Stabilizer::Warping::HOMOGRAPHY;
     Stabilizer::Mode mode = Stabilizer::Mode::TRACK_REF;
     int vis_flags = MserStabilizer::VIS_HULLS | MserStabilizer::VIS_MEANS;
+
+    std::string parameter, value;
+    while (reader.get_next(parameter, value)) {
+        if (parameter == "mode")
+            if (stabilizer_mode_list.count(value) == 0)
+                throw std::runtime_error("Invalid parameter value!");
+            else
+                mode = stabilizer_mode_list[value];
+        else if (parameter == "warping")
+            if (stabilizer_warping_list.count(value) == 0)
+                throw std::runtime_error("Invalid parameter value!");
+            else
+                warping = stabilizer_warping_list[value];
+        else
+            throw std::runtime_error("Parameter value unknown!");
+    }
 
     std::unique_ptr<MserStabilizer> stabilizer(new MserStabilizer(mser_detector, frame_0, warping, mode, vis_flags));
     return stabilizer;

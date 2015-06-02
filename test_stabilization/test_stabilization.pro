@@ -20,6 +20,8 @@ LIBS += -lopencv_video
 LIBS += -lopencv_features2d
 LIBS += -lopencv_videostab -lopencv_stitching -lopencv_calib3d
 
+LIBS += -lboost_filesystem -lboost_system
+
 HEADERS += \
     AccuracyEvaluator.h \
     ConfigFileReader.h
