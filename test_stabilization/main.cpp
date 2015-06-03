@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Maximum number of output files exceeded!");
     }
 
-    return run_stabilizer(input_file.string(), config_file.string(), output_file.string(), output_vis_file.string(), output_log_file.string(), true);
+    return run_stabilizer(input_file.string(), config_file.string(), output_file.string(), output_vis_file.string(), output_log_file.string(), false);
 }
 
 int run_stabilizer(std::string input, std::string config_file, std::string output, std::string output_vis, std::string output_log, bool show)

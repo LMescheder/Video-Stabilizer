@@ -20,13 +20,33 @@ public:
         OpticalFlowParameters(float max_err_p, int lk_levels_p, bool use_checked_optical_flow_p)
             : max_err{max_err_p}, lk_levels{lk_levels_p}, use_checked_optical_flow(use_checked_optical_flow_p) {}
 
-        float max_err = 1.e0;
+        float max_err_weighted = 50;
+        float max_err = 2.e8;
         int lk_levels = 3;
         bool use_checked_optical_flow = true;
+        double minEigThreshold = 1e-6;
+    };
+
+    struct PatchParameters {
+        PatchParameters() = default;
+        PatchParameters(unsigned int Nx_p, unsigned int Ny_p)
+            : Nx{Nx_p}, Ny{Ny_p} {}
+
+        unsigned int Nx = 40;
+        unsigned int Ny = 30;
+        float sigma_grad = 0.7f;
+        float sigma_integrate = 2.f;
+    };
+
+    struct HomographyParameters {
+        float regularize = .0f;
+        float reweight_lambda = 1.f;
+        int maxiter = 100;
     };
 
 public:
-    PatchStabilizer(const cv::Mat &frame_0);
+    PatchStabilizer(const cv::Mat &frame_0, PatchParameters patch_params={},HomographyParameters homography_params={},
+                    OpticalFlowParameters flow_params={}, OpticalFlowParameters flow_params_retrieve={});
 
 
 protected:
@@ -34,13 +54,17 @@ protected:
     virtual void create_visualization();
 
 private:
-    std::vector<cv::Point2f> calc_optical_flow_(const cv::Mat& frame_gray, float eps);
+    std::vector<cv::Point2f> calc_optical_flow_(const cv::Mat& frame_gray, float eps, float eps_weighted);
 
 private:
+    // parameters
+    OpticalFlowParameters flow_params_, flow_params_retrieve_;
+    PatchParameters patch_params_;
+    HomographyParameters homography_params_;
+
+    // status
     using Vec8f = cv::Vec<float, 8>;
     using Matx88f = cv::Matx<float, 8, 8>;
-
-    OpticalFlowParameters flow_params_, flow_params_retrieve_;
 
     std::vector<cv::Point2f> points_0_;
     std::vector<cv::Point2f> points_;
@@ -55,11 +79,6 @@ private:
 
 private:
     void init (const cv::Mat& frame);
-
-    static constexpr int N_PATCHES_X = 50;
-    static constexpr int N_PATCHES_Y = 50;
-    static constexpr float EPS = 1e-3;
-
 
 };
 #endif // PATCHSTABILIZER_H
