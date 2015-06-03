@@ -7,7 +7,7 @@
 
 #include "PatchStabilizer.h"
 
-PatchStabilizer::PatchStabilizer(const cv::Mat& frame_0, PatchParameters patch_params, HomographyParameters homography_params, OpticalFlowParameters flow_params, OpticalFlowParameters flow_params_retrieve)
+PatchStabilizer::PatchStabilizer(const cv::Mat& frame_0, PatchParameters patch_params, HomographyEstimationParameters homography_params, OpticalFlowParameters flow_params, OpticalFlowParameters flow_params_retrieve)
     : Stabilizer(frame_0, Warping::HOMOGRAPHY, Mode::WARP_BACK, true),
       patch_params_{patch_params}, homography_params_{homography_params}, flow_params_{flow_params}, flow_params_retrieve_{flow_params_retrieve}
 {
@@ -130,6 +130,7 @@ void PatchStabilizer::init(const cv::Mat& frame0)
 
     Ais_.resize(patch_params_.Nx * patch_params_.Ny);
     points_0_.resize(patch_params_.Nx * patch_params_.Ny);
+    max_eigvals_.reserve(patch_params_.Nx * patch_params_.Ny);
 
     for (int ip_y = 0; ip_y < patch_params_.Ny; ++ip_y) {
         for (int ip_x = 0; ip_x < patch_params_.Nx; ++ip_x) {
@@ -140,7 +141,7 @@ void PatchStabilizer::init(const cv::Mat& frame0)
             int ymin = static_cast<int>(ip_y * patch_height);
             int ymax = static_cast<int>((ip_y+1) * patch_height);
 
-            float max_eig = -1;
+            float max_tr = -1;
 
             // find best keypoint
             for (int i_y = ymin; i_y < ymax; ++i_y) {
@@ -148,16 +149,17 @@ void PatchStabilizer::init(const cv::Mat& frame0)
                     cv::Matx22f Ai = {Fxx.at<float>(i_y, i_x), Fxy.at<float>(i_y, i_x),
                                       Fxy.at<float>(i_y, i_x), Fyy.at<float>(i_y, i_x)};
                     float D = (Ai(0, 0) - Ai(1, 1))*(Ai(0, 0) - Ai(1, 1)) + Ai(1, 0)*Ai(0, 1);
-                    float eig = Ai(0, 0) + Ai(1, 1); // + std::sqrt(D));
-                    if (eig > max_eig) {
+                    float tr = Ai(0, 0) + Ai(1, 1); // + std::sqrt(D));
+                    if (tr > max_tr) {
                         Ais_[idx] = Ai;
                         points_0_[idx] = {i_x, i_y};
-                        max_eig = eig;
+                        max_tr = tr;
+                        max_eigvals_[idx] = .5*(Ai(0, 0) + Ai(1, 1) + std::sqrt(D));
                     }
                 }
             }
 
-            assert(max_eig >= 0.f);
+            assert(max_tr >= 0.f);
 
         }
     }
@@ -185,7 +187,7 @@ std::vector<cv::Point2f> PatchStabilizer::calc_optical_flow_(const cv::Mat& fram
 
     for (std::size_t i=0; i < points_0_.size(); ++i) {
         cv::Vec2f dist = points_0_[i] - points2[i];
-        float error2 = dist.dot(Ais_[i] * dist);
+        float error2 = dist.dot(Ais_[i] * dist)/max_eigvals_[i];
         status_[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(dist) < eps && (error2 < eps_weighted * eps_weighted) );
         float new_trust = status_[i] ? 1.f : 0.f;
         trust_[i] = .95 * trust_[i] + .05 * new_trust;

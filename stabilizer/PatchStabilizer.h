@@ -20,8 +20,8 @@ public:
         OpticalFlowParameters(float max_err_p, int lk_levels_p, bool use_checked_optical_flow_p)
             : max_err{max_err_p}, lk_levels{lk_levels_p}, use_checked_optical_flow(use_checked_optical_flow_p) {}
 
-        float max_err_weighted = 50;
-        float max_err = 2.e8;
+        float max_err_weighted = .5e-1;
+        float max_err = 5e9;
         int lk_levels = 3;
         bool use_checked_optical_flow = true;
         double minEigThreshold = 1e-6;
@@ -38,14 +38,14 @@ public:
         float sigma_integrate = 2.f;
     };
 
-    struct HomographyParameters {
+    struct HomographyEstimationParameters {
         float regularize = .0f;
         float reweight_lambda = 1.f;
         int maxiter = 100;
     };
 
 public:
-    PatchStabilizer(const cv::Mat &frame_0, PatchParameters patch_params={},HomographyParameters homography_params={},
+    PatchStabilizer(const cv::Mat &frame_0, PatchParameters patch_params={},HomographyEstimationParameters homography_params={},
                     OpticalFlowParameters flow_params={}, OpticalFlowParameters flow_params_retrieve={});
 
 
@@ -60,7 +60,7 @@ private:
     // parameters
     OpticalFlowParameters flow_params_, flow_params_retrieve_;
     PatchParameters patch_params_;
-    HomographyParameters homography_params_;
+    HomographyEstimationParameters homography_params_;
 
     // status
     using Vec8f = cv::Vec<float, 8>;
@@ -71,6 +71,7 @@ private:
     std::vector<bool> status_;
 
     std::vector<cv::Matx22f> Ais_;
+    std::vector<float> max_eigvals_;
     cv::Mat_<cv::Vec2f> gradI0_;
     cv::Mat frame0_;
 

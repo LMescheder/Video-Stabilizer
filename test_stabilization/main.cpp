@@ -249,7 +249,7 @@ std::unique_ptr<Stabilizer> get_stabilizer_from_config(const std::string& config
     else if (value == "mser")
         return configure_mser_stabilizer(reader, frame0);
     else
-        throw std::runtime_error("Stabilizer type not supported!");
+        throw std::runtime_error((boost::format("Stabilizer of type %s unknown!") % value).str());
 
 }
 
@@ -265,12 +265,12 @@ std::unique_ptr<PointStabilizer> configure_point_stabilizer(ConfigFileReader& re
     while (reader.get_next(parameter, value)) {
         if (parameter == "mode")
             if (stabilizer_mode_list.count(value) == 0)
-                throw std::runtime_error("Invalid parameter value!");
+                throw std::runtime_error((boost::format("Invalid value %s for parameter %s!") % value % parameter).str());
             else
                 mode = stabilizer_mode_list[value];
         else if (parameter == "warping")
             if (stabilizer_warping_list.count(value) == 0)
-                throw std::runtime_error("Invalid parameter value!");
+                throw std::runtime_error((boost::format("Invalid value %s for parameter %s!") % value % parameter).str());
             else
                 warping = stabilizer_warping_list[value];
 
@@ -300,7 +300,7 @@ std::unique_ptr<PointStabilizer> configure_point_stabilizer(ConfigFileReader& re
         else if (parameter == "homography_params.use_ransac")
             homography_params.use_ransac = std::stoi(value);
         else
-            throw std::runtime_error("Parameter value unknown!");
+            throw std::runtime_error((boost::format("Parameter %s unknown!") % parameter).str());
     }
 
     std::unique_ptr<PointStabilizer> stabilizer(new PointStabilizer(frame_0, warping, mode, feature_params, flow_params, flow_params_retrieve, homography_params));
@@ -314,11 +314,11 @@ std::unique_ptr<PixelStabilizer> configure_pixel_stabilizer(ConfigFileReader& re
     while (reader.get_next(parameter, value)) {
         if (parameter == "warping")
             if (stabilizer_warping_list.count(value) == 0)
-                throw std::runtime_error("Invalid parameter value!");
+                throw std::runtime_error((boost::format("Invalid value %s for parameter %s!") % value % parameter).str());
             else
                 warping = stabilizer_warping_list[value];
         else
-            throw std::runtime_error("Parameter value unknown!");
+            throw std::runtime_error((boost::format("Parameter %s unknown!") % parameter).str());
     }
     std::unique_ptr<PixelStabilizer> stabilizer(new PixelStabilizer(frame_0, warping));
     return stabilizer;
@@ -326,19 +326,61 @@ std::unique_ptr<PixelStabilizer> configure_pixel_stabilizer(ConfigFileReader& re
 
 std::unique_ptr<PatchStabilizer> configure_patch_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0) {
     Stabilizer::Warping warping = Stabilizer::Warping::HOMOGRAPHY;
+    PatchStabilizer::OpticalFlowParameters flow_params;
+    PatchStabilizer::OpticalFlowParameters flow_params_retrieve;
+    PatchStabilizer::HomographyEstimationParameters homography_params;
+    PatchStabilizer::PatchParameters patch_params;
 
     std::string parameter, value;
     while (reader.get_next(parameter, value)) {
         if (parameter == "warping")
             if (stabilizer_warping_list.count(value) == 0)
-                throw std::runtime_error("Invalid parameter value!");
+                throw std::runtime_error((boost::format("Invalid value %s for parameter %s!") % value % parameter).str());
             else
                 warping = stabilizer_warping_list[value];
+
+        else if (parameter == "flow_params.lk_levels")
+            flow_params.lk_levels = std::stoi(value);
+        else if (parameter == "flow_params.max_err")
+            flow_params.max_err = std::stod(value);
+        else if (parameter == "flow_params.max_err_weighted")
+            flow_params.max_err_weighted = std::stod(value);
+        else if (parameter == "flow_params.use_checked_optical_flow")
+            flow_params.use_checked_optical_flow = std::stoi(value);
+
+
+        else if (parameter == "flow_params_retrieve.lk_levels")
+            flow_params_retrieve.lk_levels = std::stoi(value);
+        else if (parameter == "flow_params_retrieve.max_err")
+            flow_params_retrieve.max_err = std::stod(value);
+        else if (parameter == "flow_params_retrieve.max_err_weighted")
+            flow_params_retrieve.max_err_weighted = std::stod(value);
+        else if (parameter == "flow_params_retrieve.use_checked_optical_flow")
+            flow_params_retrieve.use_checked_optical_flow = std::stoi(value);
+
+        else if (parameter == "homography_params.maxiter")
+            homography_params.maxiter = std::stoi(value);
+        else if (parameter == "homography_params.regularize")
+            homography_params.regularize = std::stod(value);
+        else if (parameter == "homography_params.reweight_lambda")
+            homography_params.reweight_lambda = std::stod(value);
+
+        else if (parameter == "patch_params.Nx")
+            patch_params.Nx  = std::stoi(value);
+        else if (parameter == "patch_params.Ny")
+            patch_params.Ny  = std::stoi(value);
+        else if (parameter == "patch_params.sigma_grad")
+            patch_params.sigma_grad  = std::stod(value);
+        else if (parameter == "patch_params.sigma_integrate")
+            patch_params.sigma_integrate  = std::stod(value);
+
         else
-            throw std::runtime_error("Parameter value unknown!");
+            throw std::runtime_error((boost::format("Parameter %s unknown!") % parameter).str());
+
     }
 
-    std::unique_ptr<PatchStabilizer> stabilizer(new PatchStabilizer(frame_0));
+    std::unique_ptr<PatchStabilizer> stabilizer(new PatchStabilizer(frame_0, patch_params, homography_params,
+                                                                    flow_params, flow_params_retrieve));
     return stabilizer;
 }
 
@@ -353,16 +395,16 @@ std::unique_ptr<MserStabilizer> configure_mser_stabilizer(ConfigFileReader& read
     while (reader.get_next(parameter, value)) {
         if (parameter == "mode")
             if (stabilizer_mode_list.count(value) == 0)
-                throw std::runtime_error("Invalid parameter value!");
+                throw std::runtime_error((boost::format("Invalid value %s for parameter %s!") % value % parameter).str());
             else
                 mode = stabilizer_mode_list[value];
         else if (parameter == "warping")
             if (stabilizer_warping_list.count(value) == 0)
-                throw std::runtime_error("Invalid parameter value!");
+                throw std::runtime_error((boost::format("Invalid value %s for parameter %s!") % value % parameter).str());
             else
                 warping = stabilizer_warping_list[value];
         else
-            throw std::runtime_error("Parameter value unknown!");
+            throw std::runtime_error((boost::format("Parameter %s unknown!") % parameter).str());
     }
 
     std::unique_ptr<MserStabilizer> stabilizer(new MserStabilizer(mser_detector, frame_0, warping, mode, vis_flags));
