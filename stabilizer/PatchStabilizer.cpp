@@ -42,7 +42,7 @@ cv::Mat PatchStabilizer::get_next_homography(const cv::Mat &next_image)
                  cv::Vec2f dist = Hinv_p1 - p0;
                  float D = h(6) * p0(0) + h(7) * p0(1) + 1.;
                  float lambda = homography_params_.reweight_lambda;
-                 float weight = (iter == 0) ? 1.f : 1./(1 + lambda * std::sqrt(dist.dot(Ais_[i] * dist)));
+                 float weight = (iter == 0) ? 1.f : 1./(lambda + std::sqrt(dist.dot(Ais_[i] * dist)));
                  cv::Matx<float, 2, 8> Jx = {p0[0],   p0[1],   1.f, 0.f, 0.f, 0.f, -p1[0]*p0[0], -p1[0]*p0[1],
                                              0.f, 0.f, 0.f, p0[0],   p0[1],   1.f, -p1[0]*p0[1], -p1[1]*p0[1]};
                  b += weight/D * Jx.t() * Ais_[i] * (p1 - p0);
@@ -172,25 +172,34 @@ void PatchStabilizer::init(const cv::Mat& frame0)
 
 std::vector<cv::Point2f> PatchStabilizer::calc_optical_flow_(const cv::Mat& frame_gray, float eps, float eps_weighted) {
     int lk_levels = flow_params_.lk_levels;
-
-    std::vector<cv::Point2f> points1, points2;
-    cv::Mat status1, status2;
-    points1.reserve(points_0_.size());
-    points2.reserve(points_0_.size());
-
+    cv::Size lk_window = cv::Size(flow_params_.lk_window, flow_params_.lk_window);
     cv::Mat err;
+    std::vector<cv::Point2f> points1;
 
-    cv::calcOpticalFlowPyrLK(ref_frame_gray_, frame_gray, points_0_, points1, status1, err, cv::Size(21, 21), lk_levels,
-                             cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01), 0, flow_params_.minEigThreshold);
-    cv::calcOpticalFlowPyrLK(frame_gray, ref_frame_gray_, points1, points2, status2, err, cv::Size(21, 21), lk_levels,
-                             cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01), 0, flow_params_.minEigThreshold);
+    if (flow_params_.use_checked_optical_flow) {
+        std::vector<cv::Point2f> points2;
+        cv::Mat status1, status2;
+        points1.reserve(points_0_.size());
+        points2.reserve(points_0_.size());
 
-    for (std::size_t i=0; i < points_0_.size(); ++i) {
-        cv::Vec2f dist = points_0_[i] - points2[i];
-        float error2 = dist.dot(Ais_[i] * dist)/max_eigvals_[i];
-        status_[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(dist) < eps && (error2 < eps_weighted * eps_weighted) );
-        float new_trust = status_[i] ? 1.f : 0.f;
-        trust_[i] = .95 * trust_[i] + .05 * new_trust;
+        cv::calcOpticalFlowPyrLK(ref_frame_gray_, frame_gray, points_0_, points1, status1, err, lk_window, lk_levels,
+                                 cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01), 0, flow_params_.minEigThreshold);
+        cv::calcOpticalFlowPyrLK(frame_gray, ref_frame_gray_, points1, points2, status2, err, lk_window, lk_levels,
+                                 cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01), 0, flow_params_.minEigThreshold);
+
+        for (std::size_t i=0; i < points_0_.size(); ++i) {
+            cv::Vec2f dist = points_0_[i] - points2[i];
+            float error2 = dist.dot(Ais_[i] * dist)/max_eigvals_[i];
+            status_[i] = (status1.at<bool>(i) && status2.at<bool>(i) && cv::norm(dist) < eps && (error2 < eps_weighted * eps_weighted) );
+            float new_trust = status_[i] ? 1.f : 0.f;
+            trust_[i] = .95 * trust_[i] + .05 * new_trust;
+        }
+    } else {
+        cv::Mat status;
+        cv::calcOpticalFlowPyrLK(ref_frame_gray_, frame_gray, points_0_, points1, status, err, lk_window, lk_levels,
+                                  cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01), 0, flow_params_.minEigThreshold);
+        for (std::size_t i=0; i<points_.size(); ++i)
+            status_[i] = status.at<bool>(i);
     }
 
     return points1;

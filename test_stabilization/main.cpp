@@ -141,7 +141,6 @@ int run_stabilizer(std::string input, std::string config_file, std::string outpu
     AccuracyEvaluator accuracy_unstabilized (frame0);
     AccuracyEvaluator accuracy_stabilized (frame0);
 
-
     /// Do the stabilization
     int i = 0;
     while (cap.isOpened()) {
@@ -347,7 +346,10 @@ std::unique_ptr<PatchStabilizer> configure_patch_stabilizer(ConfigFileReader& re
             flow_params.max_err_weighted = std::stod(value);
         else if (parameter == "flow_params.use_checked_optical_flow")
             flow_params.use_checked_optical_flow = std::stoi(value);
-
+        else if (parameter == "flow_params.minEigThreshold")
+            flow_params.minEigThreshold = std::stod(value);
+        else if (parameter == "flow_params.lk_window")
+            flow_params.lk_window = std::stoi(value);
 
         else if (parameter == "flow_params_retrieve.lk_levels")
             flow_params_retrieve.lk_levels = std::stoi(value);

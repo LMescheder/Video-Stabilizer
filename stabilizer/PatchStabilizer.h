@@ -25,6 +25,7 @@ public:
         int lk_levels = 3;
         bool use_checked_optical_flow = true;
         double minEigThreshold = 1e-6;
+        int lk_window = 21;
     };
 
     struct PatchParameters {
