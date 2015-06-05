@@ -1,0 +1,3 @@
+TYPE = mser
+warping = homography
+mode = warp_back

@@ -1,0 +1,21 @@
+TYPE = patch
+warping = homography
+
+flow_params.lk_levels = 3
+flow_params.max_err = 1000
+flow_params.max_err_weighted = 1
+flow_params.use_checked_optical_flow = 1
+
+flow_params_retrieve.lk_levels = 3
+flow_params_retrieve.max_err = 1e10
+flow_params_retrieve.max_err_weighted = 1e0
+flow_params_retrieve.use_checked_optical_flow = 0
+
+homography_params.maxiter = 100
+homography_params.regularize = 0
+homography_params.reweight_lambda = 1.
+
+patch_params.Nx  = 50
+patch_params.Ny  = 40
+patch_params.sigma_grad  = .7
+patch_params.sigma_integrate  = 2.
