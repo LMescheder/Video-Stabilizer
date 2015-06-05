@@ -14,8 +14,10 @@ This software requires
 
 Usage
 --------
-You can use the program by starting the binary `test_stabilization` with command line options
+You can use the program by starting the binary `test_stabilization` with the command line options
 
 `<path to video> <path to config file> <path to output folder>`
 
 See the `config` folder for examples of valid config files. 
+
+To automatically generate the documentation use the command `doxygen Doxyfile`.
