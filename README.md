@@ -6,6 +6,7 @@ It is distributed under the MIT license, so you can use it free of charge as lon
 Requirements
 -----------------
 This software requires
+
 - boost 1.54
 - OpenCV 2.4
 - qmake for building the project
