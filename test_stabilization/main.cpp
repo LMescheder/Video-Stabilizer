@@ -81,13 +81,11 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Maximum number of output files exceeded!");
     }
 
-    return run_stabilizer(input_file.string(), config_file.string(), output_file.string(), output_vis_file.string(), output_log_file.string(), false);
+    return run_stabilizer(input_file.string(), config_file.string(), output_file.string(), output_vis_file.string(), output_log_file.string(), true);
 }
 
 int run_stabilizer(std::string input, std::string config_file, std::string output, std::string output_vis, std::string output_log, bool show)
 {
-   MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-1);
-
    cv::VideoCapture cap(input);
 
    if(!cap.isOpened()) {
@@ -98,7 +96,11 @@ int run_stabilizer(std::string input, std::string config_file, std::string outpu
    int frame_width = cap.get(CV_CAP_PROP_FRAME_WIDTH);
    int frame_height = cap.get(CV_CAP_PROP_FRAME_HEIGHT);
    int N = cap.get(CV_CAP_PROP_FRAME_COUNT);
-   int fps = cap.get(CV_CAP_PROP_FPS);
+   double fps = cap.get(CV_CAP_PROP_FPS);
+
+   // check fps
+   if (!(fps >= 1))
+       fps = 30;
 
    /*
    std::cout << "Frame width: " << frame_width << "\n";
@@ -110,18 +112,15 @@ int run_stabilizer(std::string input, std::string config_file, std::string outpu
 
    /// Create output video writers
    cv::VideoWriter vout(output,
-                           CV_FOURCC('M','J','P','G'),
-                           20,
+                           CV_FOURCC('D', 'I', 'V', 'X'),
+                           fps,
                            cv::Size(frame_width,frame_height),
                            true);
    cv::VideoWriter voutr(output_vis,
-                           CV_FOURCC('M','J','P','G'),
-                           20,
+                           CV_FOURCC('D', 'I', 'V', 'X'),
+                           fps,
                            cv::Size(frame_width,frame_height),
                            true);
-
-
-
 
     /// If required, create windows for visualization
     if (show) {
@@ -180,7 +179,8 @@ int run_stabilizer(std::string input, std::string config_file, std::string outpu
             cv::imshow("Stabilized", stabilized_vis);
             //cv::imshow("diff", stabilized - frame0);
 
-            if (cv::waitKey(1) >= 0) {
+            // break when ESC is pressed
+            if (cv::waitKey(1) % 256 == 27) {
                 break;
             }
         }
@@ -216,9 +216,6 @@ int run_stabilizer(std::string input, std::string config_file, std::string outpu
         configfile_stream.close();
     }
     logfile_stream.close();
-
-
-
 
     /// Release resources
     cap.release();
@@ -389,6 +386,7 @@ std::unique_ptr<PatchStabilizer> configure_patch_stabilizer(ConfigFileReader& re
 std::unique_ptr<MserStabilizer> configure_mser_stabilizer(ConfigFileReader& reader, const cv::Mat& frame_0) {
     // todo: put this to config
     MatMser mser_detector(5, 50, 3000, 50.f, .1f, 25.f, 1.e-1);
+
     Stabilizer::Warping warping = Stabilizer::Warping::HOMOGRAPHY;
     Stabilizer::Mode mode = Stabilizer::Mode::TRACK_REF;
     int vis_flags = MserStabilizer::VIS_HULLS | MserStabilizer::VIS_MEANS;
