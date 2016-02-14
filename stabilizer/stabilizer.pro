@@ -1,35 +1,27 @@
-TEMPLATE = lib
-CONFIG += staticlib
+TEMPLATE = app
+#CONFIG += console
 CONFIG += c++11
+CONFIG -= app_bundle
 #CONFIG -= qt
 
-HEADERS += \
-    MserStabilizer.h \
-    PointStabilizer.h \
-    Stabilizer.h \
-    PatchStabilizer.h \
-    PixelStabilizer.h
+PRE_TARGETDEPS += $${OUT_PWD}/../libstabilizer/libstabilizer.a
 
-SOURCES += \
-    MserStabilizer.cpp \
-    PointStabilizer.cpp \
-    Stabilizer.cpp \
-    PatchStabilizer.cpp \
-    PixelStabilizer.cpp
+SOURCES += main.cpp \
+    AccuracyEvaluator.cpp \
+    ConfigFileReader.cpp
 
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../
-
-LIBS += -L$${OUT_PWD}/../mser_tools/ -lmser_tools
+LIBS += -L$${OUT_PWD}/../libstabilizer/ -lstabilizer
+LIBS += -L$${OUT_PWD}/../libmsertools/ -lmsertools
 
 LIBS += -lopencv_core -lopencv_highgui
-LIBS += -lopencv_imgproc -lopencv_imgcodecs
-LIBS += -lopencv_video -lopencv_videoio
+LIBS += -lopencv_imgproc
+LIBS += -lopencv_video
 LIBS += -lopencv_features2d
 LIBS += -lopencv_videostab -lopencv_stitching -lopencv_calib3d
 
-QMAKE_CXXFLAGS_RELEASE -= -O0
-QMAKE_CXXFLAGS_RELEASE -= -O1
-QMAKE_CXXFLAGS_RELEASE *= -O2
-QMAKE_CXXFLAGS_RELEASE -= -O3
+LIBS += -lboost_filesystem -lboost_system
 
-QMAKE_CXXFLAGS_DEBUG *= -D_DEBUG
+HEADERS += \
+    AccuracyEvaluator.h \
+    ConfigFileReader.h

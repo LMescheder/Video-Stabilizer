@@ -1,8 +1,7 @@
 TEMPLATE=subdirs
 
 SUBDIRS+=\
-    stabilizer test_stabilization  \
-    mser_tools
+    stabilizer libstabilizer libmsertools
 
-stabilizer.depends=mser_tools
-test_stabilization.depends=stabilizer
+libstabilizer.depends=libmsertools
+stabilizer.depends=libstabilizer

@@ -6,7 +6,7 @@
 
 QT       -= core gui
 
-TARGET = mser_tools
+TARGET = msertools
 TEMPLATE = lib
 CONFIG += staticlib
 CONFIG += c++11

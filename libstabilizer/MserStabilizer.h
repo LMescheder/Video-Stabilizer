@@ -8,7 +8,7 @@
 #ifndef MATMserStabilizer_HPP
 #define MATMserStabilizer_HPP
 
-#include "mser_tools/MatMserTracker.h"
+#include "libmsertools/MatMserTracker.h"
 #include "Stabilizer.h"
 #include "opencv2/opencv.hpp"
 #include <vector>
