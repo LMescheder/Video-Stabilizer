@@ -26,7 +26,7 @@ To automatically generate the documentation use the command `doxygen Doxyfile`.
 
 Results
 ---------
-Sample results from the patch stabilizer:
+Sample result from the patch stabilizer:
 ![Stabilized patch](img/stabilized_patch.png)
 Visualization:
 ![Stabilized patch points](img/stabilized_patch_vis.png)
