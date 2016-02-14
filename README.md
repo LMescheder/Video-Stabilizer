@@ -14,7 +14,7 @@ This software requires
 
 Usage
 --------
-You can use the program by starting the binary `test_stabilization` with the command line options
+You can use the program by starting the binary `stabilizer` with the command line options
 
 `<path to video> <path to config file> <path to output folder>`
 
