@@ -22,14 +22,7 @@ public:
         double average = 0.;
         int N = 0;
 
-        void update (double new_val) {
-            val = new_val;
-            min = std::min(min, val);
-            max = std::max(max, val);
-            double alpha = 1. / (N+1);
-            average = (1 - alpha) * average + alpha * val;
-            ++N;
-        }
+        void update (double new_val);
 
         std::string to_text() const {
             return (boost::format( "%.3f -- %.3f (%.3f)") % min % max % average).str();

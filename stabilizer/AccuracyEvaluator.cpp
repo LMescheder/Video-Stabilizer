@@ -147,3 +147,13 @@ cv::Mat AccuracyEvaluator::crop(const cv::Mat& frame)
     return image_roi;
 }
 
+
+
+void AccuracyEvaluator::Stats::update(double new_val) {
+    val = new_val;
+    min = std::min(min, val);
+    max = std::max(max, val);
+    double alpha = 1. / (N+1);
+    average = (1 - alpha) * average + alpha * val;
+    ++N;
+}
